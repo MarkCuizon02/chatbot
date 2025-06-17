@@ -208,8 +208,9 @@ export default function Dashboard() {
         isNaviDropdownOpen={isNaviDropdownOpen}
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen}
-      />
+        setIsProfileOpen={setIsProfileOpen} isNaviChatbotOpen={false} setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
+          throw new Error('Function not implemented.');
+        } }      />
 
       {/* Main Content */}
       <motion.div
