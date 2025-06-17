@@ -136,10 +136,10 @@ export default function Sidebar({
           <HiOutlineWallet size={20} className="mr-3" /> Billing & Subscription
         </button>
          <button
-          onClick={() => handleNavigation('/earn-rewards')}
+          onClick={() => handleNavigation('/earn-credits')}
           className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'hover:bg-gray-700 text-gray-100' : 'hover:bg-gray-100 text-gray-900'}`}
         >
-          <HiOutlineBell size={20} className="mr-3" /> Earn Rewards
+          <HiOutlineBell size={20} className="mr-3" /> Earn Credits and $
           </button>
         <button
           onClick={() => handleNavigation('/knowledge-base')}

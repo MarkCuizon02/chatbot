@@ -3,7 +3,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-// import { HiXMark, HiOutlinePuzzlePiece, HiOutlineUserGroup } from 'react-icons/hi2'; // Removed unused imports
 import { useRouter } from 'next/navigation';
 
 interface NaviAgentsModalProps {

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../../components/Sidebar";
 import { useTheme } from "../../../context/ThemeContext";
+import { HiXMark } from 'react-icons/hi2';
 
 const plans = [
 	{
@@ -132,6 +133,11 @@ export default function PlanSelectionPage() {
 	const [cancelReason, setCancelReason] = useState<string | null>(null);
 	const [cancelFeedback, setCancelFeedback] = useState("");
 
+	// New state for the new modal
+	const [showConfirmModal, setShowConfirmModal] = useState(false);
+	const [selectedPlan, setSelectedPlan] = useState<any>(null);
+	const [actionType, setActionType] = useState<'upgrade' | 'downgrade' | null>(null);
+
 	// Function to handle subscription cancellation
 	const handleCancelSubscription = () => {
 		// Here you would implement the actual cancellation logic
@@ -142,6 +148,24 @@ export default function PlanSelectionPage() {
 		setShowCancelModal(false);
 		// You might want to show a confirmation message or redirect the user
 	};
+
+	// Helper to determine plan order
+	const getPlanOrder = (planName: string) => {
+		const order = [
+			'Personal',
+			'Family',
+			'Family Plus',
+			'Launch',
+			'Growth',
+			'Pro',
+			"Human Digital Manager",
+			"Founder's Club"
+		];
+		return order.indexOf(planName);
+	};
+
+	const currentPlan = (tab === 'Personal' ? plans : businessPlans).find((p: any) => p.isCurrent);
+	const currentPlanOrder = getPlanOrder(currentPlan?.name || '');
 
 	return (
 		<div
@@ -249,10 +273,28 @@ export default function PlanSelectionPage() {
 									</span>
 								</div>
 								<button
-									className={`mt-4 w-full py-2 rounded font-semibold text-base transition ${plan.buttonColor}`}
+									className={`mt-4 w-full py-2 rounded font-semibold text-base transition ${
+										plan.buttonColor
+									}`}
 									disabled={isCurrent}
+									onClick={() => {
+										if (!isCurrent) {
+											const planOrder = getPlanOrder(plan.name);
+											if (planOrder < currentPlanOrder) {
+												setActionType('downgrade');
+											} else {
+												setActionType('upgrade');
+											}
+											setSelectedPlan(plan);
+											setShowConfirmModal(true);
+										}
+									}}
 								>
-									{plan.button}
+									{isCurrent
+										? 'Current Plan'
+										: getPlanOrder(plan.name) < currentPlanOrder
+										? 'Downgrade Plan'
+										: 'Upgrade Plan'}
 								</button>
 								<ul className="mt-6 w-full text-sm text-gray-700 space-y-2">
 									{plan.features?.map((feature: string, i: number) => (
@@ -402,6 +444,54 @@ export default function PlanSelectionPage() {
 									className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600"
 								>
 									Cancel Subscription
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{showConfirmModal && selectedPlan && (
+				<div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+					<div className={`w-full max-w-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-xl overflow-hidden`}>
+						<div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+							<h2 className="text-2xl font-bold">
+								{actionType === 'downgrade' ? 'Confirm Downgrade Subscription' : 'Confirm Upgrade Subscription'}
+							</h2>
+							<button
+								onClick={() => setShowConfirmModal(false)}
+								className={`p-1 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
+							>
+								<HiXMark className="w-6 h-6" />
+							</button>
+						</div>
+						<div className="p-6">
+							<p className={`mb-6 text-base ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}> 
+								You're about to {actionType === 'downgrade' ? 'downgrade' : 'upgrade'} to the <span className="font-semibold" style={{ color: actionType === 'upgrade' ? '#F59E42' : '#F59E42' }}>{selectedPlan.name} Plan</span>
+							</p>
+							<div className={`rounded-xl p-4 mb-6 ${isDarkMode ? 'bg-cyan-900 bg-opacity-30' : 'bg-cyan-50'}`}> 
+								<div className="flex flex-col gap-2 text-base">
+									<div className="flex justify-between"><span className="font-medium">New Plan:</span> <span>{selectedPlan.name}</span></div>
+									<div className="flex justify-between"><span className="font-medium">Billing:</span> <span>${selectedPlan.price}/month</span></div>
+									<div className="flex justify-between"><span className="font-medium">Effective:</span> <span>Immediately</span></div>
+								</div>
+							</div>
+							<p className={`mb-8 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Your new subscription will be activated immediately and you'll be charged a prorate amount for the current billing period.</p>
+							<div className="flex justify-end gap-3">
+								<button
+									onClick={() => setShowConfirmModal(false)}
+									className={`px-6 py-2 rounded-lg font-medium border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
+								>
+									Cancel
+								</button>
+								<button
+									onClick={() => {
+										
+										setShowConfirmModal(false);
+									}}
+									className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-teal-500 text-white hover:bg-teal-600'}`}
+								>
+									{actionType === 'downgrade' ? 'Confirm Downgrade' : 'Confirm Upgrade'}
 								</button>
 							</div>
 						</div>

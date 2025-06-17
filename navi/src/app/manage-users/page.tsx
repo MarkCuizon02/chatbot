@@ -367,7 +367,6 @@ export default function ManageUsersPage() {
               <input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600 transition duration-150 ease-in-out" />
             </th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access</th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agents</th>
@@ -390,11 +389,6 @@ export default function ManageUsersPage() {
                     <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
                   </div>
                 </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getAccessTagClass(user.access)}`}>
-                  {user.access}
-                </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {user.group === 'Not Assigned' ? (
@@ -419,11 +413,14 @@ export default function ManageUsersPage() {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {user.agents.length > 0 ? (
                   <div className="flex space-x-2">
-                    {user.agents.slice(0, 2).map((agent, agentIndex) => (
-                      <span key={agentIndex} className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>
-                        {agent}
-                      </span>
-                    ))}
+                    {user.agents.slice(0, 2).map((agent, agentIndex) => {
+                      const agentObj = agents.find(a => a.id === agent);
+                      return (
+                        <span key={agentIndex} className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${agentObj ? getAgentColor(agentObj.color, isDarkMode) : (isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700')}`}>
+                          {agent}
+                        </span>
+                      );
+                    })}
                     {user.agents.length > 2 && (
                       <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>
                         +{user.agents.length - 2}
@@ -558,7 +555,7 @@ export default function ManageUsersPage() {
                       <input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600 transition duration-150 ease-in-out" />
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agents</th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -581,10 +578,17 @@ export default function ManageUsersPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${getAccessTagClass(user.access)}`}>
-                          {user.access}
-                        </span>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {user.group === 'Not Assigned' ? (
+                          <select className={`block w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${isDarkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-700 border-gray-300'}`}>
+                            <option>Assign Group</option>
+                            <option>Admin</option>
+                            <option>Tech Virtual Assistant</option>
+                            <option>Chat Support</option>
+                          </select>
+                        ) : (
+                          user.group
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {typeof user.credit === 'number' ? `$${user.credit.toLocaleString()}` : (
@@ -597,11 +601,14 @@ export default function ManageUsersPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {user.agents.length > 0 ? (
                           <div className="flex space-x-2">
-                            {user.agents.slice(0, 2).map((agent, agentIndex) => (
-                              <span key={agentIndex} className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>
-                                {agent}
-                              </span>
-                            ))}
+                            {user.agents.slice(0, 2).map((agent, agentIndex) => {
+                              const agentObj = agents.find(a => a.id === agent);
+                              return (
+                                <span key={agentIndex} className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${agentObj ? getAgentColor(agentObj.color, isDarkMode) : (isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700')}`}>
+                                  {agent}
+                                </span>
+                              );
+                            })}
                             {user.agents.length > 2 && (
                               <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>
                                 +{user.agents.length - 2}
@@ -757,12 +764,6 @@ export default function ManageUsersPage() {
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 ${activeTab === 'all' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-white text-gray-900 shadow-inner') : (isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200')}`}
                 >
                   All Users ({allUsersCount})
-                </button>
-                <button
-                  onClick={() => setActiveTab('unassigned')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 ${activeTab === 'unassigned' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-white text-gray-900 shadow-inner') : (isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200')}`}
-                >
-                  Unassigned ({unassignedCount})
                 </button>
                 <button
                   onClick={() => setActiveTab('groups')}
