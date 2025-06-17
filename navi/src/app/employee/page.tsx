@@ -57,7 +57,7 @@ const agentActivities = [
   },
   {
     id: 2,
-    agent: 'Chealis',
+    agent: 'Chattie',
     activity: 'Handled 50 user queries with 98% satisfaction.',
     time: '11 AM • May 23, 2025',
     status: 'warning',
@@ -226,13 +226,13 @@ export default function DashboardPage() {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
-          {/* Recent Activity */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-20 mb-8">
+          {/* Recent Activity - Full Width Row */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.4 }}
-            className={`xl:col-span-1 rounded-xl shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+            className={`xl:col-span-3 rounded-xl shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
           >
             <div className={`p-6 border-b transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
               <h3 className={`text-xl font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Activity</h3>
@@ -324,13 +324,15 @@ export default function DashboardPage() {
               </div>
             </div>
           </motion.div>
+        </div>
 
-          {/* Agents Status */}
+        {/* Agents Status - Separate Row */}
+        <div className="grid grid-cols-1 gap-8 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.5 }}
-            className={`xl:col-span-2 rounded-xl shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+            className={`rounded-xl shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
           >
             <div className={`p-6 border-b transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
               <h3 className={`text-xl font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Agents Status & Quick Summary</h3>
