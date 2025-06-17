@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useTheme } from '../../context/ThemeContext';
 import { HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiLink, HiOutlinePlus, HiOutlineEnvelope, HiEllipsisHorizontal, HiOutlinePencil, HiOutlineKey, HiOutlineUserGroup, HiOutlineTrash, HiOutlineAdjustmentsHorizontal } from 'react-icons/hi2';
 import Sidebar from '../components/Sidebar';
+import { HiX } from 'react-icons/hi';
 
 interface UserItem {
   id: number;
@@ -172,6 +173,31 @@ export default function ManageUsersPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [selectedGroupForAddMember, setSelectedGroupForAddMember] = useState<string | null>(null);
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddMembersModal, setShowAddMembersModal] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<UserItem[]>([]);
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState<UserItem[]>([]);
+
+  const members = [
+    {
+      id: 1,
+      name: "Oliver Thompson",
+      email: "oliverthompson@email.com",
+      avatar: "/path/to/oliver-avatar.jpg"
+    },
+    {
+      id: 2,
+      name: "Hanna Kenter",
+      email: "hanna@email.com",
+      avatar: "/path/to/hanna-avatar.jpg"
+    }
+  ];
+
+  const filteredMembers = members.filter(member =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const unassignedCount = users.filter(user => user.group === 'Not Assigned').length;
   const allUsersCount = users.length;
@@ -241,6 +267,26 @@ export default function ManageUsersPage() {
       )
     );
     closeAddMemberModal();
+  };
+
+  const handleAddMembersClick = () => {
+    // Filter out users that are already in the group
+    const available = users.filter(user => !selectedGroupMembers.some(member => member.id === user.id));
+    setAvailableUsers(available);
+    setShowAddMembersModal(true);
+  };
+
+  const handleMemberSelect = (user: UserItem) => {
+    setSelectedGroupMembers(prev => [...prev, user]);
+    setAvailableUsers(prev => prev.filter(u => u.id !== user.id));
+  };
+
+  const handleMemberRemove = (userId: number) => {
+    const removedUser = selectedGroupMembers.find(member => member.id === userId);
+    if (removedUser) {
+      setSelectedGroupMembers(prev => prev.filter(member => member.id !== userId));
+      setAvailableUsers(prev => [...prev, removedUser]);
+    }
   };
 
   const renderUserTable = () => (
@@ -804,57 +850,37 @@ export default function ManageUsersPage() {
                   <label className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm block mb-3`}>
                     Members
                   </label>
-                  <div className="flex items-center space-x-3">
-                    <button className={`w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed transition-colors ${isDarkMode ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300' : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'}`}>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={handleAddMembersClick}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed transition-colors ${
+                        isDarkMode 
+                          ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300' 
+                          : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
+                      }`}
+                    >
                       <HiOutlinePlus size={20} />
                     </button>
-                    
-                    {/* Sample member avatars */}
-                    <div className="relative group">
-                      <Image
-                        src="/images/Troy.jpg"
-                        alt="Member"
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-full cursor-pointer border-2 border-white dark:border-gray-700 object-cover object-center"
-                      />
-                      <div className={`absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-800 text-white'}`}>
-                        Cristofer Stanton
+                    {selectedGroupMembers.map((member) => (
+                      <div key={member.id} className="relative group">
+                        <Image
+                          src={member.avatar}
+                          alt={member.name}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700"
+                        />
+                        <div className={`absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-800 text-white'}`}>
+                          {member.name}
+                        </div>
+                        <button 
+                          onClick={() => handleMemberRemove(member.id)}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs hover:bg-gray-500 transition-colors font-bold"
+                        >
+                          ×
+                        </button>
                       </div>
-                    </div>
-                    
-                    <div className="relative group">
-                      <Image
-                        src="/images/Audra.png"
-                        alt="Member"
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-full cursor-pointer border-2 border-white dark:border-gray-700 object-cover object-center"
-                      />
-                    </div>
-                    
-                    <div className="relative group">
-                      <Image
-                        src="/images/Paige.png"
-                        alt="Member"
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-full cursor-pointer border-2 border-white dark:border-gray-700 object-cover object-top"
-                      />
-                    </div>
-                    
-                    <div className="relative group">
-                      <Image
-                        src="/images/Pixie.png"
-                        alt="Member"
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-full cursor-pointer border-2 border-white dark:border-gray-700 object-cover object-center"
-                      />
-                      <button className="absolute -top-1 -right-1 w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs hover:bg-gray-500 transition-colors font-bold">
-                        ×
-                      </button>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -879,6 +905,135 @@ export default function ManageUsersPage() {
                 >
                   Save
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Members Modal */}
+      <AnimatePresence>
+        {showMembersModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className={`w-96 max-w-sm mx-4 rounded-2xl p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl`}>
+              <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Members
+              </h2>
+              
+              <div className="relative mb-4">
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                />
+              </div>
+              
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {filteredMembers.map((member) => (
+                  <div key={member.id} className={`flex items-center justify-between p-3 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={member.avatar}
+                        alt={member.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {member.name}
+                        </h3>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {member.email}
+                        </p>
+                      </div>
+                    </div>
+                    <button className={`p-1 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`}>
+                      <HiX size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              
+              <button
+                onClick={() => setShowMembersModal(false)}
+                className="mt-4 w-full py-2 px-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Members Modal */}
+      <AnimatePresence>
+        {showAddMembersModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setShowAddMembersModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  Members
+                </h2>
+                
+                <div className="relative mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search members..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-2xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  {availableUsers
+                    .filter(user => 
+                      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((user) => (
+                      <div 
+                        key={user.id} 
+                        onClick={() => handleMemberSelect(user)}
+                        className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
+                          isDarkMode 
+                            ? 'bg-gray-700/50 hover:bg-gray-600/50' 
+                            : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Image
+                            src={user.avatar}
+                            alt={user.name}
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {user.name}
+                            </h3>
+                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
               </div>
             </motion.div>
           </motion.div>
