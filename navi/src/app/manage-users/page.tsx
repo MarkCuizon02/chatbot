@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { useTheme } from '../../context/ThemeContext';
 import { HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiLink, HiOutlinePlus, HiOutlineEnvelope, HiEllipsisHorizontal, HiOutlinePencil, HiOutlineKey, HiOutlineUserGroup, HiOutlineTrash, HiOutlineAdjustmentsHorizontal } from 'react-icons/hi2';
 import Sidebar from '../components/Sidebar';
-import AddMemberModal from '../components/AddMemberModal';
 
 interface UserItem {
   id: number;
@@ -817,7 +816,7 @@ export default function ManageUsersPage() {
                         alt="Member"
                         width={48}
                         height={48}
-                        className="rounded-full cursor-pointer border-2 border-white dark:border-gray-700"
+                        className="w-12 h-12 rounded-full cursor-pointer border-2 border-white dark:border-gray-700 object-cover object-center"
                       />
                       <div className={`absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-800 text-white'}`}>
                         Cristofer Stanton
@@ -830,7 +829,7 @@ export default function ManageUsersPage() {
                         alt="Member"
                         width={48}
                         height={48}
-                        className="rounded-full cursor-pointer border-2 border-white dark:border-gray-700"
+                        className="w-12 h-12 rounded-full cursor-pointer border-2 border-white dark:border-gray-700 object-cover object-center"
                       />
                     </div>
                     
@@ -840,7 +839,7 @@ export default function ManageUsersPage() {
                         alt="Member"
                         width={48}
                         height={48}
-                        className="rounded-full cursor-pointer border-2 border-white dark:border-gray-700"
+                        className="w-12 h-12 rounded-full cursor-pointer border-2 border-white dark:border-gray-700 object-cover object-top"
                       />
                     </div>
                     
@@ -850,7 +849,7 @@ export default function ManageUsersPage() {
                         alt="Member"
                         width={48}
                         height={48}
-                        className="rounded-full cursor-pointer border-2 border-white dark:border-gray-700"
+                        className="w-12 h-12 rounded-full cursor-pointer border-2 border-white dark:border-gray-700 object-cover object-center"
                       />
                       <button className="absolute -top-1 -right-1 w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs hover:bg-gray-500 transition-colors font-bold">
                         ×
