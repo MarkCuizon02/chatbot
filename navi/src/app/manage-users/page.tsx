@@ -178,6 +178,7 @@ export default function ManageUsersPage() {
   const [showAddMembersModal, setShowAddMembersModal] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<UserItem[]>([]);
   const [selectedGroupMembers, setSelectedGroupMembers] = useState<UserItem[]>([]);
+  const [showAgentsModal, setShowAgentsModal] = useState(false);
 
   const members = [
     {
@@ -287,6 +288,74 @@ export default function ManageUsersPage() {
       setSelectedGroupMembers(prev => prev.filter(member => member.id !== userId));
       setAvailableUsers(prev => [...prev, removedUser]);
     }
+  };
+
+  const agents = [
+    {
+      id: 'N',
+      name: 'Navi',
+      description: 'Your smart, friendly assistant',
+      avatar: '/images/Navi.png',
+      color: 'emerald'
+    },
+    {
+      id: 'P',
+      name: 'Pixie',
+      description: 'Conversational AI',
+      avatar: '/images/Pixie.png',
+      color: 'pink'
+    },
+    {
+      id: 'PA',
+      name: 'Paige',
+      description: 'Image Generation',
+      avatar: '/images/Paige.png',
+      color: 'yellow'
+    },
+    {
+      id: 'A',
+      name: 'Audra',
+      description: 'Video Generation',
+      avatar: '/images/Audra.png',
+      color: 'teal'
+    },
+    {
+      id: 'F',
+      name: 'Flicka',
+      description: 'Audio Generation',
+      avatar: '/images/flicka.png',
+      color: 'purple'
+    }
+  ];
+
+  const handleAgentSelect = (agentId: string) => {
+    if (selectedAgents.includes(agentId)) {
+      setSelectedAgents(selectedAgents.filter(id => id !== agentId));
+    } else {
+      setSelectedAgents([...selectedAgents, agentId]);
+    }
+  };
+
+  const getAgentColor = (color: string, isDark: boolean) => {
+    const colors = {
+      emerald: isDark ? 'bg-emerald-900 text-emerald-300' : 'bg-emerald-100 text-emerald-800',
+      pink: isDark ? 'bg-pink-900 text-pink-300' : 'bg-pink-100 text-pink-800',
+      yellow: isDark ? 'bg-yellow-900 text-yellow-300' : 'bg-yellow-100 text-yellow-800',
+      teal: isDark ? 'bg-teal-900 text-teal-300' : 'bg-teal-100 text-teal-800',
+      purple: isDark ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-800'
+    };
+    return colors[color as keyof typeof colors] || colors.emerald;
+  };
+
+  const getAgentBadgeColor = (color: string, isDark: boolean) => {
+    const colors = {
+      emerald: isDark ? 'bg-emerald-700 text-emerald-200' : 'bg-emerald-200 text-emerald-700',
+      pink: isDark ? 'bg-pink-700 text-pink-200' : 'bg-pink-200 text-pink-700',
+      yellow: isDark ? 'bg-yellow-700 text-yellow-200' : 'bg-yellow-200 text-yellow-700',
+      teal: isDark ? 'bg-teal-700 text-teal-200' : 'bg-teal-200 text-teal-700',
+      purple: isDark ? 'bg-purple-700 text-purple-200' : 'bg-purple-200 text-purple-700'
+    };
+    return colors[color as keyof typeof colors] || colors.emerald;
   };
 
   const renderUserTable = () => (
@@ -809,34 +878,29 @@ export default function ManageUsersPage() {
                     AI Agents
                   </label>
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-emerald-900 text-emerald-300' : 'bg-emerald-100 text-emerald-800'}`}>
-                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mr-2 ${isDarkMode ? 'bg-emerald-700 text-emerald-200' : 'bg-emerald-200 text-emerald-700'}`}>
-                          N
-                        </span>
-                        Navi
-                        <button 
-                          onClick={() => setSelectedAgents(selectedAgents.filter(a => a !== 'N'))}
-                          className="ml-2 text-emerald-600 hover:text-emerald-800 text-sm font-bold"
-                        >
-                          ×
-                        </button>
-                      </span>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${isDarkMode ? 'bg-pink-900 text-pink-300' : 'bg-pink-100 text-pink-800'}`}>
-                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mr-2 ${isDarkMode ? 'bg-pink-700 text-pink-200' : 'bg-pink-200 text-pink-700'}`}>
-                          E
-                        </span>
-                        Emmy
-                        <button 
-                          onClick={() => setSelectedAgents(selectedAgents.filter(a => a !== 'E'))}
-                          className="ml-2 text-pink-600 hover:text-pink-800 text-sm font-bold"
-                        >
-                          ×
-                        </button>
-                      </span>
+                    <div className="flex items-center space-x-2 flex-wrap gap-2">
+                      {selectedAgents.map(agentId => {
+                        const agent = agents.find(a => a.id === agentId);
+                        if (!agent) return null;
+                        return (
+                          <span key={agent.id} className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getAgentColor(agent.color, isDarkMode)}`}>
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mr-2 ${getAgentBadgeColor(agent.color, isDarkMode)}`}>
+                              {agent.id}
+                            </span>
+                            {agent.name}
+                            <button 
+                              onClick={() => handleAgentSelect(agent.id)}
+                              className="ml-2 hover:text-opacity-75"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        );
+                      })}
                     </div>
                     <button
-                      className={`p-1 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
+                      onClick={() => setShowAgentsModal(true)}
+                      className={`p-2 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -1033,6 +1097,81 @@ export default function ManageUsersPage() {
                         </div>
                       </div>
                     ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* AI Agents Modal */}
+      <AnimatePresence>
+        {showAgentsModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setShowAgentsModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  AI Agents
+                </h2>
+                
+                <div className="relative mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search Agents..."
+                    className={`w-full px-4 py-3 rounded-2xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                  />
+                </div>
+                
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {agents.map((agent) => (
+                    <div 
+                      key={agent.id}
+                      onClick={() => {
+                        handleAgentSelect(agent.id);
+                        setShowAgentsModal(false);
+                      }}
+                      className={`flex items-center p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
+                        isDarkMode 
+                          ? 'hover:bg-gray-700/50' 
+                          : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <Image
+                        src={agent.avatar}
+                        alt={agent.name}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="ml-3">
+                        <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {agent.name}
+                        </h3>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {agent.description}
+                        </p>
+                      </div>
+                      {selectedAgents.includes(agent.id) && (
+                        <div className={`ml-auto ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
