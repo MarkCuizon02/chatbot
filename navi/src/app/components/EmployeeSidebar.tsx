@@ -115,7 +115,7 @@ export default function Sidebar({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
       transition={{ duration: 0.2 }}
-      className={`absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 w-80 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl shadow-lg z-50`}
+      className={`absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 w-72 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-xl shadow-lg z-50`}
     >
       {/* User Profile Header */}
       <ProfileHeader isDarkMode={isDarkMode} />
