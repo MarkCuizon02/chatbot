@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../../components/Sidebar";
 import { useTheme } from "../../../context/ThemeContext";
-import { HiXMark } from 'react-icons/hi2';
+import { HiXMark, HiCheckCircle, HiExclamationCircle, HiInformationCircle } from 'react-icons/hi2';
 
 const plans = [
 	{
@@ -133,10 +133,72 @@ export default function PlanSelectionPage() {
 	const [cancelReason, setCancelReason] = useState<string | null>(null);
 	const [cancelFeedback, setCancelFeedback] = useState("");
 
-	// New state for the new modal
+	// Plan change modal state
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
 	const [selectedPlan, setSelectedPlan] = useState<any>(null);
 	const [actionType, setActionType] = useState<'upgrade' | 'downgrade' | null>(null);
+
+	// Loading and status states
+	const [isLoading, setIsLoading] = useState(false);
+	const [showSuccessModal, setShowSuccessModal] = useState(false);
+	const [showErrorModal, setShowErrorModal] = useState(false);
+	const [statusMessage, setStatusMessage] = useState("");
+	const [statusDetails, setStatusDetails] = useState<any>(null);
+
+	// Mockup API functions
+	const mockPlanChange = async (plan: any, action: 'upgrade' | 'downgrade') => {
+		// Simulate API call delay
+		await new Promise(resolve => setTimeout(resolve, 2000));
+		
+		// Simulate random success/failure for demo purposes
+		const isSuccess = Math.random() > 0.1; // 90% success rate
+		
+		if (isSuccess) {
+			const prorateAmount = action === 'upgrade' 
+				? Math.round((plan.price - (currentPlan?.price || 0)) * 0.7 * 100) / 100
+				: 0;
+			
+			return {
+				success: true,
+				message: `Successfully ${action === 'upgrade' ? 'upgraded' : 'downgraded'} to ${plan.name} Plan`,
+				details: {
+					newPlan: plan.name,
+					newPrice: plan.price,
+					effectiveDate: new Date().toISOString(),
+					prorateAmount,
+					nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+					credits: plan.features.find((f: string) => f.includes('credits')) || 'N/A',
+					users: plan.features.find((f: string) => f.includes('Users')) || 'N/A'
+				}
+			};
+		} else {
+			throw new Error(`Failed to ${action} plan. Please try again or contact support.`);
+		}
+	};
+
+	const mockCancelSubscription = async (reason: string | null, feedback: string) => {
+		// Simulate API call delay
+		await new Promise(resolve => setTimeout(resolve, 1500));
+		
+		// Simulate random success/failure for demo purposes
+		const isSuccess = Math.random() > 0.05; // 95% success rate
+		
+		if (isSuccess) {
+			return {
+				success: true,
+				message: "Subscription cancelled successfully",
+				details: {
+					cancellationDate: new Date().toISOString(),
+					activeUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+					reason: reason || 'Not specified',
+					feedback: feedback || 'None provided',
+					refundAmount: currentPlan ? Math.round(currentPlan.price * 0.8 * 100) / 100 : 0
+				}
+			};
+		} else {
+			throw new Error("Failed to cancel subscription. Please try again or contact support.");
+		}
+	};
 
 	// Function to handle plan selection
 	const handlePlanSelect = (plan: any) => {
@@ -150,22 +212,41 @@ export default function PlanSelectionPage() {
 	};
 
 	// Function to confirm plan change
-	const confirmPlanChange = () => {
-		// Here you would implement the actual plan change logic
-		console.log('Changing plan to:', selectedPlan);
+	const confirmPlanChange = async () => {
+		if (!selectedPlan || !actionType) return;
+		
+		setIsLoading(true);
 		setShowConfirmModal(false);
-		router.push('/billing'); // Redirect back to billing page
+		
+		try {
+			const result = await mockPlanChange(selectedPlan, actionType);
+			setStatusMessage(result.message);
+			setStatusDetails(result.details);
+			setShowSuccessModal(true);
+		} catch (error: any) {
+			setStatusMessage(error.message);
+			setShowErrorModal(true);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	// Function to handle subscription cancellation
-	const handleCancelSubscription = () => {
-		// Here you would implement the actual cancellation logic
-		console.log("Cancellation details:", {
-			reason: cancelReason,
-			feedback: cancelFeedback,
-		});
+	const handleCancelSubscription = async () => {
+		setIsLoading(true);
 		setShowCancelModal(false);
-		router.push('/billing'); // Redirect back to billing page
+		
+		try {
+			const result = await mockCancelSubscription(cancelReason, cancelFeedback);
+			setStatusMessage(result.message);
+			setStatusDetails(result.details);
+			setShowSuccessModal(true);
+		} catch (error: any) {
+			setStatusMessage(error.message);
+			setShowErrorModal(true);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	// Helper to determine plan order
@@ -185,6 +266,101 @@ export default function PlanSelectionPage() {
 
 	const currentPlan = (tab === 'Personal' ? plans : businessPlans).find((p: any) => p.isCurrent);
 	const currentPlanOrder = getPlanOrder(currentPlan?.name || '');
+
+	// Loading overlay component
+	const LoadingOverlay = () => (
+		<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+			<div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 flex flex-col items-center`}>
+				<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mb-4"></div>
+				<p className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+					Processing your request...
+				</p>
+				<p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-2`}>
+					Please wait while we update your subscription
+				</p>
+			</div>
+		</div>
+	);
+
+	// Success/Error modal component
+	const StatusModal = ({ isSuccess }: { isSuccess: boolean }) => (
+		<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+			<div className={`w-full max-w-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-xl overflow-hidden`}>
+				<div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+					<div className="flex items-center gap-3">
+						{isSuccess ? (
+							<HiCheckCircle className="w-6 h-6 text-green-500" />
+						) : (
+							<HiExclamationCircle className="w-6 h-6 text-red-500" />
+						)}
+						<h2 className="text-xl font-semibold">
+							{isSuccess ? 'Success!' : 'Error'}
+						</h2>
+					</div>
+					<button
+						onClick={() => {
+							setShowSuccessModal(false);
+							setShowErrorModal(false);
+							if (isSuccess) {
+								router.push('/billing');
+							}
+						}}
+						className={`p-1 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
+					>
+						<HiXMark className="w-6 h-6" />
+					</button>
+				</div>
+				<div className="p-6">
+					<p className={`mb-6 text-base ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+						{statusMessage}
+					</p>
+					
+					{isSuccess && statusDetails && (
+						<div className={`rounded-xl p-4 mb-6 ${isDarkMode ? 'bg-green-900 bg-opacity-30' : 'bg-green-50'}`}>
+							<div className="flex flex-col gap-2 text-sm">
+								{Object.entries(statusDetails).map(([key, value]) => (
+									<div key={key} className="flex justify-between">
+										<span className="font-medium capitalize">
+											{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
+										</span>
+										<span>
+											{key.includes('Date') || key.includes('Until') 
+												? new Date(value as string).toLocaleDateString()
+												: key.includes('Amount') 
+													? `$${value}`
+													: value as string
+											}
+										</span>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+					
+					<div className="flex justify-end">
+						<button
+							onClick={() => {
+								setShowSuccessModal(false);
+								setShowErrorModal(false);
+								if (isSuccess) {
+									router.push('/billing');
+								}
+							}}
+							className={`px-6 py-2 rounded-lg font-medium ${
+								isSuccess 
+									? 'bg-teal-500 text-white hover:bg-teal-600'
+									: isDarkMode 
+										? 'bg-gray-700 text-white hover:bg-gray-600'
+										: 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+							}`}
+						>
+							{isSuccess ? 'Continue to Billing' : 'Close'}
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 
 	return (
 		<div
@@ -218,7 +394,8 @@ export default function PlanSelectionPage() {
 					&lt; Back
 				</button>
 				<div className="flex items-center justify-between mb-2">
-					<h1 className="text-2xl font-bold">Billing & Subscription</h1>					<button 
+					<h1 className="text-2xl font-bold">Billing & Subscription</h1>
+					<button 
 						onClick={() => setShowCancelModal(true)}
 						className="bg-red-500 text-white px-5 py-2 rounded font-medium hover:bg-red-600"
 					>
@@ -317,8 +494,18 @@ export default function PlanSelectionPage() {
 						);
 					})}
 				</div>
-			</div>			
-      {/* Cancel Subscription Modal */}
+			</div>
+
+			{/* Loading Overlay */}
+			{isLoading && <LoadingOverlay />}
+
+			{/* Success Modal */}
+			{showSuccessModal && <StatusModal isSuccess={true} />}
+
+			{/* Error Modal */}
+			{showErrorModal && <StatusModal isSuccess={false} />}
+
+			{/* Cancel Subscription Modal */}
 			{showCancelModal && (
 				<div className={`fixed inset-0 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex justify-center items-center z-50`}>
 					<div
@@ -329,7 +516,10 @@ export default function PlanSelectionPage() {
 						} rounded-2xl shadow-xl overflow-hidden`}
 					>
 						<div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-							<h2 className="text-xl font-semibold">Cancel Subscription</h2>
+							<div className="flex items-center gap-3">
+								<HiInformationCircle className="w-6 h-6 text-red-500" />
+								<h2 className="text-xl font-semibold">Cancel Subscription</h2>
+							</div>
 							<button
 								onClick={() => setShowCancelModal(false)}
 								className={`p-1 rounded-full ${
@@ -338,20 +528,7 @@ export default function PlanSelectionPage() {
 										: "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
 								} transition-colors`}
 							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24"
-									strokeWidth={2}
-									stroke="currentColor"
-									className="w-5 h-5"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										d="M6 18L18 6M6 6l12 12"
-									/>
-								</svg>
+								<HiXMark className="w-6 h-6" />
 							</button>
 						</div>
 
@@ -454,9 +631,12 @@ export default function PlanSelectionPage() {
 				<div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
 					<div className={`w-full max-w-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-xl overflow-hidden`}>
 						<div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-							<h2 className="text-2xl font-bold">
-								{actionType === 'downgrade' ? 'Confirm Downgrade Subscription' : 'Confirm Upgrade Subscription'}
-							</h2>
+							<div className="flex items-center gap-3">
+								<HiInformationCircle className="w-6 h-6 text-blue-500" />
+								<h2 className="text-2xl font-bold">
+									{actionType === 'downgrade' ? 'Confirm Downgrade Subscription' : 'Confirm Upgrade Subscription'}
+								</h2>
+							</div>
 							<button
 								onClick={() => setShowConfirmModal(false)}
 								className={`p-1 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
@@ -473,6 +653,9 @@ export default function PlanSelectionPage() {
 									<div className="flex justify-between"><span className="font-medium">New Plan:</span> <span>{selectedPlan.name}</span></div>
 									<div className="flex justify-between"><span className="font-medium">Billing:</span> <span>${selectedPlan.price}/month</span></div>
 									<div className="flex justify-between"><span className="font-medium">Effective:</span> <span>Immediately</span></div>
+									{actionType === 'upgrade' && (
+										<div className="flex justify-between"><span className="font-medium">Prorate Amount:</span> <span>~${Math.round((selectedPlan.price - (currentPlan?.price || 0)) * 0.7 * 100) / 100}</span></div>
+									)}
 								</div>
 							</div>
 							<p className={`mb-8 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Your new subscription will be activated immediately and you'll be charged a prorate amount for the current billing period.</p>
