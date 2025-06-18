@@ -7,6 +7,16 @@ import { HiOutlineEye } from "react-icons/hi2";
 import { Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+// Add subscription state interface
+interface Subscription {
+  plan: string;
+  price: number;
+  renewalDate: string;
+  status: 'active' | 'cancelled' | 'pending';
+  credits: number;
+  additionalCredits: number;
+}
+
 const billingHistory = [
   { id: "#10003", plan: "Family Plus", date: "March 5, 2025", status: "Failed" },
   { id: "#10002", plan: "Family Plus", date: "February 5, 2025", status: "Paid" },
@@ -20,7 +30,43 @@ export default function BillingPage() {
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const router = useRouter();
+
+  // Add subscription state
+  const [subscription, setSubscription] = useState<Subscription>({
+    plan: "Family Plus",
+    price: 99.00,
+    renewalDate: "April 5",
+    status: 'active',
+    credits: 1500,
+    additionalCredits: 0
+  });
+
+  // Handle plan change
+  const handlePlanChange = () => {
+    router.push('/billing/plan');
+  };
+
+  // Handle subscription cancellation
+  const handleCancelSubscription = () => {
+    setShowCancelConfirm(true);
+  };
+
+  // Confirm cancellation
+  const confirmCancellation = () => {
+    setSubscription(prev => ({
+      ...prev,
+      status: 'cancelled'
+    }));
+    setShowCancelConfirm(false);
+  };
+
+  // Handle additional credits
+  const handleAddCredits = () => {
+    // Implement credit purchase logic here
+    console.log('Adding credits...');
+  };
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"} flex font-poppins transition-colors duration-300`}>
@@ -34,9 +80,12 @@ export default function BillingPage() {
         isNaviDropdownOpen={isNaviDropdownOpen}
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen} isNaviChatbotOpen={false} setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
+        setIsProfileOpen={setIsProfileOpen}
+        isNaviChatbotOpen={false}
+        setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
           throw new Error("Function not implemented.");
-        } }      />
+        }}
+      />
       <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-12" : "ml-32"} p-8 overflow-x-hidden`}>  
         <h1 className="text-2xl font-bold mb-8">Billing & Subscription</h1>
         {/* Your Plan Section */}
@@ -44,20 +93,45 @@ export default function BillingPage() {
           <div className="font-semibold text-lg mb-3">Your Plan</div>
           <div className="bg-white rounded-2xl border border-gray-300 p-8 flex flex-col md:flex-row md:items-start md:justify-between gap-8">
             <div className="flex-1 flex flex-col gap-2 min-w-[220px]">
-              <div className="text-sm text-gray-400 mb-1">Renews on April 5</div>
-              <div className="font-semibold mb-1">Family Plus (Personal)</div>
-              <div className="text-2xl font-bold mb-1">$99.00<span className="text-base font-medium">/month</span></div>
-              <div className="text-gray-500 mb-4">unlimited users • 1500 credits/month</div>
-              <button className="border border-teal-400 text-teal-700 px-4 py-1 rounded font-medium text-sm hover:bg-teal-50 transition w-fit" onClick={() => router.push('/billing/plan')}>Upgrade Plan</button>
+              <div className="text-sm text-gray-400 mb-1">Renews on {subscription.renewalDate}</div>
+              <div className="font-semibold mb-1">{subscription.plan} (Personal)</div>
+              <div className="text-2xl font-bold mb-1">${subscription.price.toFixed(2)}<span className="text-base font-medium">/month</span></div>
+              <div className="text-gray-500 mb-4">unlimited users • {subscription.credits} credits/month</div>
+              <div className="flex gap-2">
+                <button 
+                  className="border border-teal-400 text-teal-700 px-4 py-1 rounded font-medium text-sm hover:bg-teal-50 transition w-fit" 
+                  onClick={handlePlanChange}
+                >
+                  Upgrade Plan
+                </button>
+                {subscription.status === 'active' && (
+                  <button 
+                    className="border border-red-400 text-red-700 px-4 py-1 rounded font-medium text-sm hover:bg-red-50 transition w-fit" 
+                    onClick={handleCancelSubscription}
+                  >
+                    Cancel Subscription
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex flex-col min-w-[260px] gap-2">
               <div className="flex flex-col items-end">
-                <button className="mb-4 border border-gray-300 text-gray-700 px-4 py-1 rounded font-medium text-sm hover:bg-gray-100 transition self-end" onClick={() => router.push('/billing/plan')}>Change Plan</button>
+                <button 
+                  className="mb-4 border border-gray-300 text-gray-700 px-4 py-1 rounded font-medium text-sm hover:bg-gray-100 transition self-end"
+                  onClick={handlePlanChange}
+                >
+                  Change Plan
+                </button>
                 <div className="w-full flex flex-col items-start">
                   <div className="font-semibold text-gray-500">Additional Credits</div>
-                  <div className="text-lg font-semibold">--</div>
-                  <div className="text-gray-500 mb-2">0 additional credits</div>
-                  <button className="border border-teal-400 text-teal-700 px-4 py-1 rounded font-medium text-sm hover:bg-teal-50 transition w-fit">Add more</button>
+                  <div className="text-lg font-semibold">{subscription.additionalCredits}</div>
+                  <div className="text-gray-500 mb-2">{subscription.additionalCredits} additional credits</div>
+                  <button 
+                    className="border border-teal-400 text-teal-700 px-4 py-1 rounded font-medium text-sm hover:bg-teal-50 transition w-fit"
+                    onClick={handleAddCredits}
+                  >
+                    Add more
+                  </button>
                 </div>
               </div>
             </div>
@@ -131,6 +205,32 @@ export default function BillingPage() {
           </div>
         </div>
       </div>
+
+      {/* Cancel Subscription Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-semibold mb-4">Cancel Subscription</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to cancel your subscription? You'll still have access until {subscription.renewalDate}.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+              >
+                Keep Subscription
+              </button>
+              <button
+                onClick={confirmCancellation}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+              >
+                Cancel Subscription
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

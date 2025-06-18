@@ -138,6 +138,25 @@ export default function PlanSelectionPage() {
 	const [selectedPlan, setSelectedPlan] = useState<any>(null);
 	const [actionType, setActionType] = useState<'upgrade' | 'downgrade' | null>(null);
 
+	// Function to handle plan selection
+	const handlePlanSelect = (plan: any) => {
+		const currentPlan = (tab === 'Personal' ? plans : businessPlans).find((p: any) => p.isCurrent);
+		const currentPlanOrder = getPlanOrder(currentPlan?.name || '');
+		const selectedPlanOrder = getPlanOrder(plan.name);
+
+		setSelectedPlan(plan);
+		setActionType(selectedPlanOrder > currentPlanOrder ? 'upgrade' : 'downgrade');
+		setShowConfirmModal(true);
+	};
+
+	// Function to confirm plan change
+	const confirmPlanChange = () => {
+		// Here you would implement the actual plan change logic
+		console.log('Changing plan to:', selectedPlan);
+		setShowConfirmModal(false);
+		router.push('/billing'); // Redirect back to billing page
+	};
+
 	// Function to handle subscription cancellation
 	const handleCancelSubscription = () => {
 		// Here you would implement the actual cancellation logic
@@ -146,7 +165,7 @@ export default function PlanSelectionPage() {
 			feedback: cancelFeedback,
 		});
 		setShowCancelModal(false);
-		// You might want to show a confirmation message or redirect the user
+		router.push('/billing'); // Redirect back to billing page
 	};
 
 	// Helper to determine plan order
@@ -225,7 +244,7 @@ export default function PlanSelectionPage() {
 					<button
 						className={`px-5 py-2 rounded font-medium text-base ${
 							tab === "Personal"
-								? "bg-gray-200 text-gray-900"
+								? "bg-teal-500 text-white"
 								: "bg-white text-gray-500 border border-gray-200"
 						}`}
 						onClick={() => setTab("Personal")}
@@ -235,7 +254,7 @@ export default function PlanSelectionPage() {
 					<button
 						className={`px-5 py-2 rounded font-medium text-base ${
 							tab === "Business"
-								? "bg-gray-200 text-gray-900"
+								? "bg-teal-500 text-white"
 								: "bg-white text-gray-500 border border-gray-200"
 						}`}
 						onClick={() => setTab("Business")}
@@ -248,73 +267,52 @@ export default function PlanSelectionPage() {
 						const isCurrent = (plan as any).isCurrent ?? false;
 						return (
 							<div
-								key={plan.name}
-								className={`flex-1 bg-white rounded-2xl border ${
-									plan.border
-								} shadow-sm p-8 flex flex-col items-center relative min-w-[320px] max-w-[420px] ${
-									isCurrent ? "ring-2 ring-blue-200" : ""
-								}`}
-								style={{ flexBasis: "calc(33% - 1.5rem)" }}
+								key={idx}
+								className={`flex-1 min-w-[300px] max-w-[400px] rounded-2xl border ${
+									isCurrent ? plan.border : "border-gray-200"
+								} p-6 flex flex-col`}
 							>
-								<div
-									className={`text-lg font-bold mb-1 ${plan.color}`}
-								>
-									{plan.name}
-								</div>
-								<div className="text-gray-500 text-sm mb-4 text-center">
-									{plan.description}
-								</div>
-								<div
-									className={`text-3xl font-bold mb-1 ${plan.color}`}
-								>
-									${plan.price}{" "}
-									<span className="text-base font-medium text-gray-500">
-										per month
-									</span>
+								<div className="flex-1">
+									<h3 className={`text-xl font-bold ${plan.color} mb-2`}>
+										{plan.name}
+									</h3>
+									<p className="text-gray-500 mb-4">{plan.description}</p>
+									<div className="mb-4">
+										<span className="text-3xl font-bold">${plan.price}</span>
+										<span className="text-gray-500">/month</span>
+									</div>
+									<ul className="space-y-2 mb-6">
+										{plan.features.map((feature, idx) => (
+											<li key={idx} className="flex items-start">
+												<svg
+													className="w-5 h-5 text-green-500 mr-2 mt-0.5"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M5 13l4 4L19 7"
+													/>
+												</svg>
+												<span className="text-gray-600">{feature}</span>
+											</li>
+										))}
+									</ul>
 								</div>
 								<button
-									className={`mt-4 w-full py-2 rounded font-semibold text-base transition ${
-										plan.buttonColor
+									className={`w-full py-2 rounded-lg font-medium ${
+										isCurrent
+											? plan.buttonColor
+											: plan.color.replace('text-', 'bg-') + ' text-white hover:opacity-90'
 									}`}
+									onClick={() => !isCurrent && handlePlanSelect(plan)}
 									disabled={isCurrent}
-									onClick={() => {
-										if (!isCurrent) {
-											const planOrder = getPlanOrder(plan.name);
-											if (planOrder < currentPlanOrder) {
-												setActionType('downgrade');
-											} else {
-												setActionType('upgrade');
-											}
-											setSelectedPlan(plan);
-											setShowConfirmModal(true);
-										}
-									}}
 								>
-									{isCurrent
-										? 'Current Plan'
-										: getPlanOrder(plan.name) < currentPlanOrder
-										? 'Downgrade Plan'
-										: 'Upgrade Plan'}
+									{isCurrent ? "Current Plan" : "Upgrade Plan"}
 								</button>
-								<ul className="mt-6 w-full text-sm text-gray-700 space-y-2">
-									{plan.features?.map((feature: string, i: number) => (
-										<li
-											key={i}
-											className="flex items-center gap-2"
-										>
-											✓ {feature}{" "}
-											<span
-												className="ml-1 text-gray-400"
-												title="Info"
-											>
-												{feature.includes("per month") ||
-												feature.includes("users")
-													? "ℹ️"
-													: ""}
-											</span>
-										</li>
-									))}
-								</ul>
 							</div>
 						);
 					})}
@@ -416,9 +414,9 @@ export default function PlanSelectionPage() {
 										Additional feedback (Optional)
 									</p>
 									<textarea
-										placeholder="Help us improve by sharing your thoughts..."
 										value={cancelFeedback}
 										onChange={(e) => setCancelFeedback(e.target.value)}
+										placeholder="Help us improve by sharing your thoughts..."
 										className={`w-full p-3 border rounded-lg resize-none min-h-[100px] focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${
 											isDarkMode
 												? "bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400"
@@ -451,6 +449,7 @@ export default function PlanSelectionPage() {
 				</div>
 			)}
 
+			{/* Plan Change Confirmation Modal */}
 			{showConfirmModal && selectedPlan && (
 				<div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
 					<div className={`w-full max-w-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-xl overflow-hidden`}>
@@ -485,10 +484,7 @@ export default function PlanSelectionPage() {
 									Cancel
 								</button>
 								<button
-									onClick={() => {
-										
-										setShowConfirmModal(false);
-									}}
+									onClick={confirmPlanChange}
 									className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-teal-500 text-white hover:bg-teal-600'}`}
 								>
 									{actionType === 'downgrade' ? 'Confirm Downgrade' : 'Confirm Upgrade'}
