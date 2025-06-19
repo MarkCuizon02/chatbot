@@ -37,6 +37,10 @@ export default function SettingsPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [recoveryCode] = useState("a1b2*c3d4!  e5f6@g7h8#  ij9?kl1l2$  m3n4&o5p6%  q7r8*s9t0^  u1v2#w3x4@  y5z6+a7b8~  c9d0-elf2.");
   const recoveryRef = useRef<HTMLDivElement>(null);
+  const [pendingTwoFA, setPendingTwoFA] = useState(false);
+
+  // Add state for account deletion modal
+  const [showAccountDeletionModal, setShowAccountDeletionModal] = useState(false);
 
   // Appearance state
   const [appearance, setAppearance] = useState<'system' | 'light' | 'dark'>('system');
@@ -221,24 +225,31 @@ export default function SettingsPage() {
                 <span className="font-medium">Two-Factor Authentication</span>
                 <button
                   type="button"
-                  className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${twoFA ? 'bg-teal-500' : 'bg-gray-300'}`}
+                  className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${(twoFA || pendingTwoFA) ? 'bg-teal-500' : 'bg-gray-300'}`}
                   onClick={() => {
-                    if (!twoFA) {
+                    if (twoFA) {
+                      // Turn off 2FA if currently enabled
+                      setTwoFA(false);
+                      setPendingTwoFA(false); // Clear pending state if turning off
+                    } else if (!twoFA && !pendingTwoFA) {
+                      // Initiate setup if 2FA is off and not pending
                       setShow2FAModal(true);
                       setTwoFAStep(1);
-                    } else {
-                      setTwoFA(false);
+                    } else if (pendingTwoFA) {
+                      // If pending, do nothing on toggle click (user must save or discard)
+                      return;
                     }
                   }}
-                  aria-pressed={twoFA}
-                  disabled={twoFA}
+                  aria-pressed={twoFA || pendingTwoFA}
+                  // Only disable if pending activation to allow turning off
+                  disabled={pendingTwoFA}
                 >
                   <span className="sr-only">Enable two-factor authentication</span>
                   <span
-                    className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${twoFA ? 'translate-x-5' : 'translate-x-1'}`}
+                    className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${(twoFA || pendingTwoFA) ? 'translate-x-5' : 'translate-x-1'}`}
                   />
                 </button>
-                {!twoFA && (
+                {!twoFA && !pendingTwoFA && (
                   <button
                     type="button"
                     className={`ml-2 text-cyan-600 dark:text-cyan-400 underline font-medium text-sm hover:text-cyan-800 dark:hover:text-cyan-300 transition`}
@@ -250,7 +261,10 @@ export default function SettingsPage() {
                     Setup Two-Factor
                   </button>
                 )}
-                {twoFA && (
+                {pendingTwoFA && (
+                  <span className="ml-2 text-yellow-600 dark:text-yellow-400 font-medium text-sm">Pending Activation</span>
+                )}
+                {twoFA && !pendingTwoFA && (
                   <span className="ml-2 text-green-600 dark:text-green-400 font-medium text-sm">Enabled</span>
                 )}
               </div>
@@ -306,6 +320,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   className="px-5 py-2 rounded font-medium bg-red-500 text-white hover:bg-red-600"
+                  onClick={() => setShowAccountDeletionModal(true)}
                 >
                   Request Account Deletion
                 </button>
@@ -318,12 +333,23 @@ export default function SettingsPage() {
             <button
               type="button"
               className={`px-6 py-2 rounded-lg font-medium border shadow-sm ${isDarkMode ? 'bg-gray-800 text-white hover:bg-gray-700 border-gray-700' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'} transition`}
+              onClick={() => {
+                setPendingTwoFA(false);
+                // Reset other unsaved changes if needed
+              }}
             >
               Discard
             </button>
             <button
               type="button"
               className={`px-6 py-2 rounded-lg font-medium shadow-sm ${isDarkMode ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-cyan-500 text-white hover:bg-cyan-600'} transition`}
+              onClick={() => {
+                if (pendingTwoFA) {
+                  setTwoFA(true);
+                  setPendingTwoFA(false);
+                }
+                // Save other changes if needed
+              }}
             >
               Save Changes
             </button>
@@ -452,12 +478,52 @@ export default function SettingsPage() {
                       className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-cyan-500 text-white hover:bg-cyan-600'}`}
                       onClick={() => {
                         setShow2FAModal(false);
-                        setTwoFA(true);
+                        setPendingTwoFA(true);
                       }}
                     >Confirm</button>
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {showAccountDeletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background: isDarkMode ? 'rgba(17,24,39,0.7)' : 'rgba(243,244,246,0.7)', backdropFilter: 'blur(8px)'}}>
+          <div className={`w-full max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden border relative ${isDarkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
+            style={{boxShadow: isDarkMode ? '0 8px 40px rgba(0,0,0,0.7)' : '0 8px 40px rgba(0,0,0,0.12)'}}>
+            <button
+              className="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-200 transition"
+              onClick={() => setShowAccountDeletionModal(false)}
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="p-8 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold">Confirm Account Deletion</h2>
+            </div>
+            <div className="p-8">
+              <p className={`mb-6 text-base ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Are you sure you want to request account deletion? All your data and access to associated workspaces will be lost.</p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowAccountDeletionModal(false)}
+                  className={`px-6 py-2 rounded-lg font-medium border shadow-sm ${isDarkMode ? 'bg-gray-800 text-white hover:bg-gray-700 border-gray-700' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'} transition`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('Account deletion requested!');
+                    setShowAccountDeletionModal(false);
+                    // Implement actual deletion request logic here
+                  }}
+                  className="px-6 py-2 rounded-lg font-medium bg-red-600 text-white hover:bg-red-700 transition"
+                >
+                  Confirm Deletion
+                </button>
+              </div>
             </div>
           </div>
         </div>
