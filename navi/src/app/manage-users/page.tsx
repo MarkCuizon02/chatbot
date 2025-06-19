@@ -190,13 +190,21 @@ export default function ManageUsersPage() {
       id: 1,
       name: "Oliver Thompson",
       email: "oliverthompson@email.com",
-      avatar: "/path/to/oliver-avatar.jpg"
+      avatar: "/path/to/oliver-avatar.jpg",
+      access: "Admin" as const,
+      group: "Admin",
+      credit: "Unlimited" as const,
+      agents: []
     },
     {
       id: 2,
       name: "Hanna Kenter",
       email: "hanna@email.com",
-      avatar: "/path/to/hanna-avatar.jpg"
+      avatar: "/path/to/hanna-avatar.jpg",
+      access: "Admin" as const,
+      group: "Admin",
+      credit: "Unlimited" as const,
+      agents: []
     }
   ];
 

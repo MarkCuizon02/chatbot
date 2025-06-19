@@ -20,6 +20,14 @@ const agentUsageData = [
   { date: 'May 22', Navi: 108, Audra: 52, Pixie: 40 }
 ];
 
+// Predefined waveform heights to prevent hydration issues
+const waveformHeights = [
+  13.9, 8.4, 18.7, 12.4, 6.3, 12.3, 7.8, 11.4, 12.7, 9.6,
+  16.7, 15.9, 6.1, 9.1, 15.7, 4.6, 4.4, 18.0, 12.6, 9.8,
+  9.0, 8.7, 19.3, 6.5, 15.9, 18.3, 10.0, 14.7, 17.5, 4.6,
+  13.9, 13.6, 10.9, 18.6, 4.6
+];
+
 const recentActivity = [
   {
     id: 1,
@@ -306,7 +314,7 @@ export default function DashboardPage() {
                                   key={i} 
                                   className={`w-0.5 rounded-full transition-colors duration-300 ${isDarkMode ? 'bg-gray-500' : 'bg-gray-400'}`}
                                   style={{ 
-                                    height: `${Math.random() * 16 + 4}px`,
+                                    height: `${waveformHeights[i % waveformHeights.length]}px`,
                                     opacity: i < 15 ? 0.4 : 1
                                   }}
                                 ></div>
@@ -384,97 +392,95 @@ export default function DashboardPage() {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Performance Visualizations */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.6 }}
-            className={`rounded-xl shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
-          >
-            <div className={`p-6 border-b transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className={`text-xl font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Performance Visualizations</h3>
-                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Agent Usage Over Time</p>
-                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Daily processing units used by each agent.</p>
-                </div>
-                <button className={`text-sm hover:text-blue-500 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Filter by Days
-                </button>
+        {/* Performance Visualizations - Full Width */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.6 }}
+          className={`rounded-xl shadow-sm transition-colors duration-300 mb-8 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+        >
+          <div className={`p-6 border-b transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className={`text-xl font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Performance Visualizations</h3>
+                <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Agent Usage Over Time</p>
+                <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Daily processing units used by each agent.</p>
               </div>
+              <button className={`text-sm hover:text-blue-500 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Filter by Days
+              </button>
             </div>
-            <div className="p-6">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={agentUsageData}>
-                    <XAxis 
-                      dataKey="date" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: isDarkMode ? '#d1d5db' : '#4b5563', fontSize: 12 }} 
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: isDarkMode ? '#d1d5db' : '#4b5563', fontSize: 12 }} 
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: isDarkMode ? '#374151' : '#fff', 
-                        border: 'none', 
-                        borderRadius: '0.5rem', 
-                        color: isDarkMode ? '#d1d5db' : '#4b5563' 
-                      }} 
-                    />
-                    <Line type="monotone" dataKey="Navi" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }} />
-                    <Line type="monotone" dataKey="Audra" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }} />
-                    <Line type="monotone" dataKey="Pixie" stroke="#8B5CF6" strokeWidth={2} dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+          </div>
+          <div className="p-6">
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={agentUsageData}>
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: isDarkMode ? '#d1d5db' : '#4b5563', fontSize: 12 }} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: isDarkMode ? '#d1d5db' : '#4b5563', fontSize: 12 }} 
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: isDarkMode ? '#374151' : '#fff', 
+                      border: 'none', 
+                      borderRadius: '0.5rem', 
+                      color: isDarkMode ? '#d1d5db' : '#4b5563' 
+                    }} 
+                  />
+                  <Line type="monotone" dataKey="Navi" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }} />
+                  <Line type="monotone" dataKey="Audra" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }} />
+                  <Line type="monotone" dataKey="Pixie" stroke="#8B5CF6" strokeWidth={2} dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
 
-          {/* Agent Activity & Insights */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.7 }}
-            className={`rounded-xl shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
-          >
-            <div className={`p-6 border-b transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className={`text-xl font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Agent Activity & Insights</h3>
-                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Latest operations across all agents.</p>
-                </div>
-                <button className={`text-sm hover:text-blue-500 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Filter by Days
-                </button>
+        {/* Agent Activity & Insights - Full Width */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.7 }}
+          className={`rounded-xl shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+        >
+          <div className={`p-6 border-b transition-colors duration-300 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className={`text-xl font-semibold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Agent Activity & Insights</h3>
+                <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Latest operations across all agents.</p>
               </div>
+              <button className={`text-sm hover:text-blue-500 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Filter by Days
+              </button>
             </div>
-            <div className="p-6">
-              <div className="space-y-4 max-h-80 overflow-y-auto">
-                {agentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3">
-                    <Image src={activity.avatar} alt={activity.agent} width={32} height={32} className="rounded-full flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{activity.agent}</p>
-                        <div className="flex items-center space-x-2">
-                          {getStatusIcon(activity.status)}
-                        </div>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {agentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3">
+                  <Image src={activity.avatar} alt={activity.agent} width={32} height={32} className="rounded-full flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{activity.agent}</p>
+                      <div className="flex items-center space-x-2">
+                        {getStatusIcon(activity.status)}
                       </div>
-                      <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{activity.activity}</p>
-                      <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>{activity.time}</p>
                     </div>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{activity.activity}</p>
+                    <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>{activity.time}</p>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   );

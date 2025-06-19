@@ -151,7 +151,7 @@ export default function PlanSelectionPage() {
 	const [cancelReason, setCancelReason] = useState<string | null>(null);
 	const [cancelFeedback, setCancelFeedback] = useState("");
 
-	// New state for the new modal
+	// Plan change modal state
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
 	const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 	const [actionType, setActionType] = useState<'upgrade' | 'downgrade' | null>(null);
@@ -198,13 +198,12 @@ export default function PlanSelectionPage() {
 		}
 	};
 
+	// Add this line near your other `useState` hooks in the `PlanSelectionPage` component
+	const [isLoading, setIsLoading] = useState(false);
+
 	// Function to handle subscription cancellation
-	const handleCancelSubscription = () => {
-		// Here you would implement the actual cancellation logic
-		console.log("Cancellation details:", {
-			reason: cancelReason,
-			feedback: cancelFeedback,
-		});
+	const handleCancelSubscription = async () => {
+		setIsLoading(true);
 		setShowCancelModal(false);
 		// You might want to show a confirmation message or redirect the user
 	};
