@@ -66,6 +66,7 @@ export default function ManageUsersPage() {
       credit: 5000,
       agents: ['N', 'P', 'C', '+2'],
     },
+    
     {
       id: 4,
       name: 'Hanna Kenter',
