@@ -94,13 +94,15 @@ export default function IntegrationsPage() {
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
+        isNaviChatbotOpen={false}
+        setIsNaviChatbotOpen={() => {}}
       />
-      <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-24' : 'ml-72'} p-6 sm:p-8 overflow-x-hidden w-full max-w-6xl mx-auto`}>
+      <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-24' : 'ml-72'} p-6 sm:p-8 overflow-x-hidden flex justify-center`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full"
+          className="w-full max-w-6xl"
         >
           <div className="flex justify-between items-center mb-8">
             <div>

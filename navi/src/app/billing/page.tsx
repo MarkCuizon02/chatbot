@@ -107,18 +107,18 @@ export default function BillingPage() {
         isNaviDropdownOpen={isNaviDropdownOpen}
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen} 
-        isNaviChatbotOpen={false} 
+        setIsProfileOpen={setIsProfileOpen}
+        isNaviChatbotOpen={false}
         setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
           throw new Error("Function not implemented.");
-        }} 
+        }}
       />
       <AnimatePresence>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-12" : "ml-32"} p-8 overflow-x-hidden`}
+          className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-24" : "ml-72"} p-8 md:p-12 overflow-x-hidden`}
         >
           <motion.div
             variants={containerVariants}

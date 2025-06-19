@@ -414,7 +414,7 @@ export default function Sidebar({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed top-0 left-0 h-full z-50 lg:hidden"
+              className="fixed top-0 left-0 h-screen z-50 lg:hidden"
             >
               <SidebarContent />
             </motion.aside>
@@ -422,7 +422,7 @@ export default function Sidebar({
         )}
       </AnimatePresence>
 
-      <aside className="hidden lg:block flex-none">
+      <aside className="hidden lg:block fixed top-0 left-0 h-screen z-50">
         <SidebarContent />
       </aside>
 

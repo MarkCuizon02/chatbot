@@ -894,9 +894,9 @@ export default function ManageUsersPage() {
                   />
                 </div>
 
-                {/* AI Agents */}
-                <div>
-                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
+               {/* AI Agents */}
+               <div>
+                  <label className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm block mb-2`}>
                     AI Agents
                   </label>
                   <div className="flex items-center gap-2">
@@ -910,11 +910,11 @@ export default function ManageUsersPage() {
                               {agent.id}
                             </span>
                             {agent.name}
-                            <button
+                            <button 
                               onClick={() => handleAgentSelect(agent.id)}
-                              className={`ml-2 text-current hover:opacity-75 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+                              className="ml-2 hover:text-opacity-75"
                             >
-                              <HiX className="w-4 h-4" />
+                              ×
                             </button>
                           </span>
                         );
@@ -922,9 +922,7 @@ export default function ManageUsersPage() {
                     </div>
                     <button
                       onClick={() => setShowAgentsModal(true)}
-                      className={`p-2 rounded-full transition-colors
-                        ${isDarkMode ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-200' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'}
-                        focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                      className={`p-2 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -1159,49 +1157,76 @@ export default function ManageUsersPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
             onClick={() => setShowAgentsModal(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="p-6">
                 <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                   AI Agents
                 </h2>
-                <button
-                  onClick={() => setShowAgentsModal(false)}
-                  className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors absolute top-6 right-6`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="p-6">
+                
                 <div className="relative mb-4">
                   <input
                     type="text"
                     placeholder="Search Agents..."
-                    className={`w-full px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors
-                      ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}
+                    className={`w-full px-4 py-3 rounded-2xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
                   />
                 </div>
-
+                
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {/* All AI Agents Option */}
+                  <div 
+                    onClick={() => {
+                      // Select all agents
+                      const allAgentIds = agents.map(agent => agent.id);
+                      setSelectedAgents(allAgentIds);
+                      setShowAgentsModal(false);
+                    }}
+                    className={`flex items-center p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
+                      isDarkMode 
+                        ? 'hover:bg-gray-700/50' 
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-teal-600' : 'bg-teal-500'}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-white">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        All AI Agents
+                      </h3>
+                    </div>
+                    {selectedAgents.length === agents.length && (
+                      <div className={`ml-auto ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Individual AI Agents */}
                   {agents.map((agent) => (
-                    <div
+                    <div 
                       key={agent.id}
                       onClick={() => {
                         handleAgentSelect(agent.id);
                         setShowAgentsModal(false);
                       }}
-                      className={`flex items-center p-3 rounded-2xl cursor-pointer transition-all duration-200 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100'}`}
+                      className={`flex items-center p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
+                        isDarkMode 
+                          ? 'hover:bg-gray-700/50' 
+                          : 'hover:bg-gray-100'
+                      }`}
                     >
                       <Image
                         src={agent.avatar}
