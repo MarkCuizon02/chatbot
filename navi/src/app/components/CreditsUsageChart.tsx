@@ -46,6 +46,11 @@ export default function CreditsUsageChart() {
 
   const usageStatus = getUsageStatus();
 
+  let additionalCreditsValue = (Number(subscription.totalAdditionalCredits) || 0) - (Number(subscription.usedAdditionalCredits) || 0);
+  if (isNaN(additionalCreditsValue) || additionalCreditsValue < 0) additionalCreditsValue = 0;
+  const totalCredits = getTotalCredits();
+  const additionalCreditsPercent = totalCredits > 0 ? (additionalCreditsValue / totalCredits) * 100 : 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -97,6 +102,17 @@ export default function CreditsUsageChart() {
             </span>
             <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               {getUsagePercentage().toFixed(1)}% used
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-6 mb-4">
+            <span className={`text-sm font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+              Additional Credits: {additionalCreditsValue} ({isNaN(additionalCreditsPercent) ? 0 : additionalCreditsPercent.toFixed(1)}% of total)
+            </span>
+            <span className={`text-sm font-medium ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>
+              Remaining Credits: {Number(subscription.creditsRemaining) || 0}
+            </span>
+            <span className={`text-sm font-medium ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>
+              Used Credits: {Number(subscription.creditsUsed) || 0}
             </span>
           </div>
           
@@ -171,10 +187,10 @@ export default function CreditsUsageChart() {
                 </span>
               </div>
               <div className="text-3xl font-bold mb-1">
-                {(subscription.totalAdditionalCredits - subscription.usedAdditionalCredits).toLocaleString()}
+                {additionalCreditsValue.toLocaleString()}
               </div>
-              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {getAdditionalCreditsPercentage().toFixed(1)}% of total
+              <div className={`text-sm ${isNaN(additionalCreditsPercent) ? (isDarkMode ? 'text-gray-400' : 'text-gray-600') : (isDarkMode ? 'text-gray-400' : 'text-gray-600')}`}>
+                {isNaN(additionalCreditsPercent) ? '0' : additionalCreditsPercent.toFixed(1)}% of total
               </div>
             </div>
           </motion.div>

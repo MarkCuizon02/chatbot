@@ -116,6 +116,21 @@ const defaultSubscription: SubscriptionState = {
   usedAdditionalCredits: 200
 };
 
+// Helper function to get monthly credits for a plan
+function getCreditsForPlan(planName: string) {
+  switch (planName) {
+    case 'Personal': return 200;
+    case 'Family': return 500;
+    case 'Family Plus': return 1500;
+    case 'Launch': return 1500;
+    case 'Growth': return 5000;
+    case 'Pro': return 15000;
+    case "Human Digital Manager": return 50000;
+    case "Founder's Club": return 0; // or set as needed
+    default: return 0;
+  }
+}
+
 export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [subscription, setSubscription] = useState<SubscriptionState>(() => {
     if (typeof window !== 'undefined') {
@@ -137,7 +152,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-      })
+      }),
+      creditsRemaining: getCreditsForPlan(newPlan.name),
+      creditsUsed: 0,
+      usedAdditionalCredits: 0,
+      // Preserve additionalCredits and totalAdditionalCredits
+      additionalCredits: prev.additionalCredits,
+      totalAdditionalCredits: prev.totalAdditionalCredits,
     }));
   };
 

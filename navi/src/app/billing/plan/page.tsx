@@ -316,7 +316,7 @@ export default function PlanSelectionPage() {
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5 }}
-					className={`flex-1 p-10 max-w-7xl mx-auto`}
+					className={`flex-1 p-10 max-w-7xl mx-auto transition-all duration-300 ${isSidebarCollapsed ? 'ml-24' : 'ml-72'}`}
 				>
 					<motion.div
 						variants={containerVariants}

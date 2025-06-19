@@ -63,16 +63,22 @@ export default function BillingPage() {
   };
 
   const getCreditsPercentage = () => {
-    const total = subscription.creditsUsed + subscription.creditsRemaining + subscription.totalAdditionalCredits;
-    return total > 0 ? (subscription.creditsUsed / total) * 100 : 0;
+    const used = Number(subscription.creditsUsed) || 0;
+    const remaining = Number(subscription.creditsRemaining) || 0;
+    const additional = Number(subscription.totalAdditionalCredits) || 0;
+    const total = used + remaining + additional;
+    return total > 0 ? (used / total) * 100 : 0;
   };
 
   const getTotalCreditsRemaining = () => {
-    return subscription.creditsRemaining + (subscription.totalAdditionalCredits - subscription.usedAdditionalCredits);
+    const remaining = Number(subscription.creditsRemaining) || 0;
+    const additional = Number(subscription.totalAdditionalCredits) || 0;
+    const usedAdditional = Number(subscription.usedAdditionalCredits) || 0;
+    return remaining + (additional - usedAdditional);
   };
 
   const getActiveAdditionalCredits = () => {
-    return subscription.additionalCredits.filter(credit => credit.status === 'active');
+    return (subscription.additionalCredits || []).filter(credit => credit.status === 'active');
   };
 
   const getStatusColor = (status: string) => {
@@ -107,11 +113,11 @@ export default function BillingPage() {
         isNaviDropdownOpen={isNaviDropdownOpen}
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen}
-        isNaviChatbotOpen={false}
+        setIsProfileOpen={setIsProfileOpen} 
+        isNaviChatbotOpen={false} 
         setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
           throw new Error("Function not implemented.");
-        }}
+        }} 
       />
       <AnimatePresence>
         <motion.div
@@ -190,7 +196,7 @@ export default function BillingPage() {
                       {getCreditsPercentage().toFixed(1)}%
                     </div>
                   </div>
-                  <div className="text-3xl font-bold mb-1">{getTotalCreditsRemaining()}</div>
+                  <div className="text-3xl font-bold mb-1">{getTotalCreditsRemaining() || 0}</div>
                   <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Credits Remaining</div>
                   <div className="mt-4">
                     <div className="flex justify-between text-xs mb-2">
@@ -205,12 +211,10 @@ export default function BillingPage() {
                         transition={{ duration: 1, delay: 0.5 }}
                       ></motion.div>
                     </div>
-                    {subscription.totalAdditionalCredits > 0 && (
-                      <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        +{subscription.totalAdditionalCredits - subscription.usedAdditionalCredits} additional credits
-                      </div>
-                    )}
+                    <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      +{(Number(subscription.totalAdditionalCredits) || 0) - (Number(subscription.usedAdditionalCredits) || 0)} additional credits
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -409,13 +413,11 @@ export default function BillingPage() {
                           <div className={`font-semibold ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>Additional Credits</div>
                         </div>
                         <div className="text-2xl font-bold mb-2">
-                          {subscription.totalAdditionalCredits > 0 
-                            ? subscription.totalAdditionalCredits - subscription.usedAdditionalCredits 
-                            : '0'}
+                          {(Number(subscription.totalAdditionalCredits) || 0) - (Number(subscription.usedAdditionalCredits) || 0)}
                         </div>
                         <div className={`${isDarkMode ? 'text-blue-300' : 'text-blue-600'} mb-4 text-sm`}>
-                          {subscription.totalAdditionalCredits > 0 
-                            ? `${subscription.totalAdditionalCredits - subscription.usedAdditionalCredits} additional credits available`
+                          {((Number(subscription.totalAdditionalCredits) || 0) - (Number(subscription.usedAdditionalCredits) || 0)) > 0
+                            ? `${(Number(subscription.totalAdditionalCredits) || 0) - (Number(subscription.usedAdditionalCredits) || 0)} additional credits available`
                             : 'No additional credits purchased'}
                         </div>
                         <motion.button 
@@ -516,7 +518,7 @@ export default function BillingPage() {
                         >
                           <div className="flex justify-between items-start mb-4">
                             <div>
-                              <div className="font-bold text-xl mb-1">{credit.amount} Credits</div>
+                              <div className="font-bold text-xl mb-1">{Number(credit.amount) || 0} Credits</div>
                               <div className="text-sm text-gray-500">Purchased {credit.purchaseDate}</div>
                             </div>
                             <div className={`px-3 py-1 rounded-full text-xs font-medium ${
