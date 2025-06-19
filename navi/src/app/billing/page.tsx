@@ -1,75 +1,102 @@
 "use client";
 
 import React, { useState } from "react";
-import Sidebar from "../components/Sidebar";
-import { useTheme } from "../../context/ThemeContext";
-import { HiOutlineEye } from "react-icons/hi2";
-import { Download } from "lucide-react";
+import { useTheme } from '@/context/ThemeContext';
+import { useSubscription } from '@/context/SubscriptionContext';
+import Sidebar from '@/app/components/Sidebar';
+import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
+import CreditsUsageChart from '@/app/components/CreditsUsageChart';
+import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiOutlinePlus, HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineBell } from "react-icons/hi2";
+import { Download, TrendingUp, TrendingDown, Zap, Clock, CheckCircle, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-// Add subscription state interface
-interface Subscription {
-  plan: string;
-  price: number;
-  renewalDate: string;
-  status: 'active' | 'cancelled' | 'pending';
-  credits: number;
-  additionalCredits: number;
-}
-
-const billingHistory = [
-  { id: "#10003", plan: "Family Plus", date: "March 5, 2025", status: "Failed" },
-  { id: "#10002", plan: "Family Plus", date: "February 5, 2025", status: "Paid" },
-  { id: "#10001", plan: "Family Plus", date: "January 5, 2025", status: "Paid" },
-];
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function BillingPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { subscription } = useSubscription();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
+  const [selectedTimeframe, setSelectedTimeframe] = useState('month');
   const router = useRouter();
 
-  // Add subscription state
-  const [subscription, setSubscription] = useState<Subscription>({
-    plan: "Family Plus",
-    price: 99.00,
-    renewalDate: "April 5",
-    status: 'active',
-    credits: 1500,
-    additionalCredits: 0
-  });
-
-  // Handle plan change
-  const handlePlanChange = () => {
-    router.push('/billing/plan');
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
   };
 
-  // Handle subscription cancellation
-  const handleCancelSubscription = () => {
-    setShowCancelConfirm(true);
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5
+      }
+    }
   };
 
-  // Confirm cancellation
-  const confirmCancellation = () => {
-    setSubscription(prev => ({
-      ...prev,
-      status: 'cancelled'
-    }));
-    setShowCancelConfirm(false);
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.3
+      }
+    },
+    hover: {
+      scale: 1.02,
+      y: -5,
+      transition: {
+        duration: 0.2
+      }
+    }
   };
 
-  // Handle additional credits
-  const handleAddCredits = () => {
-    // Implement credit purchase logic here
-    console.log('Adding credits...');
+  const getCreditsPercentage = () => {
+    const total = subscription.creditsUsed + subscription.creditsRemaining + subscription.totalAdditionalCredits;
+    return total > 0 ? (subscription.creditsUsed / total) * 100 : 0;
+  };
+
+  const getTotalCreditsRemaining = () => {
+    return subscription.creditsRemaining + (subscription.totalAdditionalCredits - subscription.usedAdditionalCredits);
+  };
+
+  const getActiveAdditionalCredits = () => {
+    return subscription.additionalCredits.filter(credit => credit.status === 'active');
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Paid':
+        return 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 dark:from-green-900 dark:to-emerald-900 dark:text-green-300';
+      case 'Failed':
+        return 'bg-gradient-to-r from-red-100 to-pink-100 text-red-700 dark:from-red-900 dark:to-pink-900 dark:text-red-300';
+      case 'Pending':
+        return 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-700 dark:from-yellow-900 dark:to-orange-900 dark:text-yellow-300';
+      default:
+        return 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 dark:from-gray-700 dark:to-slate-700 dark:text-gray-300';
+    }
+  };
+
+  const getCreditsStatusColor = () => {
+    const percentage = getCreditsPercentage();
+    if (percentage > 80) return 'from-red-500 to-pink-500';
+    if (percentage > 60) return 'from-yellow-500 to-orange-500';
+    return 'from-green-500 to-emerald-500';
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"} flex font-poppins transition-colors duration-300`}>
+    <div className={`min-h-screen ${isDarkMode ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100" : "bg-gradient-to-br from-gray-50 via-white to-blue-50 text-gray-900"} flex font-poppins transition-all duration-500`}>
       <Sidebar
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
@@ -80,157 +107,590 @@ export default function BillingPage() {
         isNaviDropdownOpen={isNaviDropdownOpen}
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen}
-        isNaviChatbotOpen={false}
+        setIsProfileOpen={setIsProfileOpen} 
+        isNaviChatbotOpen={false} 
         setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
           throw new Error("Function not implemented.");
-        }}
+        }} 
       />
-      <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-12" : "ml-32"} p-8 overflow-x-hidden`}>  
-        <h1 className="text-2xl font-bold mb-8">Billing & Subscription</h1>
-        {/* Your Plan Section */}
-        <div className="mb-8">
-          <div className="font-semibold text-lg mb-3">Your Plan</div>
-          <div className="bg-white rounded-2xl border border-gray-300 p-8 flex flex-col md:flex-row md:items-start md:justify-between gap-8">
-            <div className="flex-1 flex flex-col gap-2 min-w-[220px]">
-              <div className="text-sm text-gray-400 mb-1">Renews on {subscription.renewalDate}</div>
-              <div className="font-semibold mb-1">{subscription.plan} (Personal)</div>
-              <div className="text-2xl font-bold mb-1">${subscription.price.toFixed(2)}<span className="text-base font-medium">/month</span></div>
-              <div className="text-gray-500 mb-4">unlimited users • {subscription.credits} credits/month</div>
-              <div className="flex gap-2">
-                <button 
-                  className="border border-teal-400 text-teal-700 px-4 py-1 rounded font-medium text-sm hover:bg-teal-50 transition w-fit" 
-                  onClick={handlePlanChange}
-                >
-                  Upgrade Plan
-                </button>
-                {subscription.status === 'active' && (
-                  <button 
-                    className="border border-red-400 text-red-700 px-4 py-1 rounded font-medium text-sm hover:bg-red-50 transition w-fit" 
-                    onClick={handleCancelSubscription}
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-12" : "ml-32"} p-8 overflow-x-hidden`}
+        >
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Header Section */}
+            <motion.div variants={itemVariants} className="mb-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Billing & Subscription
+                  </h1>
+                  <p className={`text-lg mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Manage your subscription, credits, and billing history
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 ${
+                      isDarkMode 
+                        ? 'bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300' 
+                        : 'bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 shadow-sm'
+                    }`}
                   >
-                    Cancel Subscription
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col min-w-[260px] gap-2">
-              <div className="flex flex-col items-end">
-                <button 
-                  className="mb-4 border border-gray-300 text-gray-700 px-4 py-1 rounded font-medium text-sm hover:bg-gray-100 transition self-end"
-                  onClick={handlePlanChange}
-                >
-                  Change Plan
-                </button>
-                <div className="w-full flex flex-col items-start">
-                  <div className="font-semibold text-gray-500">Additional Credits</div>
-                  <div className="text-lg font-semibold">{subscription.additionalCredits}</div>
-                  <div className="text-gray-500 mb-2">{subscription.additionalCredits} additional credits</div>
-                  <button 
-                    className="border border-teal-400 text-teal-700 px-4 py-1 rounded font-medium text-sm hover:bg-teal-50 transition w-fit"
-                    onClick={handleAddCredits}
+                    <HiOutlineArrowPath className="w-4 h-4" />
+                    Refresh
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 ${
+                      isDarkMode 
+                        ? 'bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300' 
+                        : 'bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 shadow-sm'
+                    }`}
                   >
-                    Add more
-                  </button>
+                    <HiOutlineBell className="w-4 h-4" />
+                    Notifications
+                  </motion.button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        {/* Payment Method Section */}
-        <div className="mb-8">
-          <div className="font-semibold text-lg mb-3">Payment Method</div>
-          <div className="bg-white rounded-2xl border border-gray-300 p-8 relative flex items-center min-h-[80px]">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" className="w-12 h-8 object-contain mr-4" />
-            <div className="flex-1">
-              <div className="text-sm font-medium">Visa ending in **** 1234</div>
-            </div>
-            <button className="absolute top-6 right-6 border border-gray-300 text-gray-700 px-4 py-1 rounded font-medium text-sm hover:bg-gray-100 transition" onClick={() => router.push('/billing/cards')}>Update</button>
-          </div>
-        </div>
-        {/* Billing History Section */}
-        <div className="mb-8">
-          <div className="font-semibold text-lg mb-3">Billing History</div>
-          <div className="bg-white rounded-2xl border border-gray-300 p-8">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-700 font-semibold border-b">
-                  <th className="py-2 pr-4">Invoice ID</th>
-                  <th className="py-2 pr-4">Plan</th>
-                  <th className="py-2 pr-4">Date</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2 pr-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {billingHistory.map((row) => (
-                  <tr key={row.id} className="border-b last:border-0 group">
-                    <td className="py-2 pr-4 font-mono">{row.id}</td>
-                    <td className="py-2 pr-4">{row.plan}</td>
-                    <td className="py-2 pr-4">{row.date}</td>
-                    <td className="py-2 pr-4">
-                      {row.status === "Paid" ? (
-                        <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold">Paid</span>
-                      ) : (
-                        <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-semibold">Failed</span>
-                      )}
-                    </td>
-                    <td className="py-2 pr-4 relative text-right">
-                      <button
-                        className="p-2 rounded hover:bg-gray-100"
-                        onClick={() => setMenuOpen(menuOpen === row.id ? null : row.id)}
-                      >
-                        <span className="sr-only">Actions</span>
-                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-gray-400">
-                          <circle cx="12" cy="6" r="1.5" />
-                          <circle cx="12" cy="12" r="1.5" />
-                          <circle cx="12" cy="18" r="1.5" />
-                        </svg>
-                      </button>
-                      {menuOpen === row.id && (
-                        <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg z-10">
-                          <button className="flex items-center gap-2 px-4 py-2 w-full text-left text-gray-700 hover:bg-gray-50 text-sm">
-                            <HiOutlineEye className="w-4 h-4" /> View
-                          </button>
-                          <button className="flex items-center gap-2 px-4 py-2 w-full text-left text-gray-700 hover:bg-gray-50 text-sm">
-                            <Download className="w-4 h-4" /> Download
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+            </motion.div>
 
-      {/* Cancel Subscription Confirmation Modal */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-semibold mb-4">Cancel Subscription</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to cancel your subscription? You'll still have access until {subscription.renewalDate}.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowCancelConfirm(false)}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+            {/* Enhanced Stats Cards */}
+            <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+                className={`relative overflow-hidden rounded-2xl p-6 shadow-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600' 
+                    : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200'
+                }`}
               >
-                Keep Subscription
-              </button>
-              <button
-                onClick={confirmCancellation}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 shadow-lg`}>
+                      <Zap className="w-6 h-6 text-white" />
+                    </div>
+                    <div className={`flex items-center gap-1 text-sm font-medium ${
+                      getCreditsPercentage() > 80 ? 'text-red-500' : 
+                      getCreditsPercentage() > 60 ? 'text-yellow-500' : 'text-green-500'
+                    }`}>
+                      <TrendingUp className="w-4 h-4" />
+                      {getCreditsPercentage().toFixed(1)}%
+                    </div>
+                  </div>
+                  <div className="text-3xl font-bold mb-1">{getTotalCreditsRemaining()}</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Credits Remaining</div>
+                  <div className="mt-4">
+                    <div className="flex justify-between text-xs mb-2">
+                      <span>Used: {subscription.creditsUsed}</span>
+                      <span>Total: {subscription.creditsUsed + subscription.creditsRemaining}</span>
+                    </div>
+                    <div className={`w-full bg-gray-200 rounded-full h-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                      <motion.div 
+                        className={`h-2 rounded-full bg-gradient-to-r ${getCreditsStatusColor()}`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${getCreditsPercentage()}%` }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                      ></motion.div>
+                    </div>
+                    {subscription.totalAdditionalCredits > 0 && (
+                      <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        +{subscription.totalAdditionalCredits - subscription.usedAdditionalCredits} additional credits
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+                className={`relative overflow-hidden rounded-2xl p-6 shadow-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600' 
+                    : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200'
+                }`}
               >
-                Cancel Subscription
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 shadow-lg`}>
+                      <DollarSign className="w-6 h-6 text-white" />
+                    </div>
+                    <TrendingDown className={`w-5 h-5 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
+                  </div>
+                  <div className="text-3xl font-bold mb-1">${subscription.currentPlan?.price}</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Monthly Cost</div>
+                  <div className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} flex items-center gap-1`}>
+                    <HiOutlineCalendar className="w-3 h-3" />
+                    Next billing: {subscription.nextBillingDate}
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+                className={`relative overflow-hidden rounded-2xl p-6 shadow-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600' 
+                    : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200'
+                }`}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg`}>
+                      <HiOutlineCreditCard className="w-6 h-6 text-white" />
+                    </div>
+                    <Shield className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div className="text-3xl font-bold mb-1">{subscription.paymentMethod.type}</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Payment Method</div>
+                  <div className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    **** {subscription.paymentMethod.last4}
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+                className={`relative overflow-hidden rounded-2xl p-6 shadow-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-800 to-gray-700 border border-gray-600' 
+                    : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200'
+                }`}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-full -translate-y-16 translate-x-16"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 shadow-lg`}>
+                      <Users className="w-6 h-6 text-white" />
+                    </div>
+                    <Star className="w-5 h-5 text-yellow-500" />
+                  </div>
+                  <div className="text-3xl font-bold mb-1">{subscription.currentPlan?.category}</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Plan Category</div>
+                  <div className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    {subscription.currentPlan?.features.length} features included
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Credits Usage Chart with Enhanced Header */}
+            <motion.div variants={itemVariants} className="mb-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">Credits Usage Analytics</h2>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Track your credit consumption and usage patterns
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {['week', 'month', 'quarter'].map((timeframe) => (
+                    <motion.button
+                      key={timeframe}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedTimeframe(timeframe)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        selectedTimeframe === timeframe
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                          : isDarkMode
+                            ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+              <CreditsUsageChart />
+            </motion.div>
+
+            {/* Enhanced Plan Section */}
+            <motion.div variants={itemVariants} className="mb-8">
+              <div className="font-semibold text-xl mb-4 flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500`}>
+                  <HiOutlineCog className="w-5 h-5 text-white" />
+                </div>
+                Your Current Plan
+              </div>
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+                className={`relative overflow-hidden rounded-2xl border shadow-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600' 
+                    : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+                }`}
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-teal-500/5 to-cyan-500/5 rounded-full -translate-y-32 translate-x-32"></div>
+                <div className="relative z-10 p-8">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+                    <div className="flex-1 flex flex-col gap-4 min-w-[280px]">
+                      <div className="flex items-center gap-3">
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-teal-100 to-cyan-100 text-teal-700 dark:from-teal-900 dark:to-cyan-900 dark:text-teal-300`}>
+                          Renews on {subscription.nextBillingDate}
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 dark:from-blue-900 dark:to-purple-900 dark:text-blue-300`}>
+                          {subscription.currentPlan?.category}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-bold text-2xl mb-2">{subscription.currentPlan?.name}</div>
+                        <div className="text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+                          ${subscription.currentPlan?.price}.00
+                          <span className="text-lg font-medium text-gray-500">/month</span>
+                        </div>
+                        <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-6`}>
+                          {subscription.currentPlan?.description}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {subscription.currentPlan?.features.map((feature, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="flex items-center gap-3"
+                          >
+                            <div className="w-2 h-2 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full"></div>
+                            <span className="text-sm">{feature}</span>
+                          </motion.div>
+                        ))}
+                      </div>
+                      <motion.button 
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200 w-fit flex items-center gap-2 group"
+                        onClick={() => router.push('/billing/plan')}
+                      >
+                        Manage Plan
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </motion.button>
+                    </div>
+                    <div className="flex flex-col min-w-[300px] gap-6">
+                      <div className="flex flex-col items-end">
+                        <motion.button 
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`mb-6 border px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+                            isDarkMode 
+                              ? 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500' 
+                              : 'border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400'
+                          }`}
+                          onClick={() => router.push('/billing/cards')}
+                        >
+                          <HiOutlineCreditCard className="w-4 h-4" />
+                          Change Payment Method
+                        </motion.button>
+                      </div>
+                      <div className="w-full flex flex-col items-start p-6 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Zap className="w-5 h-5 text-blue-600" />
+                          <div className={`font-semibold ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>Additional Credits</div>
+                        </div>
+                        <div className="text-2xl font-bold mb-2">
+                          {subscription.totalAdditionalCredits > 0 
+                            ? subscription.totalAdditionalCredits - subscription.usedAdditionalCredits 
+                            : '0'}
+                        </div>
+                        <div className={`${isDarkMode ? 'text-blue-300' : 'text-blue-600'} mb-4 text-sm`}>
+                          {subscription.totalAdditionalCredits > 0 
+                            ? `${subscription.totalAdditionalCredits - subscription.usedAdditionalCredits} additional credits available`
+                            : 'No additional credits purchased'}
+                        </div>
+                        <motion.button 
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setShowCreditsModal(true)}
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200 w-fit flex items-center gap-2 group"
+                        >
+                          <HiOutlinePlus className="w-4 h-4" />
+                          Add More Credits
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </motion.button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Enhanced Payment Method Section */}
+            <motion.div variants={itemVariants} className="mb-8">
+              <div className="font-semibold text-xl mb-4 flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500`}>
+                  <HiOutlineCreditCard className="w-5 h-5 text-white" />
+                </div>
+                Payment Method
+              </div>
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+                className={`relative overflow-hidden rounded-2xl border shadow-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600' 
+                    : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+                }`}
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-full -translate-y-32 translate-x-32"></div>
+                <div className="relative z-10 p-8 flex items-center min-h-[100px]">
+                  <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} mr-6`}>
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" 
+                      alt="Visa" 
+                      className="w-16 h-10 object-contain" 
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-lg font-semibold mb-1">{subscription.paymentMethod.type} ending in **** {subscription.paymentMethod.last4}</div>
+                    <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-2`}>Expires {subscription.paymentMethod.expiry}</div>
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-green-500" />
+                      <span className="text-xs text-green-600 dark:text-green-400">Secure payment method</span>
+                    </div>
+                  </div>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`border px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+                      isDarkMode 
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500' 
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400'
+                    }`}
+                    onClick={() => router.push('/billing/cards')}
+                  >
+                    Update
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Enhanced Additional Credits Section */}
+            {subscription.totalAdditionalCredits > 0 && (
+              <motion.div variants={itemVariants} className="mb-8">
+                <div className="font-semibold text-xl mb-4 flex items-center gap-3">
+                  <div className={`p-2 rounded-lg bg-gradient-to-br from-orange-500 to-red-500`}>
+                    <Zap className="w-5 h-5 text-white" />
+                  </div>
+                  Additional Credits
+                </div>
+                <motion.div
+                  variants={cardVariants}
+                  className={`relative overflow-hidden rounded-2xl border shadow-lg transition-all duration-300 ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600' 
+                      : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-orange-500/5 to-red-500/5 rounded-full -translate-y-32 translate-x-32"></div>
+                  <div className="relative z-10 p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {getActiveAdditionalCredits().map((credit, index) => (
+                        <motion.div
+                          key={credit.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-xl p-6 border shadow-sm hover:shadow-md transition-all duration-200`}
+                        >
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <div className="font-bold text-xl mb-1">{credit.amount} Credits</div>
+                              <div className="text-sm text-gray-500">Purchased {credit.purchaseDate}</div>
+                            </div>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              credit.status === 'active' 
+                                ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 dark:from-green-900 dark:to-emerald-900 dark:text-green-300'
+                                : 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 dark:from-gray-700 dark:to-slate-700 dark:text-gray-300'
+                            }`}>
+                              {credit.status === 'active' ? 'Active' : 'Used'}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-sm">
+                              <span>Price:</span>
+                              <span className="font-semibold">${credit.price}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span>Expires:</span>
+                              <span>{credit.expiryDate}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span>Status:</span>
+                              <div className="flex items-center gap-1">
+                                {credit.status === 'active' ? (
+                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                ) : (
+                                  <Clock className="w-4 h-4 text-gray-500" />
+                                )}
+                                <span className="capitalize">{credit.status}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    
+                    {getActiveAdditionalCredits().length === 0 && (
+                      <div className="text-center py-12">
+                        <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          <Zap className={`w-8 h-8 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No Active Credits</h3>
+                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                          Purchase additional credits to boost your usage capacity
+                        </p>
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setShowCreditsModal(true)}
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2 mx-auto"
+                        >
+                          <HiOutlinePlus className="w-4 h-4" />
+                          Purchase Credits
+                        </motion.button>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* Enhanced Billing History Section */}
+            <motion.div variants={itemVariants} className="mb-8">
+              <div className="font-semibold text-xl mb-4 flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500`}>
+                  <HiOutlineArrowDownTray className="w-5 h-5 text-white" />
+                </div>
+                Billing History
+              </div>
+              <motion.div
+                variants={cardVariants}
+                className={`relative overflow-hidden rounded-2xl border shadow-lg transition-all duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600' 
+                    : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+                }`}
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 rounded-full -translate-y-32 translate-x-32"></div>
+                <div className="relative z-10 p-8">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className={`text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-semibold border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                          <th className="py-4 pr-6">Invoice ID</th>
+                          <th className="py-4 pr-6">Description</th>
+                          <th className="py-4 pr-6">Type</th>
+                          <th className="py-4 pr-6">Amount</th>
+                          <th className="py-4 pr-6">Date</th>
+                          <th className="py-4 pr-6">Status</th>
+                          <th className="py-4 pr-6"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subscription.billingHistory.map((row, index) => (
+                          <motion.tr 
+                            key={row.id} 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`border-b last:border-0 group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
+                          >
+                            <td className="py-4 pr-6 font-mono text-blue-600 dark:text-blue-400">{row.id}</td>
+                            <td className="py-4 pr-6 font-medium">{row.plan}</td>
+                            <td className="py-4 pr-6">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                row.type === 'plan' 
+                                  ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 dark:from-purple-900 dark:to-pink-900 dark:text-purple-300'
+                                  : 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 dark:from-blue-900 dark:to-cyan-900 dark:text-blue-300'
+                              }`}>
+                                {row.type === 'plan' ? 'Plan' : 'Credits'}
+                              </span>
+                            </td>
+                            <td className="py-4 pr-6 font-bold text-lg">${row.amount}</td>
+                            <td className="py-4 pr-6">{row.date}</td>
+                            <td className="py-4 pr-6">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(row.status)}`}>
+                                {row.status}
+                              </span>
+                            </td>
+                            <td className="py-4 pr-6 relative text-right">
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                                onClick={() => setMenuOpen(menuOpen === row.id ? null : row.id)}
+                              >
+                                <span className="sr-only">Actions</span>
+                                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-gray-400">
+                                  <circle cx="12" cy="6" r="1.5" />
+                                  <circle cx="12" cy="12" r="1.5" />
+                                  <circle cx="12" cy="18" r="1.5" />
+                                </svg>
+                              </motion.button>
+                              <AnimatePresence>
+                                {menuOpen === row.id && (
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    className={`absolute right-0 mt-2 w-36 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-xl shadow-lg z-10 overflow-hidden`}
+                                  >
+                                    <motion.button 
+                                      whileHover={{ backgroundColor: isDarkMode ? '#374151' : '#f3f4f6' }}
+                                      className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-gray-50 text-sm transition-colors"
+                                    >
+                                      <HiOutlineEye className="w-4 h-4" /> View Details
+                                    </motion.button>
+                                    <motion.button 
+                                      whileHover={{ backgroundColor: isDarkMode ? '#374151' : '#f3f4f6' }}
+                                      className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-gray-50 text-sm transition-colors"
+                                    >
+                                      <HiOutlineArrowDownTray className="w-4 h-4" /> Download Invoice
+                                    </motion.button>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+      
+      {/* Credits Purchase Modal */}
+      <CreditsPurchaseModal
+        isOpen={showCreditsModal}
+        onClose={() => setShowCreditsModal(false)}
+      />
     </div>
   );
 } 

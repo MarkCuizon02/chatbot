@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useTheme } from '../../context/ThemeContext';
-import { HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiLink, HiOutlinePlus, HiOutlineEnvelope, HiEllipsisHorizontal, HiOutlinePencil, HiOutlineKey, HiOutlineUserGroup, HiOutlineTrash, HiOutlineAdjustmentsHorizontal } from 'react-icons/hi2';
+import { HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiLink, HiOutlinePlus, HiOutlineEnvelope, HiEllipsisHorizontal, HiOutlinePencil, HiOutlineKey, HiOutlineUserGroup, HiOutlineTrash, HiOutlineAdjustmentsHorizontal, HiOutlineUser, HiOutlineShieldCheck } from 'react-icons/hi2';
 import Sidebar from '../components/Sidebar';
 import { HiX } from 'react-icons/hi';
 
@@ -123,7 +123,7 @@ export default function ManageUsersPage() {
       email: 'martintorff@email.com',
       avatar: '/images/Martin.jpg',
       access: 'Requested',
-      group: 'Not Assigned',
+      group: 'Admin',
       credit: 0,
       agents: [],
     },
@@ -133,7 +133,7 @@ export default function ManageUsersPage() {
       email: 'cartersaris@email.com',
       avatar: '/images/Carter.jpg',
       access: 'Requested',
-      group: 'Not Assigned',
+      group: 'Tech Virtual Assistant',
       credit: 0,
       agents: [],
     },
@@ -143,7 +143,7 @@ export default function ManageUsersPage() {
       email: 'charlie@email.com',
       avatar: '/images/Charlie.jpg',
       access: 'Requested',
-      group: 'Not Assigned',
+      group: 'Chat Support',
       credit: 0,
       agents: [],
       status: 'pending',
@@ -154,7 +154,7 @@ export default function ManageUsersPage() {
       email: 'cheyenne@email.com',
       avatar: '/images/Cheyenne.jpg',
       access: 'Requested',
-      group: 'Not Assigned',
+      group: 'Admin',
       credit: 0,
       agents: [],
       status: 'pending',
@@ -165,7 +165,7 @@ export default function ManageUsersPage() {
       email: 'james@email.com',
       avatar: '/images/James.jpg',
       access: 'Requested',
-      group: 'Not Assigned',
+      group: 'Tech Virtual Assistant',
       credit: 0,
       agents: [],
       status: 'pending',
@@ -180,6 +180,11 @@ export default function ManageUsersPage() {
   const [availableUsers, setAvailableUsers] = useState<UserItem[]>([]);
   const [selectedGroupMembers, setSelectedGroupMembers] = useState<UserItem[]>([]);
   const [showAgentsModal, setShowAgentsModal] = useState(false);
+  const [showInviteUserModal, setShowInviteUserModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('user');
+  const [inviteGroup, setInviteGroup] = useState('');
+  const [isInviting, setIsInviting] = useState(false);
 
   const members = [
     {
@@ -465,13 +470,9 @@ export default function ManageUsersPage() {
                             <HiOutlinePencil size={18} className="mr-2" />
                             Edit
                           </button>
-                          <button onClick={() => console.log('Assign Access')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
-                            <HiOutlineKey size={18} className="mr-2" />
-                            Assign Access
-                          </button>
-                          <button onClick={() => console.log('Assign Group')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
+                          <button onClick={() => console.log('Reassign Group')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
                             <HiOutlineUserGroup size={18} className="mr-2" />
-                            Assign Group
+                            Reassign Group
                           </button>
                           <button onClick={() => handleDeleteUser(user.id)} className={`${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
                             <HiOutlineTrash size={18} className="mr-2" />
@@ -653,13 +654,9 @@ export default function ManageUsersPage() {
                                     <HiOutlinePencil size={18} className="mr-2" />
                                     Edit
                                   </button>
-                                  <button onClick={() => console.log('Assign Access')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
-                                    <HiOutlineKey size={18} className="mr-2" />
-                                    Assign Access
-                                  </button>
-                                  <button onClick={() => console.log('Assign Group')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
+                                  <button onClick={() => console.log('Reassign Group')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
                                     <HiOutlineUserGroup size={18} className="mr-2" />
-                                    Assign Group
+                                    Reassign Group
                                   </button>
                                   <button onClick={() => handleDeleteUser(user.id)} className={`${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
                                     <HiOutlineTrash size={18} className="mr-2" />
@@ -720,7 +717,7 @@ export default function ManageUsersPage() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex font-poppins transition-colors duration-300`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-950' : 'bg-gray-50'} flex font-poppins transition-colors duration-300`}>
       <Sidebar
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
@@ -737,29 +734,38 @@ export default function ManageUsersPage() {
       />
       <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-12' : 'ml-32'} p-4 sm:p-6 lg:p-8 overflow-x-auto`}>
         <div className="w-full max-w-6xl mx-auto">
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-500">Manage Users</h1>
+                <h1 className={`text-3xl sm:text-4xl font-extrabold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Manage Users</h1>
                 <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-base sm:text-lg mt-2`}>Manage your team members and their account permissions.</p>
               </div>
               <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
-                <div className={`relative flex items-center rounded-full pl-4 pr-3 py-2.5 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-sm`}>
+                <div className={`relative flex items-center rounded-full pl-4 pr-3 py-2.5 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} shadow-sm focus-within:ring-2 focus-within:ring-teal-500`}>
                   <HiOutlineMagnifyingGlass size={20} className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                   <input
                     type="text"
                     placeholder="Search user..."
-                    className={`pl-2 bg-transparent focus:outline-none w-48 sm:w-64 ${isDarkMode ? 'text-gray-100 placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'}`}
+                    className={`pl-2 bg-transparent focus:outline-none w-48 sm:w-64 ${isDarkMode ? 'text-gray-100 placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'}`}
                   />
                 </div>
-                <button className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100'} border px-3 py-2.5 rounded-lg flex items-center justify-center shadow-sm`}>
-                  <HiOutlineAdjustmentsHorizontal size={20} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                <button className={`border px-3 py-2.5 rounded-lg flex items-center justify-center shadow-sm transition-colors duration-200
+                  ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700 hover:text-gray-200' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700'}
+                  focus:outline-none focus:ring-2 focus:ring-teal-500`}>
+                  <HiOutlineAdjustmentsHorizontal size={20} />
                 </button>
-                <button className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100'} border px-4 py-2.5 rounded-lg text-sm font-medium flex items-center space-x-2 shadow-sm`} onClick={() => setShowCreateGroupModal(true)}>
-                  <HiOutlinePlus size={20} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                <button className={`border px-4 py-2.5 rounded-lg text-sm font-medium flex items-center space-x-2 shadow-sm transition-colors duration-200
+                  ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-gray-100' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
+                  focus:outline-none focus:ring-2 focus:ring-teal-500`} onClick={() => setShowCreateGroupModal(true)}>
+                  <HiOutlinePlus size={20} />
                   <span>Create Groups</span>
                 </button>
-                <button className={`${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'} px-4 py-2.5 rounded-lg text-sm font-medium flex items-center space-x-2 shadow-md`}>
+                <button 
+                  onClick={() => setShowInviteUserModal(true)}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium flex items-center space-x-2 shadow-md transition-colors duration-200
+                    ${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'}
+                    focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                >
                   <HiOutlineEnvelope size={20} />
                   <span>Invite User</span>
                 </button>
@@ -767,16 +773,16 @@ export default function ManageUsersPage() {
             </div>
 
             <div className="flex items-center justify-between mb-6">
-              <div className={`flex rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} p-1 shadow-sm`}>
+              <div className={`flex rounded-xl ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} p-1 shadow-inner`}>
                 <button
                   onClick={() => setActiveTab('all')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 ${activeTab === 'all' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-white text-gray-900 shadow-inner') : (isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200')}`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 ${activeTab === 'all' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-white text-gray-900 shadow-sm') : (isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200')}`}
                 >
                   All Users ({allUsersCount})
                 </button>
                 <button
                   onClick={() => setActiveTab('groups')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 ${activeTab === 'groups' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-white text-gray-900 shadow-inner') : (isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200')}`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 ${activeTab === 'groups' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-white text-gray-900 shadow-sm') : (isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200')}`}
                 >
                   Groups ({groupsCount})
                 </button>
@@ -785,25 +791,31 @@ export default function ManageUsersPage() {
           </div>
 
           {activeTab === 'groups' ? renderGroupedUsers() : (filteredUsers.length > 0 ? renderUserTable() : (
-            <div className="flex flex-col items-center justify-center py-12 text-center w-full max-w-md mx-auto">
+            <div className={`flex flex-col items-center justify-center py-16 text-center w-full max-w-lg mx-auto rounded-xl shadow-md border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
               <div className="relative mb-6">
-                <HiOutlineUserPlus size={48} className={`${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-                <span className={`absolute bottom-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white ${isDarkMode ? 'bg-teal-600' : 'bg-teal-500'} rounded-full`}>
-                  <HiOutlinePlus size={16} />
+                <HiOutlineUserPlus size={56} className={`${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+                <span className={`absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white ${isDarkMode ? 'bg-teal-600' : 'bg-teal-500'} rounded-full ring-2 ${isDarkMode ? 'ring-gray-800' : 'ring-white'}`}>
+                  <HiOutlinePlus size={18} />
                 </span>
               </div>
-              <h2 className={`${isDarkMode ? 'text-gray-300' : 'text-gray-800'} text-xl font-semibold mb-2`}>Invite your first user</h2>
+              <h2 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Invite your first user</h2>
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center max-w-md`}>Add your team members and external users.</p>
-              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mt-6 w-full">
-                <button className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100'} border px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-sm`}>
-                  <HiLink size={20} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mt-8 w-full px-6">
+                <button className={`border px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-sm w-full sm:flex-1 transition-colors duration-200
+                  ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-gray-100' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
+                  focus:outline-none focus:ring-2 focus:ring-teal-500`}>
+                  <HiLink size={20} />
                   <span>Copy Share Link</span>
                 </button>
-                <button className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100'} border px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-sm`}>
-                  <HiOutlinePlus size={20} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                <button className={`border px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-sm w-full sm:flex-1 transition-colors duration-200
+                  ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-gray-100' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
+                  focus:outline-none focus:ring-2 focus:ring-teal-500`} onClick={() => setShowCreateGroupModal(true)}>
+                  <HiOutlinePlus size={20} />
                   <span>Create Groups</span>
                 </button>
-                <button className={`${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'} px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-md`}>
+                <button className={`px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-md w-full sm:flex-1 transition-colors duration-200
+                  ${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'}
+                  focus:outline-none focus:ring-2 focus:ring-teal-500`}>
                   <HiOutlineEnvelope size={20} />
                   <span>Invite User</span>
                 </button>
@@ -811,8 +823,8 @@ export default function ManageUsersPage() {
             </div>
           ))}
         </div>
-      </div>      
-      
+      </div>
+
       {/* Create Group Modal */}
       <AnimatePresence>
         {showCreateGroupModal && (
@@ -820,16 +832,17 @@ export default function ManageUsersPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
             onClick={() => setShowCreateGroupModal(false)}
-          >            <motion.div
+          >
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl w-full max-w-2xl mx-4 overflow-hidden`}
+              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200'} rounded-3xl shadow-xl w-full max-w-2xl mx-4 overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center p-6 pb-4">
+              <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                   Create Group
                 </h2>
@@ -842,11 +855,11 @@ export default function ManageUsersPage() {
                   </svg>
                 </button>
               </div>
-              
-              <div className="px-6 space-y-6">
+
+              <div className="p-6 space-y-6">
                 {/* Group Name */}
                 <div>
-                  <label className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm block mb-2`}>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
                     Group Name
                   </label>
                   <input
@@ -860,7 +873,7 @@ export default function ManageUsersPage() {
 
                 {/* Credit Limit */}
                 <div>
-                  <label className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm block mb-2`}>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
                     Credit Limit
                   </label>
                   <input
@@ -884,7 +897,7 @@ export default function ManageUsersPage() {
 
                 {/* AI Agents */}
                 <div>
-                  <label className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm block mb-2`}>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
                     AI Agents
                   </label>
                   <div className="flex items-center gap-2">
@@ -898,11 +911,11 @@ export default function ManageUsersPage() {
                               {agent.id}
                             </span>
                             {agent.name}
-                            <button 
+                            <button
                               onClick={() => handleAgentSelect(agent.id)}
-                              className="ml-2 hover:text-opacity-75"
+                              className={`ml-2 text-current hover:opacity-75 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                             >
-                              ×
+                              <HiX className="w-4 h-4" />
                             </button>
                           </span>
                         );
@@ -910,7 +923,9 @@ export default function ManageUsersPage() {
                     </div>
                     <button
                       onClick={() => setShowAgentsModal(true)}
-                      className={`p-2 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
+                      className={`p-2 rounded-full transition-colors
+                        ${isDarkMode ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-200' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'}
+                        focus:outline-none focus:ring-2 focus:ring-teal-500`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -920,18 +935,18 @@ export default function ManageUsersPage() {
                 </div>
 
                 {/* Members */}
-                <div className="pb-4">
-                  <label className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm block mb-3`}>
+                <div className="pb-6">
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-3`}>
                     Members
                   </label>
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={handleAddMembersClick}
-                      className={`w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed transition-colors ${
-                        isDarkMode 
-                          ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300' 
+                      className={`w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed transition-colors duration-200
+                        ${isDarkMode
+                          ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'
                           : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-500'
-                      }`}
+                        }`}
                     >
                       <HiOutlinePlus size={20} />
                     </button>
@@ -947,22 +962,23 @@ export default function ManageUsersPage() {
                         <div className={`absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-800 text-white'}`}>
                           {member.name}
                         </div>
-                        <button 
+                        <button
                           onClick={() => handleMemberRemove(member.id)}
                           className="absolute -top-1 -right-1 w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs hover:bg-gray-500 transition-colors font-bold"
                         >
-                          ×
+                          <HiX className="w-3 h-3" />
                         </button>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6 pt-4 flex justify-end space-x-3">
                 <button
                   onClick={() => setShowCreateGroupModal(false)}
-                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200
+                    ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
                 >
                   Cancel
                 </button>
@@ -975,7 +991,8 @@ export default function ManageUsersPage() {
                     setSelectedAgents([]);
                     setSelectedUsers([]);
                   }}
-                  className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200
+                    ${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'}`}
                 >
                   Save
                 </button>
@@ -988,125 +1005,60 @@ export default function ManageUsersPage() {
       {/* Members Modal */}
       <AnimatePresence>
         {showMembersModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowMembersModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="p-6 pb-4 flex-shrink-0">
-                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                  Members
-                </h2>
-                
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search members..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`w-full px-4 py-3 rounded-2xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                  />
-                </div>
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className={`w-96 max-w-sm mx-4 rounded-2xl p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl`}>
+              <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Members
+              </h2>
+
+              <div className="relative mb-4">
+                <input
+                  type="text"
+                  placeholder="Search members..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors
+                    ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}
+                />
               </div>
-              
-              {/* Scrollable Members List */}
-              <div className="flex-1 overflow-y-auto px-6">
-                <div className="space-y-2 pb-4">
-                  {filteredMembers.map((member) => (
-                    <div 
-                      key={member.id}
-                      className={`flex items-center justify-between p-3 rounded-2xl group cursor-pointer transition-all duration-200 ${
-                        isDarkMode 
-                          ? 'bg-gray-700/50 hover:bg-gray-700' 
-                          : 'bg-gray-100 hover:bg-gray-200'
-                      }`}
-                      onClick={() => handleMemberSelect(member)}
-                    >
-                      <div className="flex items-center flex-1 min-w-0">
-                        <Image
-                          src={member.avatar}
-                          alt={member.name}
-                          width={48}
-                          height={48}
-                          className="w-12 h-12 rounded-full flex-shrink-0"
-                        />
-                        <div className="ml-3 min-w-0 flex-1">
-                          <h3 className={`font-semibold text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {member.name}
-                          </h3>
-                          <p className={`text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {member.email}
-                          </p>
-                        </div>
+
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {filteredMembers.map((member) => (
+                  <div key={member.id} className={`flex items-center justify-between p-3 rounded-xl transition-colors duration-200 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                    <div className="flex items-center space-x-3">
+                      <Image
+                        src={member.avatar}
+                        alt={member.name}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <div>
+                        <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {member.name}
+                        </h3>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {member.email}
+                        </p>
                       </div>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMemberRemove(member.id);
-                        }}
-                        className={`p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 flex-shrink-0 ml-2 ${
-                          isDarkMode 
-                            ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200' 
-                            : 'hover:bg-gray-300 text-gray-500 hover:text-gray-700'
-                        }`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
                     </div>
-                  ))}
-                  
-                  {filteredMembers.length === 0 && (
-                    <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {searchTerm ? 'No members found' : 'No members yet'}
-                    </div>
-                  )}
-                </div>
+                    <button className={`p-1 rounded-full transition-colors duration-200 ${isDarkMode ? 'text-gray-400 hover:bg-gray-600 hover:text-gray-200' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-700'}`}>
+                      <HiX size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
-              
-              {/* Footer */}
-              <div className="p-6 pt-4 flex-shrink-0 border-t border-gray-200/20">
-                <div className="flex justify-between items-center">
-                  <button
-                    onClick={handleAddMembersClick}
-                    className={`flex items-center px-4 py-2 rounded-xl font-medium transition-colors duration-200 ${
-                      isDarkMode 
-                        ? 'bg-teal-600 text-white hover:bg-teal-700' 
-                        : 'bg-teal-500 text-white hover:bg-teal-600'
-                    }`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Add Members
-                  </button>
-                  
-                  <button
-                    onClick={() => setShowMembersModal(false)}
-                    className={`px-6 py-2 rounded-xl font-medium transition-colors duration-200 ${
-                      isDarkMode 
-                        ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+
+              <button
+                onClick={() => setShowMembersModal(false)}
+                className={`mt-6 w-full py-2 px-4 rounded-xl font-medium transition-colors duration-200
+                  ${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'}
+                  focus:outline-none focus:ring-2 focus:ring-teal-500`}
+              >
+                Close
+              </button>
+            </div>
+          </div>
         )}
       </AnimatePresence>
 
@@ -1117,76 +1069,83 @@ export default function ManageUsersPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
             onClick={() => setShowAddMembersModal(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className={`${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  Add Members
+                </h2>
+                <button
+                  onClick={() => setShowAddMembersModal(false)}
+                  className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors absolute top-6 right-6`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
               <div className="p-6">
-                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Members</h2>
                 <div className="relative mb-4">
                   <input
                     type="text"
                     placeholder="Search members..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`w-full px-4 py-3 rounded-2xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    className={`w-full px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors
+                      ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}
                   />
                 </div>
-                {/* Scrollable members list with max height and padding */}
-                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
                   {availableUsers
-                    .filter(user => 
+                    .filter(user =>
                       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                       user.email.toLowerCase().includes(searchTerm.toLowerCase())
                     )
-                    .map((user) => {
-                      const isSelected = selectedGroupMembers.some(member => member.id === user.id);
-                      return (
-                        <div 
-                          key={user.id} 
-                          onClick={() => {
-                            if (!isSelected) handleMemberSelect(user);
-                          }}
-                          className={`flex items-center justify-between p-3 rounded-2xl transition-all duration-200 ${
-                            isSelected
-                              ? (isDarkMode ? 'bg-teal-700/40' : 'bg-teal-100')
-                              : (isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50 cursor-pointer' : 'bg-gray-100 hover:bg-gray-200 cursor-pointer')
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <Image
-                              src={user.avatar}
-                              alt={user.name}
-                              width={40}
-                              height={40}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                            <div>
-                              <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{user.name}</h3>
-                              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
-                            </div>
+                    .map((user) => (
+                      <div
+                        key={user.id}
+                        onClick={() => handleMemberSelect(user)}
+                        className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50' : 'bg-gray-100 hover:bg-gray-200'}`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Image
+                            src={user.avatar}
+                            alt={user.name}
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {user.name}
+                            </h3>
+                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {user.email}
+                            </p>
                           </div>
-                          {isSelected && (
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleMemberRemove(user.id);
-                              }}
-                              className="ml-2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-400 text-white hover:bg-gray-500 transition-colors font-bold"
-                              title="Remove"
-                            >
-                              ×
-                            </button>
-                          )}
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
+                </div>
+
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={() => setShowAddMembersModal(false)}
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200
+                      ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -1201,76 +1160,49 @@ export default function ManageUsersPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
             onClick={() => setShowAgentsModal(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                   AI Agents
                 </h2>
-                
+                <button
+                  onClick={() => setShowAgentsModal(false)}
+                  className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors absolute top-6 right-6`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6">
                 <div className="relative mb-4">
                   <input
                     type="text"
                     placeholder="Search Agents..."
-                    className={`w-full px-4 py-3 rounded-2xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    className={`w-full px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors
+                      ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}
                   />
                 </div>
-                
-                <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {/* All AI Agents Option */}
-                  <div 
-                    onClick={() => {
-                      // Select all agents
-                      const allAgentIds = agents.map(agent => agent.id);
-                      setSelectedAgents(allAgentIds);
-                      setShowAgentsModal(false);
-                    }}
-                    className={`flex items-center p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
-                      isDarkMode 
-                        ? 'hover:bg-gray-700/50' 
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-teal-600' : 'bg-teal-500'}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-white">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                        All AI Agents
-                      </h3>
-                    </div>
-                    {selectedAgents.length === agents.length && (
-                      <div className={`ml-auto ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Individual AI Agents */}
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
                   {agents.map((agent) => (
-                    <div 
+                    <div
                       key={agent.id}
                       onClick={() => {
                         handleAgentSelect(agent.id);
                         setShowAgentsModal(false);
                       }}
-                      className={`flex items-center p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
-                        isDarkMode 
-                          ? 'hover:bg-gray-700/50' 
-                          : 'hover:bg-gray-100'
-                      }`}
+                      className={`flex items-center p-3 rounded-2xl cursor-pointer transition-all duration-200 ${isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100'}`}
                     >
                       <Image
                         src={agent.avatar}
@@ -1297,6 +1229,175 @@ export default function ManageUsersPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Invite User Modal */}
+      <AnimatePresence>
+        {showInviteUserModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => setShowInviteUserModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  Invite User
+                </h2>
+                <button
+                  onClick={() => setShowInviteUserModal(false)}
+                  className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors absolute top-6 right-6`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Email Input */}
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="Enter email address"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors
+                      ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}
+                  />
+                </div>
+
+                {/* Role Selection */}
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
+                    Role
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setInviteRole('user')}
+                      className={`p-3 rounded-lg border transition-colors duration-200 ${
+                        inviteRole === 'user'
+                          ? isDarkMode
+                            ? 'bg-teal-600 border-teal-500 text-white'
+                            : 'bg-teal-500 border-teal-400 text-white'
+                          : isDarkMode
+                          ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center space-x-2">
+                        <HiOutlineUser size={20} />
+                        <span>User</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setInviteRole('admin')}
+                      className={`p-3 rounded-lg border transition-colors duration-200 ${
+                        inviteRole === 'admin'
+                          ? isDarkMode
+                            ? 'bg-teal-600 border-teal-500 text-white'
+                            : 'bg-teal-500 border-teal-400 text-white'
+                          : isDarkMode
+                          ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
+                          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center space-x-2">
+                        <HiOutlineShieldCheck size={20} />
+                        <span>Admin</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Group Selection */}
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
+                    Add to Group (Optional)
+                  </label>
+                  <select
+                    value={inviteGroup}
+                    onChange={(e) => setInviteGroup(e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors
+                      ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                  >
+                    <option value="">Select a group</option>
+                    {Object.keys(groupedUsers).map((group) => (
+                      <option key={group} value={group}>
+                        {group}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-6 pt-4 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowInviteUserModal(false)}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200
+                    ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                  >
+                    Cancel
+                  </button>
+                <button
+                  onClick={async () => {
+                    setIsInviting(true);
+                    try {
+                      // Here you would typically make an API call to invite the user
+                      console.log('Inviting user:', { email: inviteEmail, role: inviteRole, group: inviteGroup });
+                      // Simulate API call
+                      await new Promise(resolve => setTimeout(resolve, 1000));
+                      setShowInviteUserModal(false);
+                      setInviteEmail('');
+                      setInviteRole('user');
+                      setInviteGroup('');
+                    } catch (error) {
+                      console.error('Error inviting user:', error);
+                    } finally {
+                      setIsInviting(false);
+                    }
+                  }}
+                  disabled={isInviting || !inviteEmail}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-2
+                    ${isInviting || !inviteEmail
+                      ? isDarkMode
+                        ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : isDarkMode
+                      ? 'bg-teal-600 hover:bg-teal-700 text-white'
+                      : 'bg-teal-500 hover:bg-teal-600 text-white'
+                    }`}
+                >
+                  {isInviting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Sending Invite...</span>
+                    </>
+                  ) : (
+                    <>
+                      <HiOutlineEnvelope size={20} />
+                      <span>Send Invite</span>
+                    </>
+                  )}
+                </button>
               </div>
             </motion.div>
           </motion.div>
