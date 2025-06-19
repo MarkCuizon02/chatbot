@@ -185,13 +185,21 @@ export default function ManageUsersPage() {
       id: 1,
       name: "Oliver Thompson",
       email: "oliverthompson@email.com",
-      avatar: "/path/to/oliver-avatar.jpg"
+      avatar: "/path/to/oliver-avatar.jpg",
+      access: "Admin" as const,
+      group: "Admin",
+      credit: "Unlimited" as const,
+      agents: []
     },
     {
       id: 2,
       name: "Hanna Kenter",
       email: "hanna@email.com",
-      avatar: "/path/to/hanna-avatar.jpg"
+      avatar: "/path/to/hanna-avatar.jpg",
+      access: "Admin" as const,
+      group: "Admin",
+      credit: "Unlimited" as const,
+      agents: []
     }
   ];
 
@@ -786,15 +794,15 @@ export default function ManageUsersPage() {
               <h2 className={`${isDarkMode ? 'text-gray-300' : 'text-gray-800'} text-xl font-semibold mb-2`}>Invite your first user</h2>
               <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-center max-w-md`}>Add your team members and external users.</p>
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mt-6 w-full">
-                <button className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100'} border px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-sm w-full sm:w-auto`}>
+                <button className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100'} border px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-sm`}>
                   <HiLink size={20} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                   <span>Copy Share Link</span>
                 </button>
-                <button className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100'} border px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-sm w-full sm:w-auto`}>
+                <button className={`${isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-100'} border px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-sm`}>
                   <HiOutlinePlus size={20} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                   <span>Create Groups</span>
                 </button>
-                <button className={`${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'} px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-md w-full sm:w-auto`}>
+                <button className={`${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'} px-6 py-3 rounded-xl text-sm font-medium flex items-center space-x-2 shadow-md`}>
                   <HiOutlineEnvelope size={20} />
                   <span>Invite User</span>
                 </button>
@@ -979,55 +987,125 @@ export default function ManageUsersPage() {
       {/* Members Modal */}
       <AnimatePresence>
         {showMembersModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`w-96 max-w-sm mx-4 rounded-2xl p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl`}>
-              <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Members
-              </h2>
-              
-              <div className="relative mb-4">
-                <input
-                  type="text"
-                  placeholder="Search members..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowMembersModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-6 pb-4 flex-shrink-0">
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  Members
+                </h2>
+                
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search members..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-2xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                  />
+                </div>
               </div>
               
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {filteredMembers.map((member) => (
-                  <div key={member.id} className={`flex items-center justify-between p-3 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={member.avatar}
-                        alt={member.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {member.name}
-                        </h3>
-                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {member.email}
-                        </p>
+              {/* Scrollable Members List */}
+              <div className="flex-1 overflow-y-auto px-6">
+                <div className="space-y-2 pb-4">
+                  {filteredMembers.map((member) => (
+                    <div 
+                      key={member.id}
+                      className={`flex items-center justify-between p-3 rounded-2xl group cursor-pointer transition-all duration-200 ${
+                        isDarkMode 
+                          ? 'bg-gray-700/50 hover:bg-gray-700' 
+                          : 'bg-gray-100 hover:bg-gray-200'
+                      }`}
+                      onClick={() => handleMemberSelect(member)}
+                    >
+                      <div className="flex items-center flex-1 min-w-0">
+                        <Image
+                          src={member.avatar}
+                          alt={member.name}
+                          width={48}
+                          height={48}
+                          className="w-12 h-12 rounded-full flex-shrink-0"
+                        />
+                        <div className="ml-3 min-w-0 flex-1">
+                          <h3 className={`font-semibold text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                            {member.name}
+                          </h3>
+                          <p className={`text-sm truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {member.email}
+                          </p>
+                        </div>
                       </div>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMemberRemove(member.id);
+                        }}
+                        className={`p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 flex-shrink-0 ml-2 ${
+                          isDarkMode 
+                            ? 'hover:bg-gray-600 text-gray-400 hover:text-gray-200' 
+                            : 'hover:bg-gray-300 text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
-                    <button className={`p-1 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`}>
-                      <HiX size={16} />
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                  
+                  {filteredMembers.length === 0 && (
+                    <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {searchTerm ? 'No members found' : 'No members yet'}
+                    </div>
+                  )}
+                </div>
               </div>
               
-              <button
-                onClick={() => setShowMembersModal(false)}
-                className="mt-4 w-full py-2 px-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
+              {/* Footer */}
+              <div className="p-6 pt-4 flex-shrink-0 border-t border-gray-200/20">
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={handleAddMembersClick}
+                    className={`flex items-center px-4 py-2 rounded-xl font-medium transition-colors duration-200 ${
+                      isDarkMode 
+                        ? 'bg-teal-600 text-white hover:bg-teal-700' 
+                        : 'bg-teal-500 text-white hover:bg-teal-600'
+                    }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 mr-2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Add Members
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowMembersModal(false)}
+                    className={`px-6 py-2 rounded-xl font-medium transition-colors duration-200 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -1045,14 +1123,11 @@ export default function ManageUsersPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              className={`${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6">
-                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                  Members
-                </h2>
-                
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Members</h2>
                 <div className="relative mb-4">
                   <input
                     type="text"
@@ -1062,42 +1137,55 @@ export default function ManageUsersPage() {
                     className={`w-full px-4 py-3 rounded-2xl border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
                   />
                 </div>
-                
-                <div className="space-y-2">
+                {/* Scrollable members list with max height and padding */}
+                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
                   {availableUsers
                     .filter(user => 
                       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                       user.email.toLowerCase().includes(searchTerm.toLowerCase())
                     )
-                    .map((user) => (
-                      <div 
-                        key={user.id} 
-                        onClick={() => handleMemberSelect(user)}
-                        className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
-                          isDarkMode 
-                            ? 'bg-gray-700/50 hover:bg-gray-600/50' 
-                            : 'bg-gray-100 hover:bg-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Image
-                            src={user.avatar}
-                            alt={user.name}
-                            width={40}
-                            height={40}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          <div>
-                            <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {user.name}
-                            </h3>
-                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {user.email}
-                            </p>
+                    .map((user) => {
+                      const isSelected = selectedGroupMembers.some(member => member.id === user.id);
+                      return (
+                        <div 
+                          key={user.id} 
+                          onClick={() => {
+                            if (!isSelected) handleMemberSelect(user);
+                          }}
+                          className={`flex items-center justify-between p-3 rounded-2xl transition-all duration-200 ${
+                            isSelected
+                              ? (isDarkMode ? 'bg-teal-700/40' : 'bg-teal-100')
+                              : (isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50 cursor-pointer' : 'bg-gray-100 hover:bg-gray-200 cursor-pointer')
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Image
+                              src={user.avatar}
+                              alt={user.name}
+                              width={40}
+                              height={40}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                            <div>
+                              <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{user.name}</h3>
+                              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
+                            </div>
                           </div>
+                          {isSelected && (
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleMemberRemove(user.id);
+                              }}
+                              className="ml-2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-400 text-white hover:bg-gray-500 transition-colors font-bold"
+                              title="Remove"
+                            >
+                              ×
+                            </button>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </div>
             </motion.div>
@@ -1136,6 +1224,40 @@ export default function ManageUsersPage() {
                 </div>
                 
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {/* All AI Agents Option */}
+                  <div 
+                    onClick={() => {
+                      // Select all agents
+                      const allAgentIds = agents.map(agent => agent.id);
+                      setSelectedAgents(allAgentIds);
+                      setShowAgentsModal(false);
+                    }}
+                    className={`flex items-center p-3 rounded-2xl cursor-pointer transition-all duration-200 ${
+                      isDarkMode 
+                        ? 'hover:bg-gray-700/50' 
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-teal-600' : 'bg-teal-500'}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-white">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        All AI Agents
+                      </h3>
+                    </div>
+                    {selectedAgents.length === agents.length && (
+                      <div className={`ml-auto ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Individual AI Agents */}
                   {agents.map((agent) => (
                     <div 
                       key={agent.id}
