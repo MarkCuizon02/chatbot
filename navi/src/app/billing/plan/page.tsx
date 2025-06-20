@@ -148,6 +148,7 @@ export default function PlanSelectionPage() {
 
 	// Cancel subscription modal state
 	const [showCancelModal, setShowCancelModal] = useState(false);
+	const [showReactivateModal, setShowReactivateModal] = useState(false);
 	const [cancelReason, setCancelReason] = useState<string | null>(null);
 	const [cancelFeedback, setCancelFeedback] = useState("");
 
@@ -538,7 +539,7 @@ export default function PlanSelectionPage() {
 							<motion.button
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.98 }}
-								className={`px-6 py-3 rounded-lg font-medium text-base transition-all duration-200 flex items-center gap-2 ${
+								className={`px-6 py-3 rounded-lg font-medium text-base transition-all duration-200 flex items-center gap-2 relative ${
 									tab === "Personal"
 										? isDarkMode 
 											? "bg-pink-600 text-white shadow-lg shadow-pink-600/25" 
@@ -628,21 +629,8 @@ export default function PlanSelectionPage() {
 										whileTap={{ scale: 0.98 }}
 										className="mt-4 w-full py-3 rounded-lg font-semibold text-base transition-all bg-gray-500 text-white hover:bg-gray-600"
 										onClick={() => {
-											// Open a modal to select which plan to reactivate to
-											setSelectedPlan({
-												name: "Family Plus",
-												description: "A solid starting point for businesses with scalable credits.",
-												price: 99,
-												color: "text-blue-500",
-												button: "Reactivate",
-												buttonColor: "bg-blue-500 text-white hover:bg-blue-600",
-												border: "border-blue-400",
-												isCurrent: false,
-												features: ["1500 credits per month", "Users: 6"],
-												category: 'Personal'
-											});
-											setActionType('upgrade');
-											setShowConfirmModal(true);
+											// Show a simple reactivation modal with plan options
+											setShowReactivateModal(true);
 										}}
 									>
 										Reactivate Plan
@@ -938,6 +926,93 @@ export default function PlanSelectionPage() {
 				)}
 			</AnimatePresence>
 
+			{/* Reactivate Subscription Modal */}
+			<AnimatePresence>
+				{showReactivateModal && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center z-50"
+					>
+						<motion.div
+							initial={{ scale: 0.95, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0.95, opacity: 0 }}
+							className={`w-full max-w-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-xl overflow-hidden`}
+						>
+							<div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+								<h2 className="text-xl font-semibold">Reactivate Subscription</h2>
+								<motion.button
+									whileHover={{ scale: 1.1 }}
+									whileTap={{ scale: 0.9 }}
+									onClick={() => setShowReactivateModal(false)}
+									className={`p-1 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
+								>
+									<HiXMark className="w-5 h-5" />
+								</motion.button>
+							</div>
+
+							<div className="p-6">
+								<p className={`mb-6 text-base ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+									Choose a plan to reactivate your subscription:
+								</p>
+
+								<div className="space-y-3">
+									{plans.map((plan) => (
+										<motion.div
+											key={plan.name}
+											whileHover={{ scale: 1.02 }}
+											whileTap={{ scale: 0.98 }}
+											onClick={() => {
+												setSelectedPlan({
+													...plan,
+													button: 'Reactivate'
+												});
+												setShowReactivateModal(false);
+												setShowConfirmModal(true);
+											}}
+											className={`p-4 rounded-lg border cursor-pointer transition-all ${
+												isDarkMode 
+													? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
+													: 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+											}`}
+										>
+											<div className="flex justify-between items-center">
+												<div>
+													<h3 className="font-semibold">{plan.name}</h3>
+													<p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+														${plan.price}/month
+													</p>
+												</div>
+												<div className={`text-lg font-bold ${plan.color}`}>
+													${plan.price}
+												</div>
+											</div>
+										</motion.div>
+									))}
+								</div>
+
+								<div className="flex justify-end mt-6">
+									<motion.button
+										whileHover={{ scale: 1.02 }}
+										whileTap={{ scale: 0.98 }}
+										onClick={() => setShowReactivateModal(false)}
+										className={`px-6 py-2 rounded-lg font-medium ${
+											isDarkMode
+												? 'bg-gray-700 text-white hover:bg-gray-600'
+												: 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+										}`}
+									>
+										Cancel
+									</motion.button>
+								</div>
+							</div>
+						</motion.div>
+					</motion.div>
+				)}
+			</AnimatePresence>
+
 			{/* Confirm Plan Change Modal */}
 			<AnimatePresence>
 				{showConfirmModal && selectedPlan && (
@@ -955,7 +1030,8 @@ export default function PlanSelectionPage() {
 						>
 							<div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
 								<h2 className="text-2xl font-bold">
-									{actionType === 'downgrade' ? 'Confirm Downgrade Subscription' : 'Confirm Upgrade Subscription'}
+									{selectedPlan.button === 'Reactivate' ? 'Reactivate Subscription' : 
+									 actionType === 'downgrade' ? 'Confirm Downgrade Subscription' : 'Confirm Upgrade Subscription'}
 								</h2>
 								<motion.button
 									whileHover={{ scale: 1.1 }}
@@ -968,7 +1044,10 @@ export default function PlanSelectionPage() {
 							</div>
 							<div className="p-6">
 								<p className={`mb-6 text-base ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}> 
-									You're about to {actionType === 'downgrade' ? 'downgrade' : 'upgrade'} to the <span className="font-semibold" style={{ color: actionType === 'upgrade' ? '#F59E42' : '#F59E42' }}>{selectedPlan.name} Plan</span>
+									{selectedPlan.button === 'Reactivate' ? 
+										`You're about to reactivate your subscription to the ${selectedPlan.name} Plan` :
+										`You're about to ${actionType === 'downgrade' ? 'downgrade' : 'upgrade'} to the ${selectedPlan.name} Plan`
+									}
 								</p>
 								<motion.div 
 									initial={{ opacity: 0, y: 10 }}
@@ -981,7 +1060,12 @@ export default function PlanSelectionPage() {
 										<div className="flex justify-between"><span className="font-medium">Effective:</span> <span>Immediately</span></div>
 									</div>
 								</motion.div>
-								<p className={`mb-8 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Your new subscription will be activated immediately and you'll be charged a prorate amount for the current billing period.</p>
+								<p className={`mb-8 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+									{selectedPlan.button === 'Reactivate' ? 
+										'Your subscription will be reactivated immediately and you\'ll be charged for the new billing period.' :
+										'Your new subscription will be activated immediately and you\'ll be charged a prorate amount for the current billing period.'
+									}
+								</p>
 								<div className="flex justify-end gap-3">
 									<motion.button
 										whileHover={{ scale: 1.02 }}
@@ -994,7 +1078,10 @@ export default function PlanSelectionPage() {
 									<motion.button
 										whileHover={{ scale: 1.02 }}
 										whileTap={{ scale: 0.98 }}
-										onClick={handlePlanChange}
+										onClick={selectedPlan.button === 'Reactivate' ? 
+											() => handleReactivateSubscription(selectedPlan.name) : 
+											handlePlanChange
+										}
 										disabled={isProcessing}
 										className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-teal-600 text-white hover:bg-teal-700' : 'bg-teal-500 text-white hover:bg-teal-600'} ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
 									>
@@ -1005,6 +1092,7 @@ export default function PlanSelectionPage() {
 												className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"
 											/>
 										) : (
+											selectedPlan.button === 'Reactivate' ? 'Reactivate Subscription' :
 											`${actionType === 'downgrade' ? 'Confirm Downgrade' : 'Confirm Upgrade'}`
 										)}
 									</motion.button>
