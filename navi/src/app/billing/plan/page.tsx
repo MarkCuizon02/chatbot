@@ -6,7 +6,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useSubscription, Plan } from '@/context/SubscriptionContext';
 import Sidebar from '@/app/components/Sidebar';
 import { motion, AnimatePresence } from "framer-motion";
-import { HiXMark, HiOutlineCheck, HiOutlineStar, HiOutlineUsers } from "react-icons/hi2";
+import { HiXMark, HiOutlineCheck, HiOutlineStar, HiOutlineUsers, HiOutlineUser, HiOutlineBuildingOffice2 } from "react-icons/hi2";
 import { TrendingUp, TrendingDown, Crown, Sparkles, Zap } from "lucide-react";
 import SuccessNotification from '@/app/components/SuccessNotification';
 
@@ -214,39 +214,72 @@ export default function PlanSelectionPage() {
 		
 		setIsProcessing(true);
 		
-		// Simulate API call
-		await new Promise(resolve => setTimeout(resolve, 2000));
-		
-		// Update the plan in context
-		updatePlan(selectedPlan);
-		
-		// Add billing record
-		const newBillingRecord = {
-			id: `#${Math.floor(Math.random() * 90000) + 10000}`,
-			plan: selectedPlan.name,
-			date: new Date().toLocaleDateString('en-US', {
-				year: 'numeric',
-				month: 'long',
-				day: 'numeric'
-			}),
-			status: 'Paid' as const,
-			amount: selectedPlan.price,
-			type: 'plan' as const
-		};
-		
-		addBillingRecord(newBillingRecord);
-		
-		setIsProcessing(false);
-		setShowConfirmModal(false);
-		
-		// Show success message
-		setSuccessMessage(`Successfully ${actionType === 'upgrade' ? 'upgraded' : 'downgraded'} to ${selectedPlan.name} plan!`);
-		setShowSuccessNotification(true);
-		
-		// Redirect after a short delay
-		setTimeout(() => {
-			router.push('/billing');
-		}, 1000);
+		try {
+			console.log('🔍 Client: Sending plan change request:', {
+				planName: selectedPlan.name,
+				userId: 1,
+				actionType: actionType
+			});
+
+			// Call the API to update the subscription in the database
+			const response = await fetch('/api/subscription/update-plan', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					planName: selectedPlan.name,
+					userId: 1, // TODO: Get actual user ID from auth context
+					actionType: actionType
+				}),
+			});
+
+			console.log('📦 Client: API response status:', response.status);
+			console.log('📦 Client: API response headers:', Object.fromEntries(response.headers.entries()));
+
+			const result = await response.json();
+			console.log('📦 Client: API response body:', result);
+
+			if (!response.ok) {
+				throw new Error(`API Error: ${result.error || 'Unknown error'} - ${result.details || ''}`);
+			}
+			
+			// Update the plan in context
+			updatePlan(selectedPlan);
+			
+			// Add billing record
+			const newBillingRecord = {
+				id: `#${Math.floor(Math.random() * 90000) + 10000}`,
+				plan: selectedPlan.name,
+				date: new Date().toLocaleDateString('en-US', {
+					year: 'numeric',
+					month: 'long',
+					day: 'numeric'
+				}),
+				status: 'Paid' as const,
+				amount: selectedPlan.price,
+				type: 'plan' as const
+			};
+			
+			addBillingRecord(newBillingRecord);
+			
+			// Show success message
+			setSuccessMessage(result.message || `Successfully ${actionType === 'upgrade' ? 'upgraded' : 'downgraded'} to ${selectedPlan.name} plan!`);
+			setShowSuccessNotification(true);
+			
+			// Redirect after a short delay - stay on the plan page
+			setTimeout(() => {
+				router.push('/billing/plan');
+			}, 1000);
+			
+		} catch (error) {
+			console.error('❌ Client: Error updating plan:', error);
+			setSuccessMessage(`Failed to update plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			setShowSuccessNotification(true);
+		} finally {
+			setIsProcessing(false);
+			setShowConfirmModal(false);
+		}
 	};
 
 	// Helper to determine plan order
@@ -363,34 +396,52 @@ export default function PlanSelectionPage() {
 							<motion.button
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.98 }}
-								className={`px-6 py-3 rounded-lg font-medium text-base transition-all ${
+								className={`px-6 py-3 rounded-lg font-medium text-base transition-all duration-200 flex items-center gap-2 ${
 									tab === "Personal"
 										? isDarkMode 
-											? "bg-gray-700 text-gray-100" 
-											: "bg-gray-200 text-gray-900"
+											? "bg-pink-600 text-white shadow-lg shadow-pink-600/25" 
+											: "bg-pink-500 text-white shadow-lg shadow-pink-500/25"
 										: isDarkMode
-											? "bg-gray-800 text-gray-400 border border-gray-700"
-											: "bg-white text-gray-500 border border-gray-200"
+											? "bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 hover:text-gray-300"
+											: "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700"
 								}`}
 								onClick={() => setTab("Personal")}
 							>
+								<HiOutlineUser className={`w-5 h-5 ${tab === "Personal" ? "text-white" : isDarkMode ? "text-gray-400" : "text-gray-500"}`} />
 								Personal
+								{tab === "Personal" && (
+									<motion.div
+										layoutId="activeTab"
+										className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-lg ${
+											isDarkMode ? "bg-pink-400" : "bg-pink-300"
+										}`}
+									/>
+								)}
 							</motion.button>
 							<motion.button
 								whileHover={{ scale: 1.02 }}
 								whileTap={{ scale: 0.98 }}
-								className={`px-6 py-3 rounded-lg font-medium text-base transition-all ${
+								className={`px-6 py-3 rounded-lg font-medium text-base transition-all duration-200 flex items-center gap-2 relative ${
 									tab === "Business"
 										? isDarkMode 
-											? "bg-gray-700 text-gray-100" 
-											: "bg-gray-200 text-gray-900"
+											? "bg-blue-600 text-white shadow-lg shadow-blue-600/25" 
+											: "bg-blue-500 text-white shadow-lg shadow-blue-500/25"
 										: isDarkMode
-											? "bg-gray-800 text-gray-400 border border-gray-700"
-											: "bg-white text-gray-500 border border-gray-200"
+											? "bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 hover:text-gray-300"
+											: "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50 hover:text-gray-700"
 								}`}
 								onClick={() => setTab("Business")}
 							>
+								<HiOutlineBuildingOffice2 className={`w-5 h-5 ${tab === "Business" ? "text-white" : isDarkMode ? "text-gray-400" : "text-gray-500"}`} />
 								Business
+								{tab === "Business" && (
+									<motion.div
+										layoutId="activeTab"
+										className={`absolute bottom-0 left-0 right-0 h-1 rounded-b-lg ${
+											isDarkMode ? "bg-blue-400" : "bg-blue-300"
+										}`}
+									/>
+								)}
 							</motion.button>
 						</motion.div>
 
@@ -429,7 +480,11 @@ export default function PlanSelectionPage() {
 										
 										<div className={`text-xl font-bold mb-2 ${plan.color} flex items-center gap-2`}>
 											{plan.name}
-											{isCurrent && <HiOutlineCheck className="w-5 h-5 text-green-500" />}
+											{isCurrent && (
+												<div key="current-check">
+													<HiOutlineCheck className="w-5 h-5 text-green-500" />
+												</div>
+											)}
 										</div>
 										
 										<div className={`text-sm mb-4 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>

@@ -1,0 +1,364 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  firstname String?
+  lastname  String?
+  customerId String?
+  verified    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  accounts            UserAccount[]
+  admins              Admin[]       @relation("UserAdmin")
+  oauths              OAuth[]       @relation("UserOAuth")
+  onboardings         Onboarding[]  @relation("UserOnboarding")
+  verificationTokens  VerificationToken[]
+  knowledgeBaseResponses KnowledgeBaseResponse[]
+  subscriptions         Subscription[]
+  chattieCoachsCreated  ChattieCoach[] @relation("UserChattieCoachCreator")
+}
+
+model Account {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  type        String   @default("personal")
+  credits     Int      @default(0)
+  setup       Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users           UserAccount[]
+  chatThreads     ChatThread[]
+  chatties        ChattieSettings[]
+  knowledgeBaseResponses KnowledgeBaseResponse[]
+  chattieCoachs   ChattieCoach[] // Add this line for relation
+}
+
+model UserAccount {
+  id        Int          @id @default(autoincrement())
+  userId    Int
+  accountId Int
+  role      String
+
+  user    User    @relation(fields: [userId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+
+  UserAssets UserAssets[]
+
+  @@unique([userId, accountId])
+}
+
+model UserAssets {
+  id           Int         @id @default(autoincrement())
+  userAccountId Int
+  key          String
+  type         String
+  source       String
+  status       String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  userAccount  UserAccount @relation(fields: [userAccountId], references: [id])
+}
+
+model VerificationToken {
+  id          Int      @id @default(autoincrement())
+  userId      Int      // Changed from String to Int to match User.id
+  token       String   @unique // Store a hashed version of the token
+  type        String   // e.g., 'email', 'password_reset'
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  // Foreign key relation
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId]) // Index for efficient lookups
+}
+
+model Contact {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Resume {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  fileName  String
+  fileUrl   String
+  createdAt DateTime @default(now())
+}
+
+model Email {
+  id        Int      @id @default(autoincrement())
+  to        String
+  subject   String
+  body      String
+  status    String   @default("queued") // e.g., 'queued', 'sent', 'failed'
+  createdAt DateTime @default(now())
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+
+  user User @relation("UserAdmin", fields: [userId], references: [id])
+}
+
+model OAuth {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  provider   String
+  providerId String   @unique
+  email      String
+  createdAt  DateTime @default(now())
+
+  user User @relation("UserOAuth", fields: [userId], references: [id])
+}
+
+model Onboarding {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  step      String
+  completed Boolean
+  createdAt DateTime @default(now())
+
+  user User @relation("UserOnboarding", fields: [userId], references: [id])
+}
+
+model ChatThread {
+  id           Int      @id @default(autoincrement())
+  accountId    Int
+  userId       Int      // Added userId to associate thread with specific user
+  coachId      Int   @default(0)     // Added userId to associate thread with specific user
+  title        String?
+  companyShare Boolean  @default(false) // Added for company-wide sharing
+  publicShare  Boolean  @default(false) // Added for public exposure
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  account      Account  @relation(fields: [accountId], references: [id])
+  chats        Chat[]
+  summary      ChatSummary?
+
+  @@index([accountId])
+  @@index([userId])  // Added index for faster user-specific queries
+}
+
+model Chat {
+  id           Int      @id @default(autoincrement())
+  chatThreadId Int
+  role         String   // 'user' or 'assistant'
+  content      String
+  createdAt    DateTime @default(now())
+
+  chatThread   ChatThread @relation(fields: [chatThreadId], references: [id])
+
+  @@index([chatThreadId])
+}
+
+model ChatSummary {
+  id           Int      @id @default(autoincrement())
+  chatThreadId Int      @unique
+  summary      String
+  updatedAt    DateTime @updatedAt
+
+  chatThread   ChatThread @relation(fields: [chatThreadId], references: [id])
+}
+
+model ChattieSettings {
+  id                  Int      @id @default(autoincrement())
+  accountId           Int
+  position            String
+  widgetTitle         String
+  welcomeMessage      String
+  callToActionMessage String
+  appearOn            String
+  fallbackMessage     String
+  avatar              String
+  theme               String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  account             Account  @relation(fields: [accountId], references: [id])
+}
+
+model KnowledgeBaseQuestion {
+  id        Int       @id @default(autoincrement())
+  text      String
+  type      String
+  options   Json?
+  order     Int
+  purpose   String
+  field     String?
+  createdAt DateTime  @default(now())
+  
+  // Relationships
+  responses KnowledgeBaseResponse[]
+}
+
+model KnowledgeBaseResponse {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  accountId  Int
+  questionId Int
+  response   String
+  createdAt  DateTime @default(now())
+  
+  // Relationships
+  user     User                 @relation(fields: [userId], references: [id])
+  account  Account              @relation(fields: [accountId], references: [id])
+  question KnowledgeBaseQuestion @relation(fields: [questionId], references: [id])
+  
+  @@index([userId])
+  @@index([accountId])
+  @@index([questionId])
+}
+
+model PricingPlan {
+  id          String  @id @default(cuid())
+  title       String
+  price       Int     // Price in cents (e.g., 1900 for $19.00)
+  description String
+  buttonText  String  @default("Subscribe")
+  href        String  @default("#")
+  billing     String  @default("/month")
+  popular     Boolean @default(false)
+  isActive    Boolean @default(true)
+  
+  // Stripe integration fields
+  stripeProductId String? @unique
+  stripePriceId   String? @unique
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  features      PlanFeature[]
+}
+
+model PlanFeature {
+  id            String      @id @default(cuid())
+  name          String
+  description   String?
+  included      Boolean     @default(true)
+  pricingPlanId String
+  pricingPlan   PricingPlan @relation(fields: [pricingPlanId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id     Int            @id @default(autoincrement())
+  status SubscriptionStatus @default(ACTIVE)
+  
+  // User relation
+  userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Stripe fields
+  stripeSubscriptionId String? @unique
+  stripeCustomerId     String?
+  stripePriceId        String?
+  
+  // Billing details
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  canceledAt         DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChattieCoach {
+  id          Int    @id @default(autoincrement())
+  name        String    
+  slug        String    @unique
+  category    String
+  aiModel     String    @default("gpt-4.0")
+  basePrompt  String    @db.Text
+  expert      String?    @db.Text
+  image       String?
+  visible     Boolean   @default(false)
+  favorite    Boolean   @default(false)
+  shared      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  accountId   Int
+  account     Account   @relation(fields: [accountId], references: [id])
+  createdBy   Int
+  creator     User      @relation("UserChattieCoachCreator", fields: [createdBy], references: [id])
+}
+
+model CoachTemplate {
+  id          Int    @id @default(autoincrement())
+  name        String    
+  category    String
+  aiModel     String    @default("gpt-4.0")
+  basePrompt  String    @db.Text
+  expert      String?    @db.Text
+  image       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ChatExpert {
+  id          Int    @id @default(autoincrement())
+  name        String    
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  UNPAID
+  TRIALING
+}
+
+model AIEngine {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  type        String   // e.g., "Chat", "Image Generation", "Video Generation", "Audio Generation"
+  snapshot    String   // e.g., "o4-mini-2025-04-16" or specific version tags
+  description String?
+  cost        Float    @default(0.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Agent {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  slug         String   @unique
+  description  String
+  displayOrder Int      @default(0) // New field for manual sorting
+  status       String   @default("coming_soon")
+  releaseDate  DateTime
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
