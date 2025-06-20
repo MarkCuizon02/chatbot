@@ -204,8 +204,141 @@ export default function PlanSelectionPage() {
 	// Function to handle subscription cancellation
 	const handleCancelSubscription = async () => {
 		setIsLoading(true);
-		setShowCancelModal(false);
-		// You might want to show a confirmation message or redirect the user
+		
+		try {
+			console.log('🔍 Client: Sending cancel subscription request:', {
+				userId: 1,
+				reason: cancelReason,
+				feedback: cancelFeedback
+			});
+
+			// Call the API to cancel the subscription
+			const response = await fetch('/api/subscription/cancel', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					userId: 1, // TODO: Get actual user ID from auth context
+					reason: cancelReason,
+					feedback: cancelFeedback
+				}),
+			});
+
+			console.log('📦 Client: Cancel API response status:', response.status);
+
+			const result = await response.json();
+			console.log('📦 Client: Cancel API response body:', result);
+
+			if (!response.ok) {
+				// Handle specific error cases
+				if (result.error === 'Subscription is already canceled') {
+					setSuccessMessage('Your subscription is already canceled. You can reactivate anytime!');
+					setShowSuccessNotification(true);
+					setShowCancelModal(false);
+					setCancelReason(null);
+					setCancelFeedback('');
+					return;
+				}
+				throw new Error(`API Error: ${result.error || 'Unknown error'} - ${result.details || ''}`);
+			}
+
+			// Update the subscription context to show no current plan
+			const canceledPlan = {
+				name: "No Active Plan",
+				description: "Your subscription has been canceled. You can reactivate anytime.",
+				price: 0,
+				color: "text-gray-500",
+				button: "Reactivate",
+				buttonColor: "bg-gray-500 text-white hover:bg-gray-600",
+				border: "border-gray-200",
+				isCurrent: true,
+				features: ["Access until end of billing period", "Can reactivate anytime"],
+				category: 'Personal' as const
+			};
+
+			// Update the plan in context to show canceled state
+			updatePlan(canceledPlan);
+
+			// Show success message
+			setSuccessMessage(result.message || 'Subscription canceled successfully!');
+			setShowSuccessNotification(true);
+
+			// Close the modal
+			setShowCancelModal(false);
+			setCancelReason(null);
+			setCancelFeedback('');
+
+			// Redirect back to plan page after a short delay
+			setTimeout(() => {
+				router.push('/billing/plan');
+			}, 2000);
+
+		} catch (error) {
+			console.error('❌ Client: Error canceling subscription:', error);
+			setSuccessMessage(`Failed to cancel subscription: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			setShowSuccessNotification(true);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// Function to handle subscription reactivation
+	const handleReactivateSubscription = async (planName: string) => {
+		setIsProcessing(true);
+		
+		try {
+			console.log('🔍 Client: Sending reactivate subscription request:', {
+				userId: 1,
+				planName: planName
+			});
+
+			// Call the API to reactivate the subscription
+			const response = await fetch('/api/subscription/reactivate', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					userId: 1, // TODO: Get actual user ID from auth context
+					planName: planName
+				}),
+			});
+
+			console.log('📦 Client: Reactivate API response status:', response.status);
+
+			const result = await response.json();
+			console.log('📦 Client: Reactivate API response body:', result);
+
+			if (!response.ok) {
+				throw new Error(`API Error: ${result.error || 'Unknown error'} - ${result.details || ''}`);
+			}
+
+			// Find the plan object to update the context
+			const allPlans = [...plans, ...businessPlans];
+			const reactivatedPlan = allPlans.find(plan => plan.name === planName);
+
+			if (reactivatedPlan) {
+				// Update the plan in context
+				updatePlan(reactivatedPlan);
+			}
+
+			// Show success message
+			setSuccessMessage(result.message || 'Subscription reactivated successfully!');
+			setShowSuccessNotification(true);
+
+			// Redirect back to plan page after a short delay
+			setTimeout(() => {
+				router.push('/billing/plan');
+			}, 2000);
+
+		} catch (error) {
+			console.error('❌ Client: Error reactivating subscription:', error);
+			setSuccessMessage(`Failed to reactivate subscription: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			setShowSuccessNotification(true);
+		} finally {
+			setIsProcessing(false);
+		}
 	};
 
 	// Function to handle plan change
@@ -302,6 +435,15 @@ export default function PlanSelectionPage() {
 
 	const getCurrentPlans = () => {
 		const allPlans = [...plans, ...businessPlans];
+		
+		// If current plan is "No Active Plan", show it as current
+		if (currentPlan?.name === "No Active Plan") {
+			return allPlans.map(plan => ({
+				...plan,
+				isCurrent: false
+			}));
+		}
+		
 		return allPlans.map(plan => ({
 			...plan,
 			isCurrent: plan.name === currentPlan?.name
@@ -449,6 +591,84 @@ export default function PlanSelectionPage() {
 							variants={itemVariants}
 							className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-wrap"
 						>
+							{/* Show canceled subscription status if no active plan */}
+							{currentPlan?.name === "No Active Plan" && (
+								<motion.div
+									variants={cardVariants}
+									className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} rounded-2xl border border-gray-300 shadow-lg p-8 flex flex-col items-center relative min-w-[320px] max-w-[420px] ring-2 ring-red-200 dark:ring-red-600 transition-all duration-300`}
+									style={{ flexBasis: "calc(33% - 1.5rem)" }}
+								>
+									<div className="text-xl font-bold mb-2 text-gray-500 flex items-center gap-2">
+										{currentPlan.name}
+										<div key="canceled-icon">
+											<HiOutlineCheck className="w-5 h-5 text-red-500" />
+										</div>
+									</div>
+									
+									<div className={`text-sm mb-4 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+										{currentPlan.description}
+									</div>
+									
+									<div className="text-4xl font-bold mb-2 text-gray-500 flex items-center gap-2">
+										$0
+										<span className="text-lg font-medium text-gray-500">/month</span>
+									</div>
+
+									<motion.div
+										initial={{ opacity: 0, y: 10 }}
+										animate={{ opacity: 1, y: 0 }}
+										className="flex items-center gap-1 text-red-600 text-sm mb-3"
+									>
+										<TrendingDown className="w-4 h-4" />
+										Canceled
+									</motion.div>
+
+									<motion.button
+										whileHover={{ scale: 1.02 }}
+										whileTap={{ scale: 0.98 }}
+										className="mt-4 w-full py-3 rounded-lg font-semibold text-base transition-all bg-gray-500 text-white hover:bg-gray-600"
+										onClick={() => {
+											// Open a modal to select which plan to reactivate to
+											setSelectedPlan({
+												name: "Family Plus",
+												description: "A solid starting point for businesses with scalable credits.",
+												price: 99,
+												color: "text-blue-500",
+												button: "Reactivate",
+												buttonColor: "bg-blue-500 text-white hover:bg-blue-600",
+												border: "border-blue-400",
+												isCurrent: false,
+												features: ["1500 credits per month", "Users: 6"],
+												category: 'Personal'
+											});
+											setActionType('upgrade');
+											setShowConfirmModal(true);
+										}}
+									>
+										Reactivate Plan
+									</motion.button>
+
+									<ul className="mt-6 w-full text-sm space-y-3">
+										{currentPlan.features?.map((feature: string, i: number) => (
+											<motion.li
+												key={i}
+												initial={{ opacity: 0, x: -10 }}
+												animate={{ opacity: 1, x: 0 }}
+												transition={{ delay: i * 0.1 }}
+												className="flex items-center gap-3"
+											>
+												<div className={`p-1 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+													<HiOutlineCheck className="w-4 h-4" />
+												</div>
+												<span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+													{feature}
+												</span>
+											</motion.li>
+										))}
+									</ul>
+								</motion.div>
+							)}
+
 							{filteredPlans.map((plan, idx) => {
 								const isCurrent = plan.isCurrent;
 								const planOrder = getPlanOrder(plan.name);
@@ -695,9 +915,21 @@ export default function PlanSelectionPage() {
 										whileHover={{ scale: 1.02 }}
 										whileTap={{ scale: 0.98 }}
 										onClick={handleCancelSubscription}
-										className="px-6 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600"
+										disabled={isLoading}
+										className={`px-6 py-2 rounded-lg font-medium ${isLoading ? 'bg-red-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'} text-white`}
 									>
-										Cancel Subscription
+										{isLoading ? (
+											<div className="flex items-center space-x-2">
+												<motion.div
+													animate={{ rotate: 360 }}
+													transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+													className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+												/>
+												<span>Canceling...</span>
+											</div>
+										) : (
+											'Cancel Subscription'
+										)}
 									</motion.button>
 								</div>
 							</div>
