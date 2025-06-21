@@ -197,7 +197,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'} flex font-poppins transition-colors duration-300`}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'} font-poppins transition-colors duration-300`}>
       <Sidebar
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
@@ -208,16 +208,19 @@ export default function Dashboard() {
         isNaviDropdownOpen={isNaviDropdownOpen}
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen} isNaviChatbotOpen={false} setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
+        setIsProfileOpen={setIsProfileOpen}
+        isNaviChatbotOpen={false}
+        setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
           throw new Error('Function not implemented.');
-        } }      />
+        }}
+      />
 
       {/* Main Content */}
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="flex-1 p-6"
+        className={`flex-1 p-6 transition-all duration-300 ${isSidebarCollapsed ? 'ml-24' : 'ml-72'}`}
       >
         <motion.div
           initial={{ opacity: 0, y: -20 }}
