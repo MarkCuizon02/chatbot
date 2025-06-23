@@ -574,6 +574,39 @@ export default function CardDetailsPage() {
                     <div className="text-sm text-gray-500">PayPal & Bank accounts</div>
                   </div>
                 </div>
+
+                {/* Additional Statistics */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs font-medium">Active</span>
+                    </div>
+                    <div className="text-sm font-semibold">
+                      {cards.filter(c => c.status === 'active').length}
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <span className="text-xs font-medium">Expired</span>
+                    </div>
+                    <div className="text-sm font-semibold">
+                      {cards.filter(c => c.status === 'expired').length}
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="text-xs font-medium">Suspended</span>
+                    </div>
+                    <div className="text-sm font-semibold">
+                      {cards.filter(c => c.status === 'suspended').length}
+                    </div>
+                  </div>
+                </div>
               </div>
             </motion.div>
 
