@@ -1,21 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from '@/context/ThemeContext';
 import { useSubscription } from '@/context/SubscriptionContext';
 import Sidebar from '@/app/components/Sidebar';
+import CardDetailsModal from '@/app/components/CardDetailsModal';
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineCreditCard, HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineCheck, HiOutlineShare, HiOutlineLockClosed, HiArrowLeft } from "react-icons/hi2";
 import { CreditCard, Shield, Lock, ArrowLeft, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { paymentMethodService, paymentMethodHelpers, PaymentMethodData } from '@/lib/payment-methods';
 
 
 interface Card {
-  id: string; 
+  id: number; 
+  userId: number;
   brand: string;
-  logo: string;
+  logo?: string;
   number: string;
-  expiry: string;
+  expiry?: string;
   isDefault: boolean;
   cardholderName?: string; 
   cvv?: string;
@@ -25,12 +28,19 @@ interface Card {
   status: 'active' | 'expired' | 'suspended';
   lastUsed?: string;
   securityFeatures?: string[];
+  bankName?: string;
+  accountNumber?: string;
+  routingNumber?: string;
+  email?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Sample card data with enhanced information
+// Sample card data with enhanced information - will be replaced by database data
 const initialCards: Card[] = [
   {
-    id: "card-1",
+    id: 1,
+    userId: 1,
     brand: "Visa",
     logo: "https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png",
     number: "****1234",
@@ -42,10 +52,13 @@ const initialCards: Card[] = [
     paymentMethod: 'card',
     status: 'active',
     lastUsed: "2025-03-15",
-    securityFeatures: ["3D Secure", "Fraud Protection"]
+    securityFeatures: ["3D Secure", "Fraud Protection"],
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
   },
   {
-    id: "card-2",
+    id: 2,
+    userId: 1,
     brand: "Mastercard",
     logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/Mastercard-logo.png",
     number: "****5678",
@@ -57,10 +70,13 @@ const initialCards: Card[] = [
     paymentMethod: 'card',
     status: 'active',
     lastUsed: "2025-03-10",
-    securityFeatures: ["SecureCode", "Zero Liability"]
+    securityFeatures: ["SecureCode", "Zero Liability"],
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
   },
   {
-    id: "paypal-1",
+    id: 3,
+    userId: 1,
     brand: "PayPal",
     logo: "https://upload.wikimedia.org/wikipedia/commons/3/39/PayPal_logo.svg",
     number: "troy.teeples@email.com",
@@ -70,7 +86,10 @@ const initialCards: Card[] = [
     paymentMethod: 'paypal',
     status: 'active',
     lastUsed: "2025-03-12",
-    securityFeatures: ["Buyer Protection", "Encryption"]
+    securityFeatures: ["Buyer Protection", "Encryption"],
+    email: "troy.teeples@email.com",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z"
   }
 ];
 
@@ -84,11 +103,13 @@ export default function CardDetailsPage() {
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
 
   // Cards state management
-  const [cards, setCards] = useState<Card[]>(initialCards);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showCardDetailsModal, setShowCardDetailsModal] = useState(false);
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'paypal' | 'bank'>('card');
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
@@ -106,6 +127,28 @@ export default function CardDetailsPage() {
     accountNumber: "",
     routingNumber: "",
   });
+
+  // Mock user ID - in a real app, this would come from authentication
+  const mockUserId = 1;
+
+  // Load payment methods from database
+  useEffect(() => {
+    const loadPaymentMethods = async () => {
+      try {
+        setLoading(true);
+        const paymentMethods = await paymentMethodService.getUserPaymentMethods(mockUserId);
+        setCards(paymentMethods);
+      } catch (error) {
+        console.error('Error loading payment methods:', error);
+        // Fallback to sample data if database is not available
+        setCards(initialCards);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPaymentMethods();
+  }, []);
 
   // Animation variants
   const containerVariants = {
@@ -166,53 +209,46 @@ export default function CardDetailsPage() {
     setFormData({
       cardholderName: card.cardholderName || "",
       cardNumber: card.number,
-      expiry: card.expiry,
+      expiry: card.expiry || "",
       cvv: card.cvv || "",
       zipCode: card.zipCode || "",
       country: card.country || "United States",
       isDefault: card.isDefault,
-      email: "",
-      bankName: "",
-      accountNumber: "",
-      routingNumber: "",
+      email: card.email || "",
+      bankName: card.bankName || "",
+      accountNumber: card.accountNumber || "",
+      routingNumber: card.routingNumber || "",
     });
     setShowEditModal(true);
   };
 
   // Save edited card
-  const saveEditedCard = () => {
+  const saveEditedCard = async () => {
     if (!currentCard) return;
 
-    const updatedCards = cards.map((card) => {
-      if (card.id === currentCard.id) {
-        const updatedCard = {
-          ...card,
-          expiry: formData.expiry,
-          cardholderName: formData.cardholderName,
-          zipCode: formData.zipCode,
-          country: formData.country,
-          isDefault: formData.isDefault,
-        };
+    try {
+      // Prepare update data
+      const updateData = {
+        expiry: formData.expiry,
+        cardholderName: formData.cardholderName,
+        zipCode: formData.zipCode,
+        country: formData.country,
+        isDefault: formData.isDefault,
+      };
 
-        // If this card is being set as default, update subscription context
-        if (formData.isDefault) {
-          savePaymentMethod(updatedCard);
-        }
+      // Update payment method in database
+      await paymentMethodService.updatePaymentMethod(currentCard.id, updateData);
 
-        return updatedCard;
-      }
+      // Reload payment methods to get updated data
+      const paymentMethods = await paymentMethodService.getUserPaymentMethods(mockUserId);
+      setCards(paymentMethods);
 
-      // If this card is not the default and the current card is marked as default
-      if (formData.isDefault && card.id !== currentCard.id) {
-        return { ...card, isDefault: false };
-      }
-
-      return card;
-    });
-
-    setCards(updatedCards);
-    setShowEditModal(false);
-    showNotification(`Payment method updated successfully`);
+      setShowEditModal(false);
+      showNotification(`Payment method updated successfully`);
+    } catch (error) {
+      console.error('Error updating payment method:', error);
+      showNotification('Failed to update payment method');
+    }
   };
 
   // Remove card handler
@@ -247,58 +283,62 @@ export default function CardDetailsPage() {
   };
 
   // Add new card
-  const handleAddCard = (e: React.FormEvent) => {
+  const handleAddCard = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Create new card object
-    const newCard: Card = {
-      id: `card-${Date.now()}`,
-      brand: selectedPaymentMethod === 'card' ? detectCardBrand(formData.cardNumber) : 
-             selectedPaymentMethod === 'paypal' ? 'PayPal' : 'Bank Account',
-      logo: selectedPaymentMethod === 'card' ? getCardLogo(detectCardBrand(formData.cardNumber)) :
-            selectedPaymentMethod === 'paypal' ? "https://upload.wikimedia.org/wikipedia/commons/3/39/PayPal_logo.svg" : "",
-      number: selectedPaymentMethod === 'card' ? maskCardNumber(formData.cardNumber) :
-              selectedPaymentMethod === 'paypal' ? formData.email : `****${formData.accountNumber.slice(-4)}`,
-      expiry: selectedPaymentMethod === 'card' ? formData.expiry : 'N/A',
-      cardholderName: formData.cardholderName,
-      zipCode: formData.zipCode,
-      country: formData.country,
-      isDefault: formData.isDefault,
-      paymentMethod: selectedPaymentMethod,
-      status: 'active',
-      lastUsed: new Date().toISOString().split('T')[0],
-      securityFeatures: selectedPaymentMethod === 'card' ? ['3D Secure', 'Fraud Protection'] :
-                       selectedPaymentMethod === 'paypal' ? ['Buyer Protection', 'Encryption'] :
-                       ['Bank-Level Security', 'Encryption']
-    };
+    try {
+      // Prepare payment method data
+      const paymentMethodData: PaymentMethodData = {
+        userId: mockUserId,
+        brand: selectedPaymentMethod === 'card' ? paymentMethodHelpers.detectCardBrand(formData.cardNumber) : 
+               selectedPaymentMethod === 'paypal' ? 'PayPal' : 'Bank Account',
+        logo: selectedPaymentMethod === 'card' ? paymentMethodHelpers.getCardLogo(paymentMethodHelpers.detectCardBrand(formData.cardNumber)) :
+              selectedPaymentMethod === 'paypal' ? "https://upload.wikimedia.org/wikipedia/commons/3/39/PayPal_logo.svg" : "",
+        number: selectedPaymentMethod === 'card' ? paymentMethodHelpers.maskCardNumber(formData.cardNumber) :
+                selectedPaymentMethod === 'paypal' ? formData.email : `****${formData.accountNumber.slice(-4)}`,
+        expiry: selectedPaymentMethod === 'card' ? formData.expiry : undefined,
+        cardholderName: formData.cardholderName,
+        cvv: selectedPaymentMethod === 'card' ? formData.cvv : undefined,
+        zipCode: formData.zipCode,
+        country: formData.country,
+        isDefault: formData.isDefault,
+        paymentMethod: selectedPaymentMethod,
+        securityFeatures: selectedPaymentMethod === 'card' ? ['3D Secure', 'Fraud Protection'] :
+                         selectedPaymentMethod === 'paypal' ? ['Buyer Protection', 'Encryption'] :
+                         ['Bank-Level Security', 'Encryption'],
+        bankName: selectedPaymentMethod === 'bank' ? formData.bankName : undefined,
+        accountNumber: selectedPaymentMethod === 'bank' ? formData.accountNumber : undefined,
+        routingNumber: selectedPaymentMethod === 'bank' ? formData.routingNumber : undefined,
+        email: selectedPaymentMethod === 'paypal' ? formData.email : undefined
+      };
 
-    // Update other cards if this one is default
-    let updatedCards = [...cards];
-    if (formData.isDefault) {
-      updatedCards = updatedCards.map((card) => ({ ...card, isDefault: false }));
-      // Update subscription context with new default payment method
-      savePaymentMethod(newCard);
+      // Create payment method in database
+      const newPaymentMethod = await paymentMethodService.createPaymentMethod(paymentMethodData);
+
+      // Reload payment methods to get updated data
+      const paymentMethods = await paymentMethodService.getUserPaymentMethods(mockUserId);
+      setCards(paymentMethods);
+
+      // Reset and close
+      setFormData({
+        cardholderName: "",
+        cardNumber: "",
+        expiry: "",
+        cvv: "",
+        zipCode: "",
+        country: "United States",
+        isDefault: false,
+        email: "",
+        bankName: "",
+        accountNumber: "",
+        routingNumber: "",
+      });
+      setShowAddModal(false);
+      showNotification(`${paymentMethodData.brand} payment method added successfully`);
+    } catch (error) {
+      console.error('Error adding payment method:', error);
+      showNotification('Failed to add payment method');
     }
-
-    // Add the new card
-    setCards([...updatedCards, newCard]);
-
-    // Reset and close
-    setFormData({
-      cardholderName: "",
-      cardNumber: "",
-      expiry: "",
-      cvv: "",
-      zipCode: "",
-      country: "United States",
-      isDefault: false,
-      email: "",
-      bankName: "",
-      accountNumber: "",
-      routingNumber: "",
-    });
-    setShowAddModal(false);
-    showNotification(`${newCard.brand} payment method added successfully`);
   };
 
   // Helper functions
@@ -363,7 +403,8 @@ export default function CardDetailsPage() {
     }
   };
 
-  const formatLastUsed = (dateString: string) => {
+  const formatLastUsed = (dateString: string | undefined) => {
+    if (!dateString) return 'Never';
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -381,20 +422,8 @@ export default function CardDetailsPage() {
     updatePaymentMethod({
       type: card.brand,
       last4: card.number.slice(-4),
-      expiry: card.expiry
+      expiry: card.expiry || ""
     });
-  };
-
-  // Set payment method as default
-  const setAsDefault = (card: Card) => {
-    const updatedCards = cards.map((c) => ({
-      ...c,
-      isDefault: c.id === card.id
-    }));
-    
-    setCards(updatedCards);
-    savePaymentMethod(card);
-    showNotification(`${card.brand} set as default payment method`);
   };
 
   // Get payment method status indicator
@@ -550,125 +579,170 @@ export default function CardDetailsPage() {
 
             {/* Enhanced Cards Grid */}
             <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {cards.map((card, idx) => (
-                <motion.div
-                  key={card.id}
-                  variants={cardVariants}
-                  whileHover="hover"
-                  className={`relative overflow-hidden rounded-2xl border shadow-lg transition-all duration-300 ${
-                    isDarkMode 
-                      ? 'bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600' 
-                      : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full -translate-y-16 translate-x-16"></div>
-                  <div className="relative z-10 p-6">
-                    {/* Card Header */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                          {getPaymentMethodIcon(card.paymentMethod)}
+              {loading ? (
+                <div className="col-span-full flex items-center justify-center py-12">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <span className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Loading payment methods...
+                    </span>
+                  </div>
+                </div>
+              ) : cards.length === 0 ? (
+                <div className="col-span-full flex flex-col items-center justify-center py-12">
+                  <div className={`p-6 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} mb-4`}>
+                    <CreditCard className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No Payment Methods</h3>
+                  <p className={`text-center mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    You haven't added any payment methods yet. Add your first payment method to get started.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                    onClick={() => setShowPaymentMethodModal(true)}
+                  >
+                    <HiOutlinePlus className="w-5 h-5" />
+                    Add Payment Method
+                  </motion.button>
+                </div>
+              ) : (
+                cards.map((card, idx) => (
+                  <motion.div
+                    key={card.id}
+                    variants={cardVariants}
+                    whileHover="hover"
+                    onClick={() => {
+                      setCurrentCard(card);
+                      setShowCardDetailsModal(true);
+                    }}
+                    className={`relative overflow-hidden rounded-2xl border shadow-lg transition-all duration-300 cursor-pointer ${
+                      isDarkMode 
+                        ? 'bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600' 
+                        : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full -translate-y-16 translate-x-16"></div>
+                    <div className="relative z-10 p-6">
+                      {/* Card Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                            {getPaymentMethodIcon(card.paymentMethod)}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-lg">{card.brand}</div>
+                            <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {card.paymentMethod === 'paypal' ? card.number : card.number}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-semibold text-lg">{card.brand}</div>
-                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {card.paymentMethod === 'paypal' ? card.number : card.number}
+                        <div className="flex items-center gap-2">
+                          {getStatusIndicator(card)}
+                          <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(card.status)}`}>
+                            {card.status}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusIndicator(card)}
-                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(card.status)}`}>
-                          {card.status}
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Card Details */}
-                    <div className="space-y-3 mb-6">
-                      <div className="flex justify-between text-sm">
-                        <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Cardholder:</span>
-                        <span className="font-medium">{card.cardholderName}</span>
-                      </div>
-                      {card.paymentMethod === 'card' && (
+                      {/* Card Details */}
+                      <div className="space-y-3 mb-6">
                         <div className="flex justify-between text-sm">
-                          <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Expires:</span>
-                          <span className="font-medium">{card.expiry}</span>
+                          <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Cardholder:</span>
+                          <span className="font-medium">{card.cardholderName}</span>
+                        </div>
+                        {card.paymentMethod === 'card' && (
+                          <div className="flex justify-between text-sm">
+                            <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Expires:</span>
+                            <span className="font-medium">{card.expiry}</span>
+                          </div>
+                        )}
+                        {card.lastUsed && (
+                          <div className="flex justify-between text-sm">
+                            <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Last used:</span>
+                            <span className="font-medium">{formatLastUsed(card.lastUsed)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Security Features */}
+                      {card.securityFeatures && card.securityFeatures.length > 0 && (
+                        <div className="mb-6">
+                          <div className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Security Features
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {card.securityFeatures.map((feature, index) => (
+                              <div
+                                key={index}
+                                className={`px-2 py-1 rounded-full text-xs ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}
+                              >
+                                {feature}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
-                      {card.lastUsed && (
-                        <div className="flex justify-between text-sm">
-                          <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Last used:</span>
-                          <span className="font-medium">{formatLastUsed(card.lastUsed)}</span>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Security Features */}
-                    {card.securityFeatures && card.securityFeatures.length > 0 && (
-                      <div className="mb-6">
-                        <div className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          Security Features
+                      {/* Card Actions */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <Shield className="w-3 h-3" />
+                          Secure
                         </div>
-                        <div className="flex flex-wrap gap-1">
-                          {card.securityFeatures.map((feature, index) => (
-                            <div
-                              key={index}
-                              className={`px-2 py-1 rounded-full text-xs ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          {!card.isDefault && (
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                                isDarkMode 
+                                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                              onClick={async () => {
+                                try {
+                                  await paymentMethodService.setAsDefault(card.id);
+                                  // Reload payment methods to get updated data
+                                  const paymentMethods = await paymentMethodService.getUserPaymentMethods(mockUserId);
+                                  setCards(paymentMethods);
+                                  showNotification(`${card.brand} set as default payment method`);
+                                } catch (error) {
+                                  console.error('Error setting payment method as default:', error);
+                                  showNotification('Failed to set payment method as default');
+                                }
+                              }}
                             >
-                              {feature}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Card Actions */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Shield className="w-3 h-3" />
-                        Secure
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!card.isDefault && (
+                              Set Default
+                            </motion.button>
+                          )}
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                              isDarkMode 
-                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            className={`p-2 rounded-lg transition-colors ${
+                              isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200' : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
                             }`}
-                            onClick={() => setAsDefault(card)}
+                            onClick={() => handleEditCard(card)}
                           >
-                            Set Default
+                            <HiOutlinePencil className="w-4 h-4" />
                           </motion.button>
-                        )}
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className={`p-2 rounded-lg transition-colors ${
-                            isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200' : 'hover:bg-gray-100 text-gray-600 hover:text-gray-800'
-                          }`}
-                          onClick={() => handleEditCard(card)}
-                        >
-                          <HiOutlinePencil className="w-4 h-4" />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className={`p-2 rounded-lg transition-colors ${
-                            isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-400' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'
-                          }`}
-                          onClick={() => handleRemoveCard(card)}
-                        >
-                          <HiOutlineTrash className="w-4 h-4" />
-                        </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className={`p-2 rounded-lg transition-colors ${
+                              isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-400' : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'
+                            }`}
+                            onClick={() => handleRemoveCard(card)}
+                          >
+                            <HiOutlineTrash className="w-4 h-4" />
+                          </motion.button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              )}
             </motion.div>
           </motion.div>
         </motion.div>
@@ -905,7 +979,271 @@ export default function CardDetailsPage() {
                   </div>
                 </>
               )}
+
+              {/* Set as Default Checkbox */}
+              <div className="flex items-center gap-3 pt-4">
+                <input
+                  type="checkbox"
+                  id="isDefaultAdd"
+                  checked={formData.isDefault}
+                  onChange={handleCheckboxChange}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <label htmlFor="isDefaultAdd" className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Set as default payment method
+                </label>
+              </div>
+
+              {/* Add/Cancel Buttons */}
+              <div className="flex gap-3 pt-6">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowAddModal(false)}
+                  className={`flex-1 px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 border ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 hover:border-gray-500' 
+                      : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200"
+                >
+                  Add Payment Method
+                </motion.button>
+              </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit Payment Method Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl w-full max-w-md p-8 relative`}
+          >
+            <button
+              onClick={() => setShowEditModal(false)}
+              className={`absolute top-4 right-4 text-2xl ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              &times;
+            </button>
+            <div className="flex items-center gap-3 mb-6">
+              <div className={`p-2 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500`}>
+                {currentCard && getPaymentMethodIcon(currentCard.paymentMethod)}
+              </div>
+              <h2 className="text-2xl font-bold">
+                Edit Payment Method
+              </h2>
+            </div>
+            
+            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); saveEditedCard(); }}>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Cardholder Name</label>
+                <input
+                  className={`w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                    isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                  }`}
+                  value={formData.cardholderName}
+                  name="cardholderName"
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              {currentCard?.paymentMethod === 'card' && (
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-400 mb-1">Expiration Date</label>
+                    <input
+                      className={`w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                        isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                      }`}
+                      placeholder="01/29"
+                      value={formData.expiry}
+                      name="expiry"
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-400 mb-1">CVV</label>
+                    <input
+                      className={`w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                        isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                      }`}
+                      placeholder="123"
+                      value={formData.cvv}
+                      name="cvv"
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">ZIP Code</label>
+                <input
+                  className={`w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                    isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                  }`}
+                  placeholder="84003"
+                  value={formData.zipCode}
+                  name="zipCode"
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Country</label>
+                <select
+                  className={`w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                    isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                  }`}
+                  value={formData.country}
+                  name="country"
+                  onChange={handleInputChange}
+                >
+                  <option value="United States">United States</option>
+                  <option value="Canada">Canada</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="Australia">Australia</option>
+                  <option value="Germany">Germany</option>
+                  <option value="France">France</option>
+                  <option value="Japan">Japan</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4">
+                <input
+                  type="checkbox"
+                  id="isDefault"
+                  checked={formData.isDefault}
+                  onChange={handleCheckboxChange}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <label htmlFor="isDefault" className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Set as default payment method
+                </label>
+              </div>
+
+              {/* Save/Cancel Buttons */}
+              <div className="flex gap-3 pt-6">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowEditModal(false)}
+                  className={`flex-1 px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 border ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 hover:border-gray-500' 
+                      : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200"
+                >
+                  Save Changes
+                </motion.button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showRemoveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl w-full max-w-md p-8 relative`}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-red-900' : 'bg-red-100'}`}>
+                <HiOutlineTrash className="w-6 h-6 text-red-500" />
+              </div>
+              <h2 className="text-2xl font-bold">Delete Payment Method</h2>
+            </div>
+            
+            <div className="mb-6">
+              <p className={`text-lg mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Are you sure you want to delete this payment method?
+              </p>
+              {currentCard && (
+                <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>
+                      {getPaymentMethodIcon(currentCard.paymentMethod)}
+                    </div>
+                    <div>
+                      <div className="font-semibold">{currentCard.brand}</div>
+                      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {currentCard.number}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <p className={`text-sm mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                This action cannot be undone. If this is your default payment method, another one will be set as default.
+              </p>
+            </div>
+
+            {/* Delete/Cancel Buttons */}
+            <div className="flex gap-3">
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowRemoveModal(false)}
+                className={`flex-1 px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 border ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 hover:border-gray-500' 
+                    : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
+                }`}
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={async () => {
+                  if (currentCard) {
+                    try {
+                      await paymentMethodService.deletePaymentMethod(currentCard.id);
+                      // Reload payment methods to get updated data
+                      const paymentMethods = await paymentMethodService.getUserPaymentMethods(mockUserId);
+                      setCards(paymentMethods);
+                      setShowRemoveModal(false);
+                      showNotification(`${currentCard.brand} payment method removed successfully`);
+                    } catch (error) {
+                      console.error('Error deleting payment method:', error);
+                      showNotification('Failed to delete payment method');
+                    }
+                  }
+                }}
+                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200"
+              >
+                Delete Payment Method
+              </motion.button>
+            </div>
           </motion.div>
         </div>
       )}
@@ -930,6 +1268,15 @@ export default function CardDetailsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Card Details Modal */}
+      {showCardDetailsModal && (
+        <CardDetailsModal
+          isOpen={showCardDetailsModal}
+          onClose={() => setShowCardDetailsModal(false)}
+          card={currentCard}
+        />
+      )}
     </div>
   );
 }

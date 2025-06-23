@@ -43,6 +43,10 @@ export default function AgentsPage() {
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
+        isNaviChatbotOpen={false}
+        setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
+          throw new Error("Function not implemented.");
+        }}
       />
       <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-12' : 'ml-32'} p-6 sm:p-8 overflow-x-hidden flex justify-center`}>
         <motion.div

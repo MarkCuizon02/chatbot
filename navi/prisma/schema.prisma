@@ -28,6 +28,7 @@ model User {
   knowledgeBaseResponses KnowledgeBaseResponse[]
   subscriptions         Subscription[]
   chattieCoachsCreated  ChattieCoach[] @relation("UserChattieCoachCreator")
+  paymentMethods       PaymentMethod[]
 }
 
 model Account {
@@ -361,4 +362,38 @@ model Agent {
   imageUrl     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model PaymentMethod {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  brand           String   // Visa, Mastercard, PayPal, etc.
+  logo            String?  // URL to payment method logo
+  number          String   // Masked card number or email for PayPal
+  expiry          String?  // MM/YY format for cards, null for others
+  cardholderName  String?
+  cvv             String?  // Should be encrypted in production
+  zipCode         String?
+  country         String   @default("United States")
+  isDefault       Boolean  @default(false)
+  paymentMethod   String   // 'card', 'paypal', 'bank'
+  status          String   @default("active") // 'active', 'expired', 'suspended'
+  lastUsed        DateTime?
+  securityFeatures String[] // Array of security features
+  bankName        String?  // For bank accounts
+  accountNumber   String?  // For bank accounts (masked)
+  routingNumber   String?  // For bank accounts
+  email           String?  // For PayPal
+  isDeleted       Boolean  @default(false) // Soft delete flag
+  deletedAt       DateTime? // When the record was soft deleted
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isDefault])
+  @@index([status])
+  @@index([isDeleted]) // Index for soft delete queries
 }
