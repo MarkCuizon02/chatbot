@@ -92,15 +92,42 @@ export default function KnowledgeBasePage() {
                   <div className="flex-1 flex flex-col space-y-3">
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Full Name</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={fullName} onChange={e => setFullName(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={fullName}
+                        onChange={e => setFullName(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Preferred Name</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={preferredName} onChange={e => setPreferredName(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={preferredName}
+                        onChange={e => setPreferredName(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Gender</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={gender} onChange={e => setGender(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={gender}
+                        onChange={e => setGender(e.target.value)}
+                      />
                     </div>
                     <div className="flex items-center space-x-2 mt-1 mb-1">
                       <button type="button" onClick={() => setAddPronouns(!addPronouns)} className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ${addPronouns ? 'bg-teal-500' : 'bg-gray-200'}`}> <span className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-200 ${addPronouns ? 'translate-x-4' : 'translate-x-0'}`}></span></button>
@@ -109,12 +136,30 @@ export default function KnowledgeBasePage() {
                     {addPronouns && (
                       <div>
                         <label className="block text-xs font-semibold mb-1 text-gray-400">Preferred Pronouns</label>
-                        <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={pronouns} onChange={e => setPronouns(e.target.value)} />
+                        <input
+                          type="text"
+                          className={`w-full p-2 rounded-md border text-sm
+                            ${isDarkMode
+                              ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                              : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                            }`}
+                          value={pronouns}
+                          onChange={e => setPronouns(e.target.value)}
+                        />
                       </div>
                     )}
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Birthday</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={birthday} onChange={e => setBirthday(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={birthday}
+                        onChange={e => setBirthday(e.target.value)}
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col items-center md:w-48 mt-2 md:mt-0">
@@ -136,15 +181,42 @@ export default function KnowledgeBasePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Phone Number</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={phone} onChange={e => setPhone(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Personal Email Address</label>
-                      <input type="email" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={email} onChange={e => setEmail(e.target.value)} />
+                      <input
+                        type="email"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                      />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold mb-1 text-gray-400">LinkedIn Profile</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={linkedin} onChange={e => setLinkedin(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={linkedin}
+                        onChange={e => setLinkedin(e.target.value)}
+                      />
                     </div>
                   </div>
                   <div className="mt-4">
@@ -176,7 +248,15 @@ export default function KnowledgeBasePage() {
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Country</label>
                       <div className="relative">
-                        <select className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm appearance-none" value={country} onChange={e => setCountry(e.target.value)}>
+                        <select
+                          className={`w-full p-2 rounded-md border text-sm
+                            ${isDarkMode
+                              ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                              : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                            }`}
+                          value={country}
+                          onChange={e => setCountry(e.target.value)}
+                        >
                           <option>United States</option>
                           <option>Canada</option>
                           <option>United Kingdom</option>
@@ -189,19 +269,55 @@ export default function KnowledgeBasePage() {
                     <div></div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Address Line 1</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={address1} onChange={e => setAddress1(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={address1}
+                        onChange={e => setAddress1(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Address Line 2</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={address2} onChange={e => setAddress2(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={address2}
+                        onChange={e => setAddress2(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">City</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={city} onChange={e => setCity(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={city}
+                        onChange={e => setCity(e.target.value)}
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Zip Code</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value={zip} onChange={e => setZip(e.target.value)} />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value={zip}
+                        onChange={e => setZip(e.target.value)}
+                      />
                     </div>
                   </div>
                 </div>
@@ -226,15 +342,42 @@ export default function KnowledgeBasePage() {
                   <div className="flex-1 flex flex-col space-y-3">
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Company Name</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="Greencheck" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value="Greencheck"
+                        readOnly
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Company Website</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="greencheck.ai" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value="greencheck.ai"
+                        readOnly
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Industry or Business Type</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="SaaS" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value="SaaS"
+                        readOnly
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col items-center md:w-48 mt-2 md:mt-0">
@@ -256,7 +399,15 @@ export default function KnowledgeBasePage() {
                   <div className="flex flex-row space-x-4 items-center">
                     <div className="flex-1">
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Company</label>
-                      <select className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm appearance-none" value="Greencheck" disabled>
+                      <select
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value="Greencheck"
+                        disabled
+                      >
                         <option>Greencheck</option>
                       </select>
                     </div>
@@ -289,15 +440,42 @@ export default function KnowledgeBasePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Company Phone Number</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="(801) 335-9507" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value="(801) 335-9507"
+                        readOnly
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Company Email</label>
-                      <input type="email" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="contact@greencheck.com" readOnly />
+                      <input
+                        type="email"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value="contact@greencheck.com"
+                        readOnly
+                      />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Company Website</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="greencheck.ai" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value="greencheck.ai"
+                        readOnly
+                      />
                     </div>
                   </div>
                 </div>
@@ -316,7 +494,15 @@ export default function KnowledgeBasePage() {
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Country</label>
                       <div className="relative">
-                        <select className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm appearance-none" value={country} onChange={e => setCountry(e.target.value)}>
+                        <select
+                          className={`w-full p-2 rounded-md border text-sm
+                            ${isDarkMode
+                              ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                              : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                            }`}
+                          value={country}
+                          onChange={e => setCountry(e.target.value)}
+                        >
                           <option>United States</option>
                           <option>Canada</option>
                           <option>United Kingdom</option>
@@ -329,19 +515,55 @@ export default function KnowledgeBasePage() {
                     <div></div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Address Line 1</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value=""
+                        readOnly
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Address Line 2</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value=""
+                        readOnly
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">City</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value=""
+                        readOnly
+                      />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-gray-400">Zip Code</label>
-                      <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="" readOnly />
+                      <input
+                        type="text"
+                        className={`w-full p-2 rounded-md border text-sm
+                          ${isDarkMode
+                            ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                            : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                          }`}
+                        value=""
+                        readOnly
+                      />
                     </div>
                   </div>
                 </div>
@@ -358,13 +580,39 @@ export default function KnowledgeBasePage() {
                 <div className="flex-1 flex flex-col space-y-3">
                   <div>
                     <label className="block text-xs font-semibold mb-1 text-gray-400">Number of Employees</label>
-                    <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm" value="5000" readOnly />
+                    <input
+                      type="text"
+                      className={`w-full p-2 rounded-md border text-sm
+                        ${isDarkMode
+                          ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                          : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                        }`}
+                      value="5000"
+                      readOnly
+                    />
                   </div>
                   <div className="mt-4">
                     <label className="block text-xs font-semibold mb-1 text-gray-400">Socials</label>
-                    <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm mb-2" placeholder="Add link here" />
+                    <input
+                      type="text"
+                      className={`w-full p-2 rounded-md border text-sm
+                        ${isDarkMode
+                          ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                          : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                        }`}
+                      placeholder="Add link here"
+                    />
                     <button type="button" className="px-3 py-1 rounded bg-[#23423f] text-white text-xs font-semibold mb-2">+ Add Social Link</button>
-                    <input type="text" className="w-full p-2 rounded-md border border-gray-200 bg-white text-sm mb-2" value="https://facebook.com/greencheck" readOnly />
+                    <input
+                      type="text"
+                      className={`w-full p-2 rounded-md border text-sm
+                        ${isDarkMode
+                          ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-400'
+                          : 'bg-white text-gray-900 border-gray-200 placeholder-gray-400'
+                        }`}
+                      value="https://facebook.com/greencheck"
+                      readOnly
+                    />
                     <div className="flex space-x-2 mb-4">
                       <button type="button" className="px-3 py-1 rounded bg-[#23423f] text-white text-xs font-semibold">Save Changes</button>
                       <button type="button" className="px-3 py-1 rounded border border-gray-300 text-gray-600 bg-white text-xs font-semibold">Cancel</button>
