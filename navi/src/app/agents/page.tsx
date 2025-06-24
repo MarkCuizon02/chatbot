@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { useTheme } from '../../context/ThemeContext';
 import { motion } from 'framer-motion';
-import Sidebar from '../components/Sidebar';
-import AgentsModal from '../components/AgentsModal';
+import { useTheme } from '@/context/ThemeContext';
+import Sidebar from '@/app/components/Sidebar';
+import AgentsModal from '@/app/components/AgentsModal';
 
 export default function AgentsPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -15,24 +15,95 @@ export default function AgentsPage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAgentsModalOpen, setIsAgentsModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
+  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
 
-  const availableAgents = [
-    { name: 'Navi', image: '/images/Navi.png', bgColor: 'from-cyan-400 to-teal-500', description: 'Lorem ipsum' },
-    { name: 'Flicka', image: '/images/flicka.png', bgColor: 'from-purple-600 to-indigo-700', description: 'Lorem ipsum' },
-    { name: 'Audra', image: '/images/Audra.png', bgColor: 'from-green-600 to-emerald-700', description: 'Lorem ipsum' },
-    { name: 'Pixie', image: '/images/Pixie.png', bgColor: 'from-pink-400 to-rose-500', description: 'Lorem ipsum' },
-    { name: 'Paige', image: '/images/Paige.png', bgColor: 'from-amber-400 to-orange-500', description: 'Lorem ipsum' },
-    { name: 'Neuro', image: null, bgColor: 'from-gray-600 to-gray-700', description: 'Coming Soon' },
+  const agentsData = [
+    {
+      name: 'Navi',
+      image: '/images/Navi.png',
+      bgColor: 'from-cyan-400 to-teal-500',
+      description: 'Your personal dashboard assistant for managing your account, companies, and more. Helps with account setup, adding new companies, etc.',
+      role: 'Dashboard Assistant',
+      roleDescription: 'Your guide for account management',
+      features: [
+        { title: 'Account Setup', description: 'Streamlined onboarding process.' },
+        { title: 'Company Management', description: 'Add or remove companies easily.' },
+        { title: 'Billing Inquiries', description: 'Get help with your subscription.' },
+        { title: 'User Support', description: 'Answers to your questions.' },
+      ],
+    },
+    {
+      name: 'Flicka',
+      image: '/images/flicka.png',
+      bgColor: 'from-purple-600 to-indigo-700',
+      description: 'AI-powered video generation to create stunning videos from text prompts, similar to Kling.',
+      role: 'Video Generation',
+      roleDescription: 'AI-powered video creation',
+      features: [
+        { title: 'Text-to-Video', description: 'Generate video from a simple prompt.' },
+        { title: 'High-Resolution Output', description: 'Export in 1080p and 4K.' },
+        { title: 'Multiple Styles', description: 'Cinematic, animation, and more.' },
+        { title: 'Scene Control', description: 'Fine-tune scenes and characters.' },
+      ],
+    },
+    {
+      name: 'Audra',
+      image: '/images/Audra.png',
+      bgColor: 'from-green-600 to-emerald-700',
+      description: 'Generate realistic, lifelike audio and speech, similar to Eleven Labs.',
+      role: 'Audio Generation',
+      roleDescription: 'Lifelike text-to-speech AI',
+      features: [
+        { title: 'Text-to-Speech', description: 'Convert text into natural audio.' },
+        { title: 'Voice Cloning', description: 'Clone your own voice securely.' },
+        { title: 'Multiple Languages', description: 'Support for over 20 languages.' },
+        { title: 'Emotion Control', description: 'Add emotion to the generated audio.' },
+      ],
+    },
+    {
+      name: 'Pixie',
+      image: '/images/Pixie.png',
+      bgColor: 'from-pink-400 to-rose-500',
+      description: 'Your creative partner for generating stunning and artistic images from text, like Midjourney or DALL-E.',
+      role: 'Image Generation',
+      roleDescription: 'Create images from text',
+      features: [
+        { title: 'Text-to-Image', description: 'Create visuals from text prompts.' },
+        { title: 'Artistic Styles', description: 'Generate in various artistic styles.' },
+        { title: 'Image Editing', description: 'Modify existing images with AI.' },
+        { title: 'High-Fidelity Output', description: 'Produce high-resolution images.' },
+      ],
+    },
+    {
+      name: 'Paige',
+      image: '/images/Paige.png',
+      bgColor: 'from-amber-400 to-orange-500',
+      description: 'An intelligent web chat bot to engage visitors on your customer-facing website and provide automated support.',
+      role: 'Web Chat Bot',
+      roleDescription: 'Engage your website visitors',
+      features: [
+        { title: 'Live Chat', description: 'Seamless handoff to human agents.' },
+        { title: 'Lead Generation', description: 'Capture leads from conversations.' },
+        { title: 'FAQ Automation', description: 'Answer common questions instantly.' },
+        { title: 'Customizable Branding', description: 'Match the bot to your brand.' },
+      ],
+    },
+    {
+      name: 'Neuro',
+      image: null,
+      bgColor: 'from-gray-600 to-gray-700',
+      description: 'Coming Soon',
+      role: 'Coming Soon',
+      roleDescription: 'This agent is under development.',
+      features: [
+        { title: 'Advanced Reasoning', description: 'Future capability.' },
+        { title: 'Complex Problem Solving', description: 'Future capability.' },
+      ],
+    },
   ];
 
-  const comingSoonAgents = [
-    { name: 'Navi', image: '/images/Navi.png', bgColor: 'from-cyan-400 to-teal-500', description: 'Lorem ipsum' },
-    { name: 'Flicka', image: '/images/flicka.png', bgColor: 'from-purple-600 to-indigo-700', description: 'Lorem ipsum' },
-    { name: 'Audra', image: '/images/Audra.png', bgColor: 'from-green-600 to-emerald-700', description: 'Lorem ipsum' },
-    { name: 'Pixie', image: '/images/Pixie.png', bgColor: 'from-pink-400 to-rose-500', description: 'Lorem ipsum' },
-    { name: 'Paige', image: '/images/Paige.png', bgColor: 'from-amber-400 to-orange-500', description: 'Lorem ipsum' },
-    { name: 'Neuro', image: null, bgColor: 'from-gray-600 to-gray-700', description: 'Coming Soon' },
-  ];
+  const availableAgents = agentsData;
+  const comingSoonAgents = agentsData;
 
   const openAgentsModal = (agent: any) => {
     setSelectedAgent(agent);
@@ -56,9 +127,10 @@ export default function AgentsPage() {
         isNaviDropdownOpen={isNaviDropdownOpen}
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen} isNaviChatbotOpen={false} setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
-          throw new Error('Function not implemented.');
-        } }      />
+        setIsProfileOpen={setIsProfileOpen}
+        isNaviChatbotOpen={isNaviChatbotOpen}
+        setIsNaviChatbotOpen={setIsNaviChatbotOpen}
+      />
       <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-12' : 'ml-32'} p-6 sm:p-8 overflow-x-hidden flex justify-center ${isAgentsModalOpen ? 'filter blur-sm' : ''}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -96,7 +168,7 @@ export default function AgentsPage() {
                     </div>
                   )}
                   <h3 className="text-xl sm:text-2xl font-semibold">{agent.name}</h3>
-                  <p className="text-base sm:text-lg opacity-80 mt-2">{agent.description}</p>
+                  <p className="text-base sm:text-lg opacity-80 mt-2">{agent.role}</p>
                 </motion.div>
               ))}
             </div>
@@ -112,7 +184,8 @@ export default function AgentsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
                   whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-                  className={`rounded-xl p-4 sm:p-6 flex flex-col items-center justify-center text-center text-white min-h-[180px] sm:min-h-[220px] bg-gradient-to-br ${agent.bgColor} shadow-xl border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
+                  className={`rounded-xl p-4 sm:p-6 flex flex-col items-center justify-center text-center text-white min-h-[180px] sm:min-h-[220px] bg-gradient-to-br ${agent.bgColor} shadow-xl border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} opacity-80`}
+                  onClick={() => openAgentsModal(agent)}
                 >
                   {agent.image ? (
                     <Image src={agent.image} alt={agent.name} width={96} height={96} className="rounded-full mb-3 sm:mb-4" />
@@ -122,7 +195,7 @@ export default function AgentsPage() {
                     </div>
                   )}
                   <h3 className="text-xl sm:text-2xl font-semibold">{agent.name}</h3>
-                  <p className="text-base sm:text-lg opacity-80 mt-2">{agent.description}</p>
+                  <p className="text-base sm:text-lg opacity-80 mt-2">{agent.role}</p>
                 </motion.div>
               ))}
             </div>

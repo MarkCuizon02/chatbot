@@ -1,9 +1,4 @@
-'use client';
-
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
-import { HiXMark, HiChevronDown } from 'react-icons/hi2';
+import React, { useState, useEffect } from 'react';
 
 interface AgentsModalProps {
   isOpen: boolean;
@@ -13,143 +8,267 @@ interface AgentsModalProps {
     name: string;
     image: string | null;
     bgColor: string;
+    gradient: string;
+    color: string;
     description: string;
+    role?: string;
+    roleDescription?: string;
+    features?: { title: string; description: string; }[];
   } | null;
 }
 
-export default function AgentsModal({
-  isOpen,
-  onClose,
-  isDarkMode,
-  agent,
-}: AgentsModalProps) {
-  const [mood, setMood] = useState<'professional' | 'casual' | 'relaxed'>('casual');
-  const [aiModel, setAiModel] = useState('GPT-4');
-  const [customTraits, setCustomTraits] = useState('');
+export default function AgentsModal({ isOpen, onClose, isDarkMode, agent }: AgentsModalProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(onClose, 300);
+  };
 
   if (!isOpen || !agent) return null;
 
-  const handleSave = () => {
-    console.log('Saving changes for agent:', agent.name);
-    console.log('Mood:', mood);
-    console.log('AI Model:', aiModel);
-    console.log('Custom Traits:', customTraits);
-    onClose();
-  };
+  const accentGradient = agent.gradient || agent.bgColor || 'from-purple-600 via-pink-500 to-orange-500';
+  const accentColor = agent.color || 'purple';
+  const features = agent.features || [
+    { title: 'AI-powered spam filtering', description: 'Advanced automation' },
+    { title: 'Smart reply generation', description: 'Advanced automation' },
+    { title: 'Instant FAQ responses', description: 'Advanced automation' },
+    { title: 'Priority inbox sorting', description: 'Advanced automation' },
+    { title: 'Follow-up tracking', description: 'Advanced automation' },
+    { title: 'Sentiment analysis', description: 'Advanced automation' },
+  ];
+  const role = agent.role || 'Email Assistant';
+  const roleDescription = agent.roleDescription || 'Your intelligent inbox companion';
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -50, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className={`relative rounded-3xl shadow-xl w-full max-w-2xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transform transition-all duration-300`}
+    <>
+      {/* Backdrop with solid color */}
+      <div 
+        className={`fixed inset-0 z-50 transition-all duration-500 ${
+          isVisible ? 'opacity-100 backdrop-blur-xl' : 'opacity-0 backdrop-blur-0'
+        }`}
+        style={{
+          background: 'rgba(20, 20, 30, 0.92)'
+        }}
+        onClick={handleClose}
+      >
+        {/* Floating particles background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className={`absolute w-2 h-2 bg-gradient-to-r ${accentGradient} rounded-full animate-float opacity-20`}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${3 + Math.random() * 4}s`
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Main Modal */}
+        <div className="flex items-center justify-center min-h-screen p-4">
+          <div
+            className={`relative w-full max-w-6xl transform transition-all duration-700 ${
+              isVisible ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-8'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header Section */}
-            <div className={`relative h-40 rounded-t-3xl overflow-hidden ${agent.bgColor} flex items-center justify-between p-6`}>
-              <div className="flex flex-col">
-                <h2 className="text-white text-3xl font-bold">{agent.name}</h2>
-                <p className="text-white text-opacity-80 mt-1 pr-16">Your smart dashboard assistant — here to guide you through setup, manage your companies, and simplify every step. Fast. Friendly. Always ready to help.</p>
-              </div>
-              {agent.image && (
-                <Image
-                  src={agent.image}
-                  alt={agent.name}
-                  width={160}
-                  height={160}
-                  className="absolute -bottom-8 right-6 transform translate-x-1/4 rounded-full"
-                />
-              )}
+          
+            
+            {/* Main container */}
+            <div className="relative bg-white/10 backdrop-blur-2xl rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
+              {/* Close button - positioned at top right of modal */}
               <button
-                onClick={onClose}
-                className={`absolute top-4 right-4 p-2 rounded-full ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'}`}
+                onClick={handleClose}
+                className="absolute top-6 right-6 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all duration-300 group z-30"
               >
-                <HiXMark size={24} />
+                <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
-            </div>
-
-            {/* Content Section */}
-            <div className="p-6 space-y-6">
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Mood</label>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    className={`py-2 px-4 rounded-full text-sm font-semibold transition-colors duration-200
-                    ${mood === 'professional' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-teal-500 text-white') : (isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200')} border ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
-                    onClick={() => setMood('professional')}
-                  >
-                    Strictly Professional
-                  </button>
-                  <button
-                    className={`py-2 px-4 rounded-full text-sm font-semibold transition-colors duration-200
-                    ${mood === 'casual' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-teal-500 text-white') : (isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200')} border ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
-                    onClick={() => setMood('casual')}
-                  >
-                    Business Casual
-                  </button>
-                  <button
-                    className={`py-2 px-4 rounded-full text-sm font-semibold transition-colors duration-200
-                    ${mood === 'relaxed' ? (isDarkMode ? 'bg-teal-600 text-white' : 'bg-teal-500 text-white') : (isDarkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-800 hover:bg-gray-200')} border ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}
-                    onClick={() => setMood('relaxed')}
-                  >
-                    Friendly and Relaxed
-                  </button>
+              <div className="flex flex-col lg:flex-row min-h-[600px]">
+                
+                {/* Left Panel - Agent Visual */}
+                <div className="lg:w-2/5 relative overflow-hidden">
+                  {/* Dynamic background */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${accentGradient} opacity-90`}>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2)_0%,transparent_50%)]"></div>
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
+                  </div>
+                  
+                 
+                  {/* Content */}
+                  <div className="relative z-10 flex flex-col items-center justify-center h-full p-8 text-center">
+                    {/* Agent Avatar */}
+                    <div className="relative group">
+                      <div className="absolute -inset-4 bg-white/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300"></div>
+                      <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-white/30 backdrop-blur-sm group-hover:scale-105 transition-all duration-500">
+                        {agent.image ? (
+                          <video
+                            src={agent.image}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center">
+                            <div className="text-6xl font-bold text-white/80">{agent.name.charAt(0)}</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Pulse ring */}
+                      <div className="absolute inset-0 rounded-full border-2 border-white/50 animate-ping"></div>
+                    </div>
+                    
+                    {/* Agent name */}
+                    <h1 className="text-4xl lg:text-5xl font-bold text-white mt-8 mb-4 tracking-tight">
+                      {agent.name}
+                    </h1>
+                    
+                    {/* Role badge */}
+                    <div className="inline-flex items-center px-6 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white font-medium tracking-wide">
+                      <div className="w-2 h-2 bg-white rounded-full mr-3 animate-pulse"></div>
+                      {role}
+                    </div>
+                    
+                    {/* Play instruction */}
+                    <p className="text-white/80 mt-6 text-sm font-light">
+                      {agent.image ? 'Click to interact with me' : 'Ready to assist you'}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>AI Model</label>
-                <div className="relative">
-                  <select
-                    value={aiModel}
-                    onChange={(e) => setAiModel(e.target.value)}
-                    className={`block w-full py-2 px-3 pr-10 border rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-teal-500
-                    ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-gray-50 border-gray-300 text-gray-900'}`}
-                  >
-                    <option value="GPT-4">GPT-4</option>
-                    <option value="GPT-3.5">GPT-3.5</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <HiChevronDown className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} size={20} />
+                {/* Right Panel - Content */}
+                <div className="lg:w-3/5 p-8 lg:p-12 flex flex-col justify-center bg-white/5 backdrop-blur-sm">
+                  {/* Header */}
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-1 h-12 bg-gradient-to-b ${accentGradient} rounded-full`}></div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-white mb-1">{roleDescription}</h2>
+                        <p className="text-white/60 text-sm">Powered by Simplabots</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="mb-10">
+                    <p className="text-white/80 text-lg leading-relaxed font-light">
+                      {agent.description || `Meet ${agent.name}, your next-generation digital assistant. I leverage cutting-edge AI to transform how you manage communications, offering intelligent automation, predictive responses, and seamless workflow integration.`}
+                    </p>
+                  </div>
+
+                  {/* Capabilities */}
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
+                      <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Core Capabilities
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {features.map((feature, idx) => (
+                        <div
+                          key={idx}
+                          className="group p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer"
+                          style={{
+                            animationDelay: `${idx * 100}ms`,
+                            animation: isVisible ? 'slideInUp 0.6s ease-out forwards' : 'none'
+                          }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${accentGradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mt-1`}>
+                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-white font-medium mb-1">{feature.title}</h4>
+                              <p className="text-white/50 text-sm">{feature.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Favorite button */}
+                  <div className="flex justify-center">
+                    <button className={`px-8 py-4 rounded-2xl bg-gradient-to-r ${accentGradient} text-white font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 group`}>
+                      <svg className="w-6 h-6 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      Add to Favorites
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Custom Traits</label>
-                <textarea
-                  value={customTraits}
-                  onChange={(e) => setCustomTraits(e.target.value)}
-                  rows={4}
-                  placeholder="Describe what will your agent will do specifically"
-                  className={`block w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-y
-                  ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'}`}
-                ></textarea>
-              </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Footer */}
-            <div className={`p-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-end`}>
-              <button
-                onClick={handleSave}
-                className="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-6 rounded-full transition-colors duration-200"
-              >
-                Save Changes
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      {/* Enhanced CSS animations */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33% { transform: translateY(-10px) rotate(120deg); }
+          66% { transform: translateY(5px) rotate(240deg); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes blob {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        
+        .animate-shimmer {
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          background-size: 200% 100%;
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
+    </>
   );
-} 
+}

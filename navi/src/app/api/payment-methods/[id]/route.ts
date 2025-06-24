@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-// GET /api/payment-methods/[id] - Get a specific payment method
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -105,7 +105,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/payment-methods/[id] - Soft delete a payment method
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

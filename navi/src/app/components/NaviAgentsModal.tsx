@@ -20,95 +20,74 @@ export default function NaviAgentsModal({
 
   if (!isOpen) return null;
 
-  const mostUsedAgents = [
-    { name: 'Navi', description: 'Lorem Ipsum', image: '/images/Navi.png', bgColor: 'from-emerald-400 to-teal-500' },
-    { name: 'Flicka', description: 'Lorem Ipsum', image: '/images/flicka.png', bgColor: 'from-purple-600 to-indigo-700' },
-    { name: 'Audra', description: 'Lorem Ipsum', image: '/images/Audra.png', bgColor: 'from-green-600 to-emerald-700' },
+  const availableAgents = [
+    { name: 'Navi', image: '/images/Navi.png', bgColor: 'from-emerald-400 to-teal-500' },
+    { name: 'Flicka', image: '/images/flicka.png', bgColor: 'from-purple-600 to-indigo-700' },
+    { name: 'Audra', image: '/images/Audra.png', bgColor: 'from-green-600 to-emerald-700' },
+    { name: 'Pixie', image: '/images/Pixie.png', bgColor: 'from-pink-400 to-rose-500' },
+    { name: 'Paige', image: '/images/Paige.png', bgColor: 'from-amber-400 to-orange-500' },
   ];
 
-  const availableAgents = [
-    { name: 'Navi', description: 'Lorem Ipsum', image: '/images/Navi.png', bgColor: 'from-emerald-400 to-teal-500' },
-    { name: 'Flicka', description: 'Lorem Ipsum', image: '/images/flicka.png', bgColor: 'from-purple-600 to-indigo-700' },
-    { name: 'Audra', description: 'Lorem Ipsum', image: '/images/Audra.png', bgColor: 'from-green-600 to-emerald-700' },
-    { name: 'Pixie', description: 'Lorem Ipsum', image: '/images/Pixie.png', bgColor: 'from-pink-400 to-rose-500' },
-    { name: 'Paige', description: 'Lorem Ipsum', image: '/images/Paige.png', bgColor: 'from-amber-400 to-orange-500' },
-    { name: 'Neuro', description: 'Coming Soon', image: null, bgColor: 'from-gray-600 to-gray-700' },
-  ];
+  const handleAgentClick = () => {
+    router.push('/agents');
+    onClose();
+  };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md"
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            transition={{ duration: 0.2, delay: 0.1 }}
-            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl w-full max-w-4xl p-8 transform transition-all scale-100 opacity-100`}
+            initial={{ y: 50, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 50, opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="relative w-full max-w-4xl rounded-2xl shadow-2xl bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-white/20 dark:border-black/20"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-bold`}>Choose an Agent</h2>
-              <button onClick={onClose} className={`${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} focus:outline-none`}>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <div className="flex justify-between items-center p-6 border-b border-white/10 dark:border-black/20">
+              <h2 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-2xl font-bold`}>Choose an Agent</h2>
+              <button onClick={onClose} className={`${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'} transition-colors focus:outline-none`}>
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
               </button>
             </div>
 
-            <div className="mb-8">
-              <h3 className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-lg font-semibold mb-4`}>Most Frequently Used</h3>
-              <div className="grid grid-cols-3 gap-4">
-                {mostUsedAgents.map((agent, index) => (
+            <div className="p-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {availableAgents.map((agent) => (
                   <motion.div
-                    key={index}
-                    whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-                    className={`rounded-xl p-4 flex flex-col items-center justify-center text-center text-white min-h-[140px] bg-gradient-to-br ${agent.bgColor}`}
-                  >
-                    {agent.image ? (
-                      <Image src={agent.image} alt={agent.name} width={64} height={64} className="rounded-full mb-2" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-gray-500 flex items-center justify-center mb-2">
-                        <span className="text-gray-300 text-3xl">?</span>
-                      </div>
-                    )}
-                    <h4 className="font-semibold text-lg">{agent.name}</h4>
-                    <p className="text-sm opacity-80">{agent.description}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-lg font-semibold mb-4`}>Available Agents</h3>
-              <div className="grid grid-cols-3 gap-4">
-                {availableAgents.map((agent, index) => (
-                  <motion.div
-                    key={index}
-                    whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-                    className={`relative rounded-xl p-4 flex flex-col items-center justify-center text-center text-white min-h-[140px] bg-gradient-to-br ${agent.bgColor}`}
+                    key={agent.name}
+                    whileHover={{ scale: 1.05, y: -5, filter: 'brightness(1.1)' }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                    className={`group relative rounded-2xl p-4 flex flex-col items-center justify-center text-center text-white min-h-[160px] bg-gradient-to-br ${agent.bgColor} cursor-pointer shadow-lg hover:shadow-2xl hover:shadow-emerald-500/20`}
+                    onClick={handleAgentClick}
                   >
                     {agent.name === 'Navi' && (
-                      <div className="absolute bottom-2 left-2 p-2 bg-white bg-opacity-20 rounded-full">
-                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                          <path fillRule="evenodd" d="M11.49 4.382a1 1 0 011.02-1.302l1.638.163a1 1 0 011.173.96l.163 1.638a1 1 0 01-1.302 1.02l-1.638-.163a1 1 0 01-.96-1.173zM5.51 16.618a1 1 0 01-1.02 1.302l-1.638-.163a1 1 0 01-1.173-.96l-.163-1.638a1 1 0 011.302-1.02l1.638.163a1 1 0 01.96 1.173zM16.618 5.51a1 1 0 011.302-1.02l.163-1.638a1 1 0 01.96-1.173l1.638.163a1 1 0 011.02 1.302l-.163 1.638a1 1 0 01-1.173.96zM4.382 11.49a1 1 0 01-1.302 1.02l-1.638-.163a1 1 0 01-.96-1.173l.163-1.638a1 1 0 011.173-.96zM10 12a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      <div className="absolute top-3 right-3 p-1.5 bg-white/20 rounded-full backdrop-blur-sm">
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                         </svg>
                       </div>
                     )}
                     {agent.image ? (
-                      <Image src={agent.image} alt={agent.name} width={64} height={64} className="rounded-full mb-2" />
+                      <Image src={agent.image} alt={agent.name} width={72} height={72} className="rounded-full mb-3 border-2 border-white/50 shadow-md" />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-gray-500 flex items-center justify-center mb-2">
-                        <span className="text-gray-300 text-3xl">?</span>
+                      <div className="w-18 h-18 rounded-full bg-gray-500 flex items-center justify-center mb-3 border-2 border-white/50 shadow-md">
+                        <span className="text-gray-300 text-4xl">?</span>
                       </div>
                     )}
-                    <h4 className="font-semibold text-lg">{agent.name}</h4>
-                    <p className="text-sm opacity-80">{agent.description}</p>
+                    <h4 className="font-semibold text-xl tracking-tight">{agent.name}</h4>
+                    <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <svg className="w-6 h-6 text-white/70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                    </div>
                   </motion.div>
                 ))}
               </div>

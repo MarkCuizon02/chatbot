@@ -74,7 +74,7 @@ const SimplabotsLogo = () => (
   </svg>
 );
 
-export default function Sidebar({
+const Sidebar = React.memo(function Sidebar({
   isDarkMode,
   toggleDarkMode,
   isSidebarCollapsed,
@@ -94,6 +94,7 @@ export default function Sidebar({
   const [creditLimit, setCreditLimit] = useState('');
   const [selectedAgents, setSelectedAgents] = useState<string[]>(['N', 'E']); // Default selected agents
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -103,8 +104,18 @@ export default function Sidebar({
     setIsProfileOpen(false); // Close the profile dropdown when navigating
   };
 
+  const handleSignOut = async () => {
+    // Clear local/session storage or cookies as needed
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+    // Optionally, call a sign-out API endpoint here
+    // await fetch('/api/auth/signout', { method: 'POST' });
+    router.push('/login');
+  };
 
-  const ProfileDropdown = () => (
+  const ProfileDropdown = React.memo(() => (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -153,17 +164,12 @@ export default function Sidebar({
         >
           <HiOutlineCog6Tooth size={20} className="mr-3" /> Settings
         </button>
-        <a
-          href="https://help.example.com" 
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => handleNavigation('/help-support')}
           className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'hover:bg-gray-700 text-gray-100' : 'hover:bg-gray-100 text-gray-900'}`}
         >
           <HiOutlineQuestionMarkCircle size={20} className="mr-3" /> Help and Support
-          <span className="ml-auto flex items-center space-x-1">
-            <HiArrowTopRightOnSquare size={16} />
-          </span>
-        </a>
+        </button>
         <div className={`border-t my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}></div>
         <div className={`flex items-center w-full px-4 py-2 text-sm justify-between ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
           <div className="flex items-center">
@@ -196,19 +202,16 @@ export default function Sidebar({
           </div>
         </div>
         <button
-          onClick={() => {
-            console.log('Sign Out');
-            // Add sign out logic here
-          }}
+          onClick={() => setShowSignOutConfirm(true)}
           className={`flex items-center w-full px-4 py-2 text-sm ${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-500 hover:bg-gray-100'}`}
         >
           <HiArrowRightOnRectangle size={20} className="mr-3" /> Sign Out
         </button>
             </div>
     </motion.div>
-  );
+  ));
 
-  const SidebarContent = () => (
+  const SidebarContent = React.memo(() => (
     <motion.div
       initial={false}
       animate={{ width: isSidebarCollapsed ? '96px' : '288px' }}
@@ -248,8 +251,16 @@ export default function Sidebar({
               </motion.div>
             )}
           </AnimatePresence>
-          <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} hidden lg:block`}>
-            <HiBars3 size={28} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-200 text-gray-500'}`}
+          >
+            <motion.div
+              animate={{ rotate: isSidebarCollapsed ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <HiBars3 size={24} />
+            </motion.div>
           </button>
           <button onClick={() => setIsNaviModalOpen(false)} className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} block lg:hidden`}>
             <HiXMark size={28} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -395,7 +406,7 @@ export default function Sidebar({
         isDarkMode={isDarkMode}
       />
       </motion.div>
-  );
+  ));
 
   return (
     <>
@@ -622,6 +633,48 @@ export default function Sidebar({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Sign Out Confirmation Dialog */}
+      <AnimatePresence>
+        {showSignOutConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setShowSignOutConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <h2 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Sign Out</h2>
+                <p className={`mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Are you sure you want to sign out?</p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowSignOutConfirm(false)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSignOut}
+                    className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
-}
+});
+
+export default Sidebar;
