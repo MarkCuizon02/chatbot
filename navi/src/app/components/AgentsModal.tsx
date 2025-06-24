@@ -58,21 +58,7 @@ export default function AgentsModal({ isOpen, onClose, isDarkMode, agent }: Agen
         }}
         onClick={handleClose}
       >
-        {/* Floating particles background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className={`absolute w-2 h-2 bg-gradient-to-r ${accentGradient} rounded-full animate-float opacity-20`}
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${3 + Math.random() * 4}s`
-              }}
-            />
-          ))}
-        </div>
+       
 
         {/* Main Modal */}
         <div className="flex items-center justify-center min-h-screen p-4">
