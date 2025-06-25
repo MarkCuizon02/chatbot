@@ -13,26 +13,12 @@ import {
   HiBars3,
   HiOutlineLink,
   HiOutlineGift,
-  HiOutlineUser, 
-  HiOutlineBookOpen, 
-  HiOutlineCog6Tooth, 
-  HiOutlineQuestionMarkCircle, 
-  HiOutlineSwatch, 
-  HiOutlineSun, 
-  HiOutlineMoon, 
-  HiArrowRightOnRectangle, 
-  HiArrowTopRightOnSquare, 
   HiChevronDown, 
   HiXMark, 
-  HiOutlineCheck, 
   HiOutlinePlus,
-  HiOutlineTrash,
-  HiOutlineArrowPathRoundedSquare,
-  HiUsers,
 } from 'react-icons/hi2';
 import type { IconType } from 'react-icons';
 import NaviAgentsModal from './NaviAgentsModal';
-import AccountCard from './AccountCard';
 import EmployeeDropdownItem, { 
   employeeDropdownIcons, 
   ProfileHeader, 
@@ -86,11 +72,8 @@ export default function Sidebar({
   setIsSidebarCollapsed,
   isNaviModalOpen,
   setIsNaviModalOpen,
-  isNaviDropdownOpen,
-  setIsNaviDropdownOpen,
   isProfileOpen,
   setIsProfileOpen,
-  isNaviChatbotOpen,
 }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
