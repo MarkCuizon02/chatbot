@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HiXMark, HiOutlineCheck, HiOutlineStar, HiOutlineUsers, HiOutlineUser, HiOutlineBuildingOffice2 } from "react-icons/hi2";
 import { TrendingUp, TrendingDown, Crown, Sparkles, Zap } from "lucide-react";
 import SuccessNotification from '@/app/components/SuccessNotification';
+import SubscriptionManagementModal from '@/app/components/SubscriptionManagementModal';
 
 const plans: Plan[] = [
 	{
@@ -160,6 +161,14 @@ export default function PlanSelectionPage() {
 	const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 	const [successMessage, setSuccessMessage] = useState("");
 
+	// Subscription management modal state
+	const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+	const [subscriptionModalAction, setSubscriptionModalAction] = useState<'cancel' | 'update' | 'success'>('cancel');
+	const [subscriptionModalData, setSubscriptionModalData] = useState<{
+		planName?: string;
+		currentPlan?: string;
+	}>({});
+
 	// Animation variants
 	const containerVariants = {
 		hidden: { opacity: 0 },
@@ -260,6 +269,11 @@ export default function PlanSelectionPage() {
 
 			// Update the plan in context to show canceled state
 			updatePlan(canceledPlan);
+
+			// Show subscription management modal
+			setSubscriptionModalAction('cancel');
+			setSubscriptionModalData({});
+			setShowSubscriptionModal(true);
 
 			// Show success message
 			setSuccessMessage(result.message || 'Subscription canceled successfully!');
@@ -396,6 +410,14 @@ export default function PlanSelectionPage() {
 			};
 			
 			addBillingRecord(newBillingRecord);
+			
+			// Show subscription management modal
+			setSubscriptionModalAction('update');
+			setSubscriptionModalData({
+				planName: selectedPlan.name,
+				currentPlan: subscription.currentPlan?.name
+			});
+			setShowSubscriptionModal(true);
 			
 			// Show success message
 			setSuccessMessage(result.message || `Successfully ${actionType === 'upgrade' ? 'upgraded' : 'downgraded'} to ${selectedPlan.name} plan!`);
@@ -1108,6 +1130,19 @@ export default function PlanSelectionPage() {
 				isVisible={showSuccessNotification}
 				message={successMessage}
 				onClose={() => setShowSuccessNotification(false)}
+			/>
+
+			{/* Subscription Management Modal */}
+			<SubscriptionManagementModal
+				isOpen={showSubscriptionModal}
+				onClose={() => setShowSubscriptionModal(false)}
+				action={subscriptionModalAction}
+				planName={subscriptionModalData.planName}
+				currentPlan={subscriptionModalData.currentPlan}
+				onDeleteAccount={async () => {
+					console.log('Deleting account from plan page...');
+					setShowSubscriptionModal(false);
+				}}
 			/>
 		</div>
 	);

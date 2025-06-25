@@ -6,6 +6,7 @@ import { useSubscription } from '@/context/SubscriptionContext';
 import Sidebar from '@/app/components/Sidebar';
 import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
 import CreditsUsageChart from '@/app/components/CreditsUsageChart';
+import SubscriptionManagementModal from '@/app/components/SubscriptionManagementModal';
 import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiOutlinePlus, HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineBell } from "react-icons/hi2";
 import { Download, TrendingUp, TrendingDown, Zap, Clock, CheckCircle, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,6 +22,15 @@ export default function BillingPage() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('month');
+  
+  // Subscription management modal state
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscriptionModalAction, setSubscriptionModalAction] = useState<'cancel' | 'update' | 'success'>('cancel');
+  const [subscriptionModalData, setSubscriptionModalData] = useState<{
+    planName?: string;
+    currentPlan?: string;
+  }>({});
+  
   const router = useRouter();
 
   const containerVariants = {
@@ -99,6 +109,64 @@ export default function BillingPage() {
     if (percentage > 80) return 'from-red-500 to-pink-500';
     if (percentage > 60) return 'from-yellow-500 to-orange-500';
     return 'from-green-500 to-emerald-500';
+  };
+
+  // Handle subscription cancellation
+  const handleSubscriptionCancel = async () => {
+    console.log('🔄 Cancellation button clicked');
+    
+    // Show modal immediately
+    setSubscriptionModalAction('cancel');
+    setSubscriptionModalData({});
+    setShowSubscriptionModal(true);
+    console.log('✅ Modal should be visible now');
+    
+    // TODO: Add API call here if needed
+    /*
+    try {
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 1,
+          reason: 'User requested cancellation',
+          feedback: 'Cancelled from billing page'
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to cancel subscription');
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+    }
+    */
+  };
+
+  // Handle subscription update
+  const handleSubscriptionUpdate = (newPlanName: string) => {
+    console.log('🔄 Update button clicked for plan:', newPlanName);
+    setSubscriptionModalAction('update');
+    setSubscriptionModalData({
+      planName: newPlanName,
+      currentPlan: subscription.currentPlan?.name
+    });
+    setShowSubscriptionModal(true);
+    console.log('✅ Update modal should be visible now');
+  };
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    try {
+      // Here you would call your account deletion API
+      console.log('Deleting account...');
+      // For now, just close the modal
+      setShowSubscriptionModal(false);
+    } catch (error) {
+      console.error('Error deleting account:', error);
+    }
   };
 
   return (
@@ -488,98 +556,6 @@ export default function BillingPage() {
               </motion.div>
             </motion.div>
 
-            {/* Enhanced Additional Credits Section */}
-            {subscription.totalAdditionalCredits > 0 && (
-              <motion.div variants={itemVariants} className="mb-8">
-                <div className="font-semibold text-xl mb-4 flex items-center gap-3">
-                  <div className={`p-2 rounded-lg bg-gradient-to-br from-orange-500 to-red-500`}>
-                    <Zap className="w-5 h-5 text-white" />
-                  </div>
-                  Additional Credits
-                </div>
-                <motion.div
-                  variants={cardVariants}
-                  className={`relative overflow-hidden rounded-2xl border shadow-lg transition-all duration-300 ${
-                    isDarkMode 
-                      ? 'bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600' 
-                      : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-orange-500/5 to-red-500/5 rounded-full -translate-y-32 translate-x-32"></div>
-                  <div className="relative z-10 p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {getActiveAdditionalCredits().map((credit, index) => (
-                        <motion.div
-                          key={credit.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'} rounded-xl p-6 border shadow-sm hover:shadow-md transition-all duration-200`}
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <div className="font-bold text-xl mb-1">{Number(credit.amount) || 0} Credits</div>
-                              <div className="text-sm text-gray-500">Purchased {credit.purchaseDate}</div>
-                            </div>
-                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              credit.status === 'active' 
-                                ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 dark:from-green-900 dark:to-emerald-900 dark:text-green-300'
-                                : 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 dark:from-gray-700 dark:to-slate-700 dark:text-gray-300'
-                            }`}>
-                              {credit.status === 'active' ? 'Active' : 'Used'}
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-3">
-                            <div className="flex justify-between text-sm">
-                              <span>Price:</span>
-                              <span className="font-semibold">${credit.price}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span>Expires:</span>
-                              <span>{credit.expiryDate}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span>Status:</span>
-                              <div className="flex items-center gap-1">
-                                {credit.status === 'active' ? (
-                                  <CheckCircle className="w-4 h-4 text-green-500" />
-                                ) : (
-                                  <Clock className="w-4 h-4 text-gray-500" />
-                                )}
-                                <span className="capitalize">{credit.status}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                    
-                    {getActiveAdditionalCredits().length === 0 && (
-                      <div className="text-center py-12">
-                        <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                          <Zap className={`w-8 h-8 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-                        </div>
-                        <h3 className="text-lg font-semibold mb-2">No Active Credits</h3>
-                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
-                          Purchase additional credits to boost your usage capacity
-                        </p>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setShowCreditsModal(true)}
-                          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200 flex items-center gap-2 mx-auto"
-                        >
-                          <HiOutlinePlus className="w-4 h-4" />
-                          Purchase Credits
-                        </motion.button>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-
             {/* Enhanced Billing History Section */}
             <motion.div variants={itemVariants} className="mb-8">
               <div className="font-semibold text-xl mb-4 flex items-center gap-3">
@@ -694,6 +670,16 @@ export default function BillingPage() {
       <CreditsPurchaseModal
         isOpen={showCreditsModal}
         onClose={() => setShowCreditsModal(false)}
+      />
+
+      {/* Subscription Management Modal */}
+      <SubscriptionManagementModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        action={subscriptionModalAction}
+        planName={subscriptionModalData.planName}
+        currentPlan={subscriptionModalData.currentPlan}
+        onDeleteAccount={handleDeleteAccount}
       />
     </div>
   );
