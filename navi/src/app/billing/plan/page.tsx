@@ -500,14 +500,8 @@ export default function PlanSelectionPage() {
 				setIsSidebarCollapsed={setIsSidebarCollapsed}
 				isNaviModalOpen={isNaviModalOpen}
 				setIsNaviModalOpen={setIsNaviModalOpen}
-				isNaviDropdownOpen={isNaviDropdownOpen}
-				setIsNaviDropdownOpen={setIsNaviDropdownOpen}
 				isProfileOpen={isProfileOpen}
 				setIsProfileOpen={setIsProfileOpen}
-				isNaviChatbotOpen={false}
-				setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
-					throw new Error("Function not implemented.");
-				}}
 			/>
 			<AnimatePresence>
 				<motion.div
