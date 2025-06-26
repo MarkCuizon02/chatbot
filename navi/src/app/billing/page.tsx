@@ -6,6 +6,7 @@ import { useSubscription } from '@/context/SubscriptionContext';
 import Sidebar from '@/app/components/Sidebar';
 import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
 import CreditsUsageChart from '@/app/components/CreditsUsageChart';
+import SubscriptionManagementModal from '@/app/components/SubscriptionManagementModal';
 import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiOutlinePlus, HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineBell } from "react-icons/hi2";
 import { Download, TrendingUp, TrendingDown, Zap, Clock, CheckCircle, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,6 +22,15 @@ export default function BillingPage() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('month');
+  
+  // Subscription management modal state
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscriptionModalAction, setSubscriptionModalAction] = useState<'cancel' | 'update' | 'success'>('cancel');
+  const [subscriptionModalData, setSubscriptionModalData] = useState<{
+    planName?: string;
+    currentPlan?: string;
+  }>({});
+  
   const router = useRouter();
 
   const containerVariants = {
@@ -101,6 +111,64 @@ export default function BillingPage() {
     return 'from-green-500 to-emerald-500';
   };
 
+  // Handle subscription cancellation
+  const handleSubscriptionCancel = async () => {
+    console.log('🔄 Cancellation button clicked');
+    
+    // Show modal immediately
+    setSubscriptionModalAction('cancel');
+    setSubscriptionModalData({});
+    setShowSubscriptionModal(true);
+    console.log('✅ Modal should be visible now');
+    
+    // TODO: Add API call here if needed
+    /*
+    try {
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: 1,
+          reason: 'User requested cancellation',
+          feedback: 'Cancelled from billing page'
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to cancel subscription');
+      }
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+    }
+    */
+  };
+
+  // Handle subscription update
+  const handleSubscriptionUpdate = (newPlanName: string) => {
+    console.log('🔄 Update button clicked for plan:', newPlanName);
+    setSubscriptionModalAction('update');
+    setSubscriptionModalData({
+      planName: newPlanName,
+      currentPlan: subscription.currentPlan?.name
+    });
+    setShowSubscriptionModal(true);
+    console.log('✅ Update modal should be visible now');
+  };
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    try {
+      // Here you would call your account deletion API
+      console.log('Deleting account...');
+      // For now, just close the modal
+      setShowSubscriptionModal(false);
+    } catch (error) {
+      console.error('Error deleting account:', error);
+    }
+  };
+
   return (
     <div className={`min-h-screen ${isDarkMode ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100" : "bg-gradient-to-br from-gray-50 via-white to-blue-50 text-gray-900"} flex font-poppins transition-all duration-500`}>
       <Sidebar
@@ -110,14 +178,8 @@ export default function BillingPage() {
         setIsSidebarCollapsed={setIsSidebarCollapsed}
         isNaviModalOpen={isNaviModalOpen}
         setIsNaviModalOpen={setIsNaviModalOpen}
-        isNaviDropdownOpen={isNaviDropdownOpen}
-        setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen} 
-        isNaviChatbotOpen={false} 
-        setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
-          throw new Error("Function not implemented.");
-        }} 
+        setIsProfileOpen={setIsProfileOpen}
       />
       <AnimatePresence>
         <motion.div
@@ -488,8 +550,11 @@ export default function BillingPage() {
               </motion.div>
             </motion.div>
 
+<<<<<<< HEAD
            
 
+=======
+>>>>>>> 9272ded5e00d613161ef3601143ba6cdc3ffc8a5
             {/* Enhanced Billing History Section */}
             <motion.div variants={itemVariants} className="mb-8">
               <div className="font-semibold text-xl mb-4 flex items-center gap-3">
@@ -604,6 +669,16 @@ export default function BillingPage() {
       <CreditsPurchaseModal
         isOpen={showCreditsModal}
         onClose={() => setShowCreditsModal(false)}
+      />
+
+      {/* Subscription Management Modal */}
+      <SubscriptionManagementModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        action={subscriptionModalAction}
+        planName={subscriptionModalData.planName}
+        currentPlan={subscriptionModalData.currentPlan}
+        onDeleteAccount={handleDeleteAccount}
       />
     </div>
   );

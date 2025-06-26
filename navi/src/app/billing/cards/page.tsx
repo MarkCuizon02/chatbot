@@ -465,14 +465,8 @@ export default function CardDetailsPage() {
         setIsSidebarCollapsed={setIsSidebarCollapsed}
         isNaviModalOpen={isNaviModalOpen}
         setIsNaviModalOpen={setIsNaviModalOpen}
-        isNaviDropdownOpen={isNaviDropdownOpen}
-        setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
-        isNaviChatbotOpen={false}
-        setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
-          throw new Error("Function not implemented.");
-        }}
       />
       <AnimatePresence>
         <motion.div
@@ -1303,11 +1297,15 @@ export default function CardDetailsPage() {
       </AnimatePresence>
 
       {/* Card Details Modal */}
-      {showCardDetailsModal && (
+      {showCardDetailsModal && currentCard && (
         <CardDetailsModal
           isOpen={showCardDetailsModal}
           onClose={() => setShowCardDetailsModal(false)}
-          card={currentCard}
+          card={{
+            ...currentCard,
+            cardholderName: currentCard.cardholderName || 'Unknown',
+            country: currentCard.country || 'Unknown'
+          }}
         />
       )}
     </div>

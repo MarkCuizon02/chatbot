@@ -7,10 +7,29 @@ import { CreditCard, Shield, Lock, CheckCircle, AlertCircle, Info } from "lucide
 import { useTheme } from '@/context/ThemeContext';
 import { paymentMethodHelpers } from '@/lib/payment-methods';
 
+interface Card {
+  brand: string;
+  number: string;
+  expiry?: string;
+  email?: string;
+  bankName?: string;
+  accountNumber?: string;
+  routingNumber?: string;
+  cardholderName: string;
+  zipCode?: string;
+  country: string;
+  status: string;
+  isDefault: boolean;
+  paymentMethod: 'card' | 'paypal' | 'bank';
+  securityFeatures?: string[];
+  createdAt: string;
+  lastUsed?: string;
+}
+
 interface CardDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  card: any;
+  card: Card;
 }
 
 export default function CardDetailsModal({ isOpen, onClose, card }: CardDetailsModalProps) {
