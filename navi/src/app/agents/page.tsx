@@ -88,22 +88,84 @@ export default function AgentsPage() {
         { title: 'Customizable Branding', description: 'Match the bot to your brand.' },
       ],
     },
+  ];
+
+  const comingSoonAgents = [
     {
-      name: 'Neuro',
+      name: 'Hunter',
       image: null,
-      bgColor: 'from-gray-600 to-gray-700',
+      bgColor: 'from-blue-600 to-blue-700',
       description: 'Coming Soon',
       role: 'Coming Soon',
       roleDescription: 'This agent is under development.',
       features: [
-        { title: 'Advanced Reasoning', description: 'Future capability.' },
-        { title: 'Complex Problem Solving', description: 'Future capability.' },
+        { title: 'Advanced Analytics', description: 'Future capability.' },
+        { title: 'Data Processing', description: 'Future capability.' },
+      ],
+    },
+    {
+      name: 'Dominic',
+      image: null,
+      bgColor: 'from-red-600 to-red-700',
+      description: 'Coming Soon',
+      role: 'Coming Soon',
+      roleDescription: 'This agent is under development.',
+      features: [
+        { title: 'Machine Learning', description: 'Future capability.' },
+        { title: 'Pattern Recognition', description: 'Future capability.' },
+      ],
+    },
+    {
+      name: 'Adsy',
+      image: null,
+      bgColor: 'from-yellow-600 to-yellow-700',
+      description: 'Coming Soon',
+      role: 'Coming Soon',
+      roleDescription: 'This agent is under development.',
+      features: [
+        { title: 'Ad Campaign Management', description: 'Future capability.' },
+        { title: 'Marketing Automation', description: 'Future capability.' },
+      ],
+    },
+    {
+      name: 'Paige',
+      image: null,
+      bgColor: 'from-indigo-600 to-indigo-700',
+      description: 'Coming Soon',
+      role: 'Coming Soon',
+      roleDescription: 'This agent is under development.',
+      features: [
+        { title: 'Content Creation', description: 'Future capability.' },
+        { title: 'Writing Assistant', description: 'Future capability.' },
+      ],
+    },
+    {
+      name: 'Callie',
+      image: null,
+      bgColor: 'from-emerald-600 to-emerald-700',
+      description: 'Coming Soon',
+      role: 'Coming Soon',
+      roleDescription: 'This agent is under development.',
+      features: [
+        { title: 'Customer Support', description: 'Future capability.' },
+        { title: 'Call Management', description: 'Future capability.' },
+      ],
+    },
+    {
+      name: 'Emmy',
+      image: null,
+      bgColor: 'from-violet-600 to-violet-700',
+      description: 'Coming Soon',
+      role: 'Coming Soon',
+      roleDescription: 'This agent is under development.',
+      features: [
+        { title: 'Email Marketing', description: 'Future capability.' },
+        { title: 'Campaign Analytics', description: 'Future capability.' },
       ],
     },
   ];
 
   const availableAgents = agentsData;
-  const comingSoonAgents = agentsData;
 
   const openAgentsModal = (agent: any) => {
     setSelectedAgent(agent);
@@ -183,9 +245,7 @@ export default function AgentsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
-                  whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-                  className={`rounded-xl p-4 sm:p-6 flex flex-col items-center justify-center text-center text-white min-h-[180px] sm:min-h-[220px] bg-gradient-to-br ${agent.bgColor} shadow-xl border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} opacity-80`}
-                  onClick={() => openAgentsModal(agent)}
+                  className={`rounded-xl p-4 sm:p-6 flex flex-col items-center justify-center text-center text-white min-h-[180px] sm:min-h-[220px] bg-gradient-to-br ${agent.bgColor} shadow-xl border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} opacity-30 cursor-not-allowed`}
                 >
                   {agent.image ? (
                     <Image src={agent.image} alt={agent.name} width={96} height={96} className="rounded-full mb-3 sm:mb-4" />

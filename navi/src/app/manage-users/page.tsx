@@ -68,6 +68,11 @@ export default function ManageUsersPage() {
   // 1. Add state for delete confirmation modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteUser, setDeleteUser] = useState<UserItem | null>(null);
+  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
+  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const [selectedGroupForAddMember, setSelectedGroupForAddMember] = useState<string | null>(null);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
 
   // --- Utility Functions ---
   const getUserInitials = (name: string) => {
@@ -585,6 +590,10 @@ export default function ManageUsersPage() {
         setIsSidebarCollapsed={setIsSidebarCollapsed}
         isNaviModalOpen={isNaviModalOpen}
         setIsNaviModalOpen={setIsNaviModalOpen}
+        isNaviDropdownOpen={isNaviDropdownOpen}
+        setIsNaviDropdownOpen={setIsNaviDropdownOpen}
+        isNaviChatbotOpen={isNaviChatbotOpen}
+        setIsNaviChatbotOpen={setIsNaviChatbotOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
       />

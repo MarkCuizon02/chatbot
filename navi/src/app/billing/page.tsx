@@ -29,6 +29,9 @@ export default function BillingPage() {
   // Monthly discount toggle state
   const [monthlyDiscountActive, setMonthlyDiscountActive] = useState(false);
 
+  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
+  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
+
   const router = useRouter();
 
   // Fix hydration mismatch by ensuring client-side rendering
@@ -139,6 +142,10 @@ export default function BillingPage() {
           setIsSidebarCollapsed={setIsSidebarCollapsed}
           isNaviModalOpen={isNaviModalOpen}
           setIsNaviModalOpen={setIsNaviModalOpen}
+          isNaviDropdownOpen={isNaviDropdownOpen}
+          setIsNaviDropdownOpen={setIsNaviDropdownOpen}
+          isNaviChatbotOpen={isNaviChatbotOpen}
+          setIsNaviChatbotOpen={setIsNaviChatbotOpen}
           isProfileOpen={isProfileOpen}
           setIsProfileOpen={setIsProfileOpen}
         />
