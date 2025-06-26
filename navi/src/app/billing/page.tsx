@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from '@/context/ThemeContext';
 import { useSubscription } from '@/context/SubscriptionContext';
 import Sidebar from '@/app/components/Sidebar';
@@ -11,6 +11,7 @@ import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiO
 import { TrendingUp, TrendingDown, Zap, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 export default function BillingPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -31,8 +32,8 @@ export default function BillingPage() {
   // Monthly discount toggle state - only enabled if user is subscribed
   const [monthlyDiscountActive, setMonthlyDiscountActive] = useState(false);
 
-  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
-  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
+  // Track if we've already auto-enabled the discount
+  const hasAutoEnabled = useRef(false);
 
   const router = useRouter();
 
@@ -43,6 +44,14 @@ export default function BillingPage() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Automatically enable monthly discount if user is subscribed (only once)
+  useEffect(() => {
+    if (isSubscribed && !hasAutoEnabled.current) {
+      setMonthlyDiscountActive(true);
+      hasAutoEnabled.current = true;
+    }
+  }, [isSubscribed]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -571,10 +580,12 @@ export default function BillingPage() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500/5 to-pink-500/5 rounded-full -translate-y-32 translate-x-32"></div>
                 <div className="relative z-10 p-8 flex items-center min-h-[100px]">
                   <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} mr-6`}>
-                    <img 
+                    <Image 
                       src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" 
                       alt="Visa" 
-                      className="w-16 h-10 object-contain" 
+                      width={64}
+                      height={40}
+                      className="object-contain" 
                     />
                   </div>
                   <div className="flex-1">
