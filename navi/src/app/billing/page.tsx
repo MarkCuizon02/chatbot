@@ -26,13 +26,16 @@ export default function BillingPage() {
   // Subscription management modal state
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   
-  // Monthly discount toggle state
+  // Monthly discount toggle state - only enabled if user is subscribed
   const [monthlyDiscountActive, setMonthlyDiscountActive] = useState(false);
 
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
   const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
 
   const router = useRouter();
+
+  // Check if user is subscribed to a plan
+  const isSubscribed = subscription.currentPlan && subscription.currentPlan.name !== "No Active Plan";
 
   // Fix hydration mismatch by ensuring client-side rendering
   useEffect(() => {
@@ -235,25 +238,42 @@ export default function BillingPage() {
                 <span className="text-2xl"><span role="img" aria-label="crown">👑</span></span>
                 <div>
                   <div className="font-bold text-lg md:text-xl">Monthly Subscription</div>
-                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Get 20% OFF on all packages when you subscribe to monthly packs</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {isSubscribed 
+                      ? "Get 20% OFF on all packages when you subscribe to monthly packs"
+                      : "Subscribe to a plan to unlock 20% OFF on all credit packages"
+                    }
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="bg-green-100 text-green-600 text-xs font-semibold px-3 py-1 rounded-lg border border-green-200">20% OFF</span>
-                <label className="relative inline-flex items-center cursor-pointer ml-2">
+                <label className={`relative inline-flex items-center ${isSubscribed ? 'cursor-pointer' : 'cursor-not-allowed'} ml-2`}>
                   <input
                     type="checkbox"
                     className="sr-only peer"
                     checked={monthlyDiscountActive}
-                    onChange={() => setMonthlyDiscountActive(v => !v)}
+                    onChange={() => isSubscribed && setMonthlyDiscountActive(v => !v)}
+                    disabled={!isSubscribed}
                   />
                   <div
-                    className={`w-10 h-6 bg-gray-200 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-cyan-500 dark:bg-gray-700 transition-colors duration-200 ${monthlyDiscountActive ? 'bg-green-400' : 'bg-gray-200'}`}
+                    className={`w-10 h-6 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-cyan-500 transition-colors duration-200 ${
+                      isSubscribed 
+                        ? monthlyDiscountActive 
+                          ? 'bg-green-400' 
+                          : 'bg-gray-200 dark:bg-gray-700'
+                        : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
                   ></div>
                   <div
-                    className={`absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${monthlyDiscountActive ? 'translate-x-4' : ''}`}
+                    className={`absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${
+                      monthlyDiscountActive ? 'translate-x-4' : ''
+                    }`}
                   ></div>
                 </label>
+                {!isSubscribed && (
+                  <div className="text-xs text-gray-500 ml-2">Subscribe to enable</div>
+                )}
               </div>
             </motion.div>
 
@@ -694,6 +714,7 @@ export default function BillingPage() {
       <CreditsPurchaseModal
         isOpen={showCreditsModal}
         onClose={() => setShowCreditsModal(false)}
+        monthlyDiscountActive={monthlyDiscountActive}
       />
 
       {/* Subscription Management Modal */}
