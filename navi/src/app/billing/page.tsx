@@ -31,6 +31,9 @@ export default function BillingPage() {
   // Monthly discount toggle state - only enabled if user is subscribed
   const [monthlyDiscountActive, setMonthlyDiscountActive] = useState(false);
 
+  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
+  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
+
   const router = useRouter();
 
   // Check if user is subscribed to a plan
