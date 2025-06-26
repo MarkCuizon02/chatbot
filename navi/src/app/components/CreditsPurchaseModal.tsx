@@ -10,6 +10,7 @@ interface CreditsPurchaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   monthlyDiscountActive?: boolean;
+  setMonthlyDiscountActive?: (value: boolean) => void;
 }
 
 const creditPackages = [
@@ -51,7 +52,7 @@ const creditPackages = [
   }
 ];
 
-export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountActive = false }: CreditsPurchaseModalProps) {
+export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountActive = false, setMonthlyDiscountActive }: CreditsPurchaseModalProps) {
   const { isDarkMode } = useTheme();
   const { purchaseAdditionalCredits, subscription } = useSubscription();
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
@@ -173,20 +174,54 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
               </div>
 
               <div className="p-4 md:p-6 overflow-y-auto flex-1">
-                {/* Monthly Discount Banner */}
-                {monthlyDiscountActive && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 rounded-xl flex items-center gap-3"
-                  >
-                    <HiOutlineSparkles className="w-5 h-5" />
+                {/* Monthly Subscription Toggle Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex items-center justify-between rounded-2xl border shadow-md mb-6 px-6 py-4 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl"><span role="img" aria-label="crown">👑</span></span>
                     <div>
-                      <div className="font-semibold">Monthly Subscription Active!</div>
-                      <div className="text-sm opacity-90">You&apos;re getting 20% OFF on all credit packages</div>
+                      <div className="font-bold text-lg md:text-xl">Monthly Subscription</div>
+                      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {isSubscribed 
+                          ? "Get 20% OFF on all packages when you subscribe to monthly packs"
+                          : "Subscribe to a plan to unlock 20% OFF on all credit packages"
+                        }
+                      </div>
                     </div>
-                  </motion.div>
-                )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-green-100 text-green-600 text-xs font-semibold px-3 py-1 rounded-lg border border-green-200">20% OFF</span>
+                    <label className={`relative inline-flex items-center ${isSubscribed ? 'cursor-pointer' : 'cursor-not-allowed'} ml-2`}>
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={monthlyDiscountActive}
+                        onChange={() => isSubscribed && setMonthlyDiscountActive && setMonthlyDiscountActive(!monthlyDiscountActive)}
+                        disabled={!isSubscribed}
+                      />
+                      <div
+                        className={`w-10 h-6 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-cyan-500 transition-colors duration-200 ${
+                          isSubscribed 
+                            ? monthlyDiscountActive 
+                              ? 'bg-green-400' 
+                              : 'bg-gray-200 dark:bg-gray-700'
+                            : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      ></div>
+                      <div
+                        className={`absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${
+                          monthlyDiscountActive ? 'translate-x-4' : ''
+                        }`}
+                      ></div>
+                    </label>
+                    {!isSubscribed && (
+                      <div className="text-xs text-gray-500 ml-2">Subscribe to enable</div>
+                    )}
+                  </div>
+                </motion.div>
 
                 {/* Package Selection */}
                 <div className="mb-6">
