@@ -18,6 +18,7 @@ export default function BillingPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
+  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
@@ -178,6 +179,10 @@ export default function BillingPage() {
         setIsSidebarCollapsed={setIsSidebarCollapsed}
         isNaviModalOpen={isNaviModalOpen}
         setIsNaviModalOpen={setIsNaviModalOpen}
+        isNaviDropdownOpen={isNaviDropdownOpen}
+        setIsNaviDropdownOpen={setIsNaviDropdownOpen}
+        isNaviChatbotOpen={isNaviChatbotOpen}
+        setIsNaviChatbotOpen={setIsNaviChatbotOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
       />
@@ -550,11 +555,6 @@ export default function BillingPage() {
               </motion.div>
             </motion.div>
 
-<<<<<<< HEAD
-           
-
-=======
->>>>>>> 9272ded5e00d613161ef3601143ba6cdc3ffc8a5
             {/* Enhanced Billing History Section */}
             <motion.div variants={itemVariants} className="mb-8">
               <div className="font-semibold text-xl mb-4 flex items-center gap-3">
