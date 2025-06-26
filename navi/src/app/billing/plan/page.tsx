@@ -110,6 +110,7 @@ export default function PlanSelectionPage() {
 	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 	const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
 	const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
+	const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
 	const [isProfileOpen, setIsProfileOpen] = useState(false);
 	const [tab, setTab] = useState("Personal");
 
@@ -466,6 +467,10 @@ export default function PlanSelectionPage() {
 				setIsSidebarCollapsed={setIsSidebarCollapsed}
 				isNaviModalOpen={isNaviModalOpen}
 				setIsNaviModalOpen={setIsNaviModalOpen}
+				isNaviDropdownOpen={isNaviDropdownOpen}
+				setIsNaviDropdownOpen={setIsNaviDropdownOpen}
+				isNaviChatbotOpen={isNaviChatbotOpen}
+				setIsNaviChatbotOpen={setIsNaviChatbotOpen}
 				isProfileOpen={isProfileOpen}
 				setIsProfileOpen={setIsProfileOpen}
 			/>

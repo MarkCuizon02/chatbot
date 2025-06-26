@@ -100,6 +100,7 @@ export default function CardDetailsPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = React.useState(false);
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = React.useState(false);
+  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = React.useState(false);
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
 
   // Cards state management
@@ -465,6 +466,10 @@ export default function CardDetailsPage() {
         setIsSidebarCollapsed={setIsSidebarCollapsed}
         isNaviModalOpen={isNaviModalOpen}
         setIsNaviModalOpen={setIsNaviModalOpen}
+        isNaviDropdownOpen={isNaviDropdownOpen}
+        setIsNaviDropdownOpen={setIsNaviDropdownOpen}
+        isNaviChatbotOpen={isNaviChatbotOpen}
+        setIsNaviChatbotOpen={setIsNaviChatbotOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
       />
