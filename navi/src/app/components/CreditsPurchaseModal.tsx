@@ -19,7 +19,7 @@ const creditPackages = [
     price: 10,
     popular: false,
     savings: 0,
-    features: ['100 credits', '90 days expiry', 'Standard support']
+    features: ['100 credits', 'Standard support']
   },
   {
     id: 'pro',
@@ -28,7 +28,7 @@ const creditPackages = [
     price: 45,
     popular: true,
     savings: 10,
-    features: ['500 credits', '90 days expiry', 'Priority support', '10% savings']
+    features: ['500 credits', 'Priority support', '10% savings']
   },
   {
     id: 'enterprise',
@@ -37,7 +37,7 @@ const creditPackages = [
     price: 80,
     popular: false,
     savings: 20,
-    features: ['1000 credits', '90 days expiry', 'Premium support', '20% savings']
+    features: ['1000 credits', 'Premium support', '20% savings']
   },
   {
     id: 'unlimited',
@@ -46,7 +46,7 @@ const creditPackages = [
     price: 180,
     popular: false,
     savings: 28,
-    features: ['2500 credits', '90 days expiry', '24/7 support', '28% savings']
+    features: ['2500 credits', '24/7 support', '28% savings']
   }
 ];
 
@@ -176,10 +176,6 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h4 className="font-semibold text-base">{pkg.name}</h4>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <HiOutlineClock className="w-3 h-3" />
-                            90 days expiry
-                          </div>
                         </div>
                         <div className="text-right">
                           <div className="text-xl font-bold">{pkg.credits}</div>
@@ -195,9 +191,6 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                               Save {pkg.savings}%
                             </span>
                           )}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          ${(pkg.price / pkg.credits).toFixed(2)} per credit
                         </div>
                       </div>
                       
@@ -270,10 +263,6 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                           ? creditPackages.find(p => p.id === selectedPackage)?.price 
                           : customPrice}
                       </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Expiry:</span>
-                      <span>90 days from purchase</span>
                     </div>
                   </div>
                 </motion.div>

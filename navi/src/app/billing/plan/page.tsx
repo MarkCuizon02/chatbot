@@ -100,40 +100,6 @@ const businessPlans: Plan[] = [
 		],
 		category: 'Business'
 	},
-	{
-		name: "Human Digital Manager",
-		description:
-			"Full-featured plan for pro teams with max credits, storage and BYOK.",
-		price: 2500,
-		color: "text-cyan-500",
-		button: "Upgrade Plan",
-		buttonColor: "bg-cyan-500 text-white hover:bg-cyan-600",
-		border: "border-cyan-200",
-		isCurrent: false,
-		features: [
-			"50000 credits per month",
-			"Users: unlimited ",
-		],
-		category: 'Business'
-	},
-	{
-		name: "Founder's Club",
-		description: "Exclusive plan for local small business owners.",
-		price: 2500,
-		color: "text-teal-500",
-		button: "Upgrade Plan",
-		buttonColor:
-			"bg-gradient-to-r from-teal-400 to-green-400 text-white hover:from-teal-500 hover:to-green-500",
-		border: "border-teal-200",
-		isCurrent: false,
-		features: [
-			"+20% Bonus Credits for Life",
-			"Access to Community & Training",
-			"Early Feature Access & Direct Feedback Loop",
-			"Locked Pricing - No Future Increase",
-		],
-		category: 'Business'
-	},
 ];
 
 export default function PlanSelectionPage() {

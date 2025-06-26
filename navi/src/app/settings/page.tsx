@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../../context/ThemeContext";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function SettingsPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -356,138 +357,146 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-      {show2FAModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background: isDarkMode ? 'rgba(17,24,39,0.7)' : 'rgba(243,244,246,0.7)', backdropFilter: 'blur(8px)'}}>
-          <div className={`w-full max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden border relative ${isDarkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
-            style={{boxShadow: isDarkMode ? '0 8px 40px rgba(0,0,0,0.7)' : '0 8px 40px rgba(0,0,0,0.12)'}}>
-            <button
-              className="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-200 transition"
-              onClick={() => setShow2FAModal(false)}
-              aria-label="Close"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <div className="p-8 border-b border-gray-200 dark:border-gray-700">
-              <div className="text-xs mb-2 text-gray-400">Two-Factor Authentication Setup &gt; {twoFAStep}</div>
-              <h2 className="text-2xl font-bold mb-2">Two-Factor Authentication Setup</h2>
-              <div className="flex items-center mb-4">
-                <div className={`flex items-center mr-4 ${twoFAStep >= 1 ? 'text-cyan-500' : 'text-gray-400'}`}><span className="font-bold mr-1">1</span>Phone Number</div>
-                <div className={`flex items-center mr-4 ${twoFAStep >= 2 ? 'text-cyan-500' : 'text-gray-400'}`}><span className="font-bold mr-1">2</span>Confirm</div>
-                <div className={`flex items-center ${twoFAStep === 3 ? 'text-cyan-500' : 'text-gray-400'}`}><span className="font-bold mr-1">3</span>Recovery Code</div>
+      <AnimatePresence>
+        {show2FAModal && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur"
+          >
+            <div className={`w-full max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden border relative ${isDarkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}
+              style={{boxShadow: isDarkMode ? '0 8px 40px rgba(0,0,0,0.7)' : '0 8px 40px rgba(0,0,0,0.12)'}}>
+              <button
+                className="absolute top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-200 transition"
+                onClick={() => setShow2FAModal(false)}
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <div className="p-8 border-b border-gray-200 dark:border-gray-700">
+                <div className="text-xs mb-2 text-gray-400">Two-Factor Authentication Setup &gt; {twoFAStep}</div>
+                <h2 className="text-2xl font-bold mb-2">Two-Factor Authentication Setup</h2>
+                <div className="flex items-center mb-4">
+                  <div className={`flex items-center mr-4 ${twoFAStep >= 1 ? 'text-cyan-500' : 'text-gray-400'}`}><span className="font-bold mr-1">1</span>Phone Number</div>
+                  <div className={`flex items-center mr-4 ${twoFAStep >= 2 ? 'text-cyan-500' : 'text-gray-400'}`}><span className="font-bold mr-1">2</span>Confirm</div>
+                  <div className={`flex items-center ${twoFAStep === 3 ? 'text-cyan-500' : 'text-gray-400'}`}><span className="font-bold mr-1">3</span>Recovery Code</div>
+                </div>
+              </div>
+              <div className="p-8">
+                {twoFAStep === 1 && (
+                  <>
+                    <div className="mb-4">
+                      <div className="font-semibold mb-2">Enter your mobile phone number below.</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">We will send an authentication code if we detect a sign in attempt from an unrecognized location.</div>
+                      <input
+                        type="text"
+                        className={`w-full mb-3 px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                        placeholder="Country"
+                        value={country}
+                        onChange={e => setCountry(e.target.value)}
+                      />
+                      <input
+                        type="tel"
+                        className={`w-full px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                        placeholder="Enter phone number"
+                        value={phoneInput}
+                        onChange={e => setPhoneInput(e.target.value)}
+                      />
+                      <div className="text-xs text-gray-400 mt-2">Your phone number will only be under for two-factor authentication purposes.</div>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <button
+                        className={`px-6 py-2 rounded-lg font-medium border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
+                        onClick={() => { setShow2FAModal(false); setPhoneInput(""); setVerificationCode(""); }}
+                      >Cancel</button>
+                      <button
+                        className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-cyan-500 text-white hover:bg-cyan-600'}`}
+                        onClick={() => setTwoFAStep(2)}
+                        disabled={!phoneInput}
+                      >Continue</button>
+                    </div>
+                  </>
+                )}
+                {twoFAStep === 2 && (
+                  <>
+                    <div className="mb-4">
+                      <div className="font-semibold mb-2">A verification code has been sent to +xxxxxxxxx000.</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">Please confirm by entering the code below.</div>
+                      <input
+                        type="text"
+                        className={`w-full px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                        placeholder="Enter code"
+                        value={verificationCode}
+                        onChange={e => setVerificationCode(e.target.value)}
+                      />
+                      <div className="text-xs text-gray-400 mt-2">We use this code to verify your identity whenever a sign in attempt is detected from an unrecognized location.</div>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <button
+                        className={`px-6 py-2 rounded-lg font-medium border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
+                        onClick={() => setTwoFAStep(1)}
+                      >Back</button>
+                      <button
+                        className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-cyan-500 text-white hover:bg-cyan-600'}`}
+                        onClick={() => setTwoFAStep(3)}
+                        disabled={!verificationCode}
+                      >Continue</button>
+                    </div>
+                  </>
+                )}
+                {twoFAStep === 3 && (
+                  <>
+                    <div className="mb-4">
+                      <div className="font-semibold mb-2">This is your <span className="text-orange-500">ONE TIME</span> recovery code.</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">Please save your recovery code in a secure place by selecting at least one of the options below.</div>
+                      <div ref={recoveryRef} className={`w-full p-4 rounded-lg border font-mono text-base whitespace-pre-wrap break-words ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'}`}>{recoveryCode}</div>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          className={`px-4 py-1 rounded border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
+                          onClick={() => {
+                            if (recoveryRef.current) {
+                              navigator.clipboard.writeText(recoveryRef.current.textContent || '');
+                            }
+                          }}
+                        >Copy</button>
+                        <button
+                          className={`px-4 py-1 rounded border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
+                          onClick={() => {
+                            const blob = new Blob([recoveryCode], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'recovery-code.txt';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                        >Download</button>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                      <button
+                        className={`px-6 py-2 rounded-lg font-medium border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
+                        onClick={() => setTwoFAStep(2)}
+                      >Back</button>
+                      <button
+                        className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-cyan-500 text-white hover:bg-cyan-600'}`}
+                        onClick={() => {
+                          setShow2FAModal(false);
+                          setPendingTwoFA(true);
+                        }}
+                      >Confirm</button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-            <div className="p-8">
-              {twoFAStep === 1 && (
-                <>
-                  <div className="mb-4">
-                    <div className="font-semibold mb-2">Enter your mobile phone number below.</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">We will send an authentication code if we detect a sign in attempt from an unrecognized location.</div>
-                    <input
-                      type="text"
-                      className={`w-full mb-3 px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                      placeholder="Country"
-                      value={country}
-                      onChange={e => setCountry(e.target.value)}
-                    />
-                    <input
-                      type="tel"
-                      className={`w-full px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                      placeholder="Enter phone number"
-                      value={phoneInput}
-                      onChange={e => setPhoneInput(e.target.value)}
-                    />
-                    <div className="text-xs text-gray-400 mt-2">Your phone number will only be under for two-factor authentication purposes.</div>
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <button
-                      className={`px-6 py-2 rounded-lg font-medium border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
-                      onClick={() => { setShow2FAModal(false); setPhoneInput(""); setVerificationCode(""); }}
-                    >Cancel</button>
-                    <button
-                      className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-cyan-500 text-white hover:bg-cyan-600'}`}
-                      onClick={() => setTwoFAStep(2)}
-                      disabled={!phoneInput}
-                    >Continue</button>
-                  </div>
-                </>
-              )}
-              {twoFAStep === 2 && (
-                <>
-                  <div className="mb-4">
-                    <div className="font-semibold mb-2">A verification code has been sent to +xxxxxxxxx000.</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">Please confirm by entering the code below.</div>
-                    <input
-                      type="text"
-                      className={`w-full px-4 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                      placeholder="Enter code"
-                      value={verificationCode}
-                      onChange={e => setVerificationCode(e.target.value)}
-                    />
-                    <div className="text-xs text-gray-400 mt-2">We use this code to verify your identity whenever a sign in attempt is detected from an unrecognized location.</div>
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <button
-                      className={`px-6 py-2 rounded-lg font-medium border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
-                      onClick={() => setTwoFAStep(1)}
-                    >Back</button>
-                    <button
-                      className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-cyan-500 text-white hover:bg-cyan-600'}`}
-                      onClick={() => setTwoFAStep(3)}
-                      disabled={!verificationCode}
-                    >Continue</button>
-                  </div>
-                </>
-              )}
-              {twoFAStep === 3 && (
-                <>
-                  <div className="mb-4">
-                    <div className="font-semibold mb-2">This is your <span className="text-orange-500">ONE TIME</span> recovery code.</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">Please save your recovery code in a secure place by selecting at least one of the options below.</div>
-                    <div ref={recoveryRef} className={`w-full p-4 rounded-lg border font-mono text-base whitespace-pre-wrap break-words ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : 'bg-white border-gray-200 text-gray-900'}`}>{recoveryCode}</div>
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        className={`px-4 py-1 rounded border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
-                        onClick={() => {
-                          if (recoveryRef.current) {
-                            navigator.clipboard.writeText(recoveryRef.current.textContent || '');
-                          }
-                        }}
-                      >Copy</button>
-                      <button
-                        className={`px-4 py-1 rounded border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
-                        onClick={() => {
-                          const blob = new Blob([recoveryCode], { type: 'text/plain' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'recovery-code.txt';
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        }}
-                      >Download</button>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <button
-                      className={`px-6 py-2 rounded-lg font-medium border ${isDarkMode ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' : 'bg-white text-gray-800 hover:bg-gray-100 border-gray-300'}`}
-                      onClick={() => setTwoFAStep(2)}
-                    >Back</button>
-                    <button
-                      className={`px-6 py-2 rounded-lg font-medium ${isDarkMode ? 'bg-cyan-600 text-white hover:bg-cyan-700' : 'bg-cyan-500 text-white hover:bg-cyan-600'}`}
-                      onClick={() => {
-                        setShow2FAModal(false);
-                        setPendingTwoFA(true);
-                      }}
-                    >Confirm</button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       {showAccountDeletionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{background: isDarkMode ? 'rgba(17,24,39,0.7)' : 'rgba(243,244,246,0.7)', backdropFilter: 'blur(8px)'}}>
           <div className={`w-full max-w-md mx-auto rounded-3xl shadow-2xl overflow-hidden border relative ${isDarkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}

@@ -447,7 +447,7 @@ export default function HelpSupportPage() {
         )}
         {/* Chatbot Modal */}
         <AnimatePresence>
-          {showChatbot && (
+        {showChatbot && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -461,11 +461,11 @@ export default function HelpSupportPage() {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="relative max-w-2xl w-full flex flex-col h-[90vh] sm:h-[80vh] rounded-t-2xl sm:rounded-2xl shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border border-gray-200 dark:border-gray-700"
               >
-                <button
-                  onClick={() => setShowChatbot(false)}
+              <button
+                onClick={() => setShowChatbot(false)}
                   className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 text-2xl z-10"
-                  aria-label="Close"
-                >
+                aria-label="Close"
+              >
                   &times;
                 </button>
                 <div className="flex-1 overflow-hidden flex">
@@ -483,8 +483,8 @@ export default function HelpSupportPage() {
                           <span className="truncate text-sm font-medium text-gray-700 dark:text-gray-300">{session.messages.find(m => m.role === 'user')?.content || 'New Chat'}</span>
                           <button onClick={(e) => {e.stopPropagation(); handleDeleteChat(session.id);}} className="p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors">
                             <Trash2 className="w-4 h-4"/>
-                          </button>
-                        </div>
+              </button>
+              </div>
                       ))}
                     </div>
                   </div>
@@ -532,9 +532,9 @@ export default function HelpSupportPage() {
                               <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                             </div>
                           )}
-                        </div>
-                      ))}
-                      {isChatLoading && (
+                  </div>
+                ))}
+                {isChatLoading && (
                         <div className="flex items-start gap-3 justify-start">
                           <Image src="/images/Navi.png" alt="Navi" width={32} height={32} className="rounded-full mt-1" />
                           <div className={`rounded-xl px-4 py-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} text-gray-400 text-sm`}>
@@ -545,12 +545,12 @@ export default function HelpSupportPage() {
                             </div>
                           </div>
                         </div>
-                      )}
-                    </div>
-                    <form
+                )}
+              </div>
+              <form
                       className="p-4 border-t border-gray-200/50 dark:border-gray-700/50 flex flex-col gap-2 bg-white/60 dark:bg-gray-900/60 rounded-br-2xl"
-                      onSubmit={e => {
-                        e.preventDefault();
+                onSubmit={e => {
+                  e.preventDefault();
                         if (editingMessage) {
                           handleSaveEdit();
                         } else {
@@ -571,16 +571,16 @@ export default function HelpSupportPage() {
                         )}
                       </AnimatePresence>
                       <div className="flex gap-4">
-                        <input
+                <input
                           ref={inputRef}
-                          type="text"
+                  type="text"
                           className="flex-1 rounded-xl border-gray-300 dark:border-gray-600 focus:border-emerald-500 focus:ring-emerald-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm transition-all"
                           placeholder="Ask Navi a question..."
-                          value={chatInput}
-                          onChange={e => setChatInput(e.target.value)}
-                          disabled={isChatLoading}
-                          autoFocus
-                        />
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  disabled={isChatLoading}
+                  autoFocus
+                />
                         {editingMessage ? (
                           <div className="flex items-center gap-2">
                             <button
@@ -599,23 +599,23 @@ export default function HelpSupportPage() {
                             </button>
                           </div>
                         ) : (
-                          <button
-                            type="submit"
+                <button
+                  type="submit"
                             className="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all flex items-center justify-center"
-                            disabled={isChatLoading || !chatInput.trim()}
-                          >
+                  disabled={isChatLoading || !chatInput.trim()}
+                >
                             <Send className="w-5 h-5" />
-                          </button>
+                </button>
                         )}
                       </div>
-                    </form>
-                  </div>
-                </div>
+              </form>
+            </div>
+          </div>
               </motion.div>
             </motion.div>
-          )}
+        )}
         </AnimatePresence>
       </main>
     </div>
   );
-}
+} 

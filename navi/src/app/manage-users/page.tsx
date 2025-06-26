@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useTheme } from '../../context/ThemeContext';
@@ -12,7 +12,6 @@ interface UserItem {
   id: number;
   name: string;
   email: string;
-  avatar: string;
   access: 'Owner' | 'Admin' | 'Support Agent' | 'Team Lead' | 'Requested';
   group: 'Admin' | 'Tech Virtual Assistant' | 'Chat Support' | 'Not Assigned' | string;
   credit: 'Unlimited' | number;
@@ -34,143 +33,17 @@ export default function ManageUsersPage() {
   const [groupName, setGroupName] = useState('');
   const [creditLimit, setCreditLimit] = useState<number | ''>('');
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [users, setUsers] = useState<UserItem[]>([
-    {
-      id: 1,
-      name: 'Oliver Thompson',
-      email: 'oliverthompson@email.com',
-      avatar: '/images/Oliver.jpg',
-      access: 'Owner',
-      group: 'Admin',
-      credit: 'Unlimited',
-      agents: ['N', 'P', 'C'],
-    },
-    {
-      id: 2,
-      name: 'Gretchen Schleifer',
-      email: 'gretchen@email.com',
-      avatar: '/images/Gretchen.jpg',
-      access: 'Admin',
-      group: 'Admin',
-      credit: 'Unlimited',
-      agents: ['N', 'P', 'C'],
-    },
-    {
-      id: 3,
-      name: 'Cristofer Stanton',
-      email: 'cristoferpson@email.com',
-      avatar: '/images/Cristofer.jpg',
-      access: 'Support Agent',
-      group: 'Tech Virtual Assistant',
-      credit: 5000,
-      agents: ['N', 'P', 'C', '+2'],
-    },
-    
-    {
-      id: 4,
-      name: 'Hanna Kenter',
-      email: 'hanna@email.com',
-      avatar: '/images/Hanna.jpg',
-      access: 'Team Lead',
-      group: 'Tech Virtual Assistant',
-      credit: 10000,
-      agents: ['N', 'P', 'C'],
-    },
-    {
-      id: 5,
-      name: 'Jaxson Herwitz',
-      email: 'jaxson@email.com',
-      avatar: '/images/Jaxson.jpg',
-      access: 'Support Agent',
-      group: 'Tech Virtual Assistant',
-      credit: 5000,
-      agents: ['N', 'C'],
-    },
-    {
-      id: 6,
-      name: 'Marcus Korsgaard',
-      email: 'marcus@email.com',
-      avatar: '/images/Marcus.jpg',
-      access: 'Team Lead',
-      group: 'Chat Support',
-      credit: 10000,
-      agents: ['N', 'F'],
-    },
-    {
-      id: 7,
-      name: 'Martin Ekstrom Bothman',
-      email: 'martin@email.com',
-      avatar: '/images/Martin.jpg',
-      access: 'Support Agent',
-      group: 'Chat Support',
-      credit: 5000,
-      agents: ['N', 'C'],
-    },
-    {
-      id: 8,
-      name: 'Ann George',
-      email: 'ann@email.com',
-      avatar: '/images/Ann.jpg',
-      access: 'Support Agent',
-      group: 'Chat Support',
-      credit: 5000,
-      agents: ['N', 'C'],
-    },
-    {
-      id: 9,
-      name: 'Martin Torff',
-      email: 'martintorff@email.com',
-      avatar: '/images/Martin.jpg',
-      access: 'Requested',
-      group: 'Admin',
-      credit: 0,
-      agents: [],
-    },
-    {
-      id: 10,
-      name: 'Carter Saris',
-      email: 'cartersaris@email.com',
-      avatar: '/images/Carter.jpg',
-      access: 'Requested',
-      group: 'Tech Virtual Assistant',
-      credit: 0,
-      agents: [],
-    },
-    {
-      id: 11,
-      name: 'Charlie Press',
-      email: 'charlie@email.com',
-      avatar: '/images/Charlie.jpg',
-      access: 'Requested',
-      group: 'Chat Support',
-      credit: 0,
-      agents: [],
-      status: 'pending',
-    },
-    {
-      id: 12,
-      name: 'Cheyenne Bator',
-      email: 'cheyenne@email.com',
-      avatar: '/images/Cheyenne.jpg',
-      access: 'Requested',
-      group: 'Admin',
-      credit: 0,
-      agents: [],
-      status: 'pending',
-    },
-    {
-      id: 13,
-      name: 'James Levin',
-      email: 'james@email.com',
-      avatar: '/images/James.jpg',
-      access: 'Requested',
-      group: 'Tech Virtual Assistant',
-      credit: 0,
-      agents: [],
-      status: 'pending',
-    },
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [users, setUsers] = useState<UserItem[]>([]); // Will be initialized dynamically
+  const [groups, setGroups] = useState<string[]>(['Admin', 'Tech Virtual Assistant', 'Chat Support']);
+  const [agents, setAgents] = useState([
+    { id: 'N', name: 'Navi', description: 'Your smart, friendly assistant', color: 'emerald' },
+    { id: 'P', name: 'Pixie', description: 'Conversational AI', color: 'pink' },
+    { id: 'PA', name: 'Paige', description: 'Image Generation', color: 'yellow' },
+    { id: 'A', name: 'Audra', description: 'Video Generation', color: 'teal' },
+    { id: 'F', name: 'Flicka', description: 'Audio Generation', color: 'purple' },
   ]);
+  const [invitedUsers, setInvitedUsers] = useState<{ email: string; group: string; status: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [selectedGroupForAddMember, setSelectedGroupForAddMember] = useState<string | null>(null);
@@ -182,37 +55,65 @@ export default function ManageUsersPage() {
   const [showAgentsModal, setShowAgentsModal] = useState(false);
   const [showInviteUserModal, setShowInviteUserModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('user');
   const [inviteGroup, setInviteGroup] = useState('');
   const [isInviting, setIsInviting] = useState(false);
+  // Add state for Add/Edit User modal
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null);
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    access: 'Support Agent' as UserItem['access'],
+    group: groups[0],
+    credit: 'Unlimited' as 'Unlimited' | number,
+    agents: [] as string[],
+  });
+  // Add state for reassign group modal
+  const [showReassignGroupModal, setShowReassignGroupModal] = useState(false);
+  const [reassignUser, setReassignUser] = useState<UserItem | null>(null);
+  // 1. Add state for delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteUser, setDeleteUser] = useState<UserItem | null>(null);
 
-  const members = [
-    {
-      id: 1,
-      name: "Oliver Thompson",
-      email: "oliverthompson@email.com",
-      avatar: "/path/to/oliver-avatar.jpg",
-      access: "Admin" as const,
-      group: "Admin",
-      credit: "Unlimited" as const,
-      agents: []
-    },
-    {
-      id: 2,
-      name: "Hanna Kenter",
-      email: "hanna@email.com",
-      avatar: "/path/to/hanna-avatar.jpg",
-      access: "Admin" as const,
-      group: "Admin",
-      credit: "Unlimited" as const,
-      agents: []
-    }
+  // --- Utility Functions ---
+  const getUserInitials = (name: string) => {
+    const names = name.split(' ');
+    return names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
+  };
+  const avatarColors = [
+    'bg-emerald-500',
+    'bg-pink-500',
+    'bg-yellow-500',
+    'bg-teal-500',
+    'bg-purple-500',
+    'bg-blue-500',
+    'bg-orange-500',
+    'bg-gray-500',
   ];
+  const getAvatarColor = (id: number) => avatarColors[id % avatarColors.length];
 
-  const filteredMembers = members.filter(member =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // --- Initialization (for demo, can be replaced with API call) ---
+  useEffect(() => {
+    setUsers([
+      { id: 1, name: 'Oliver Thompson', email: 'oliverthompson@email.com', access: 'Owner', group: 'Admin', credit: 'Unlimited', agents: ['N', 'P', 'C'] },
+      { id: 2, name: 'Gretchen Schleifer', email: 'gretchen@email.com', access: 'Admin', group: 'Admin', credit: 'Unlimited', agents: ['N', 'P', 'C'] },
+      { id: 3, name: 'Cristofer Stanton', email: 'cristoferpson@email.com', access: 'Support Agent', group: 'Tech Virtual Assistant', credit: 5000, agents: ['N', 'P', 'C', '+2'] },
+      { id: 4, name: 'Hanna Kenter', email: 'hanna@email.com', access: 'Team Lead', group: 'Tech Virtual Assistant', credit: 10000, agents: ['N', 'P', 'C'] },
+      { id: 5, name: 'Jaxson Herwitz', email: 'jaxson@email.com', access: 'Support Agent', group: 'Tech Virtual Assistant', credit: 5000, agents: ['N', 'C'] },
+      { id: 6, name: 'Marcus Korsgaard', email: 'marcus@email.com', access: 'Team Lead', group: 'Chat Support', credit: 10000, agents: ['N', 'F'] },
+      { id: 7, name: 'Martin Ekstrom Bothman', email: 'martin@email.com', access: 'Support Agent', group: 'Chat Support', credit: 5000, agents: ['N', 'C'] },
+      { id: 8, name: 'Ann George', email: 'ann@email.com', access: 'Support Agent', group: 'Chat Support', credit: 5000, agents: ['N', 'C'] },
+      { id: 9, name: 'Martin Torff', email: 'martintorff@email.com', access: 'Requested', group: 'Admin', credit: 0, agents: [] },
+      { id: 10, name: 'Carter Saris', email: 'cartersaris@email.com', access: 'Requested', group: 'Tech Virtual Assistant', credit: 0, agents: [] },
+      { id: 11, name: 'Charlie Press', email: 'charlie@email.com', access: 'Requested', group: 'Chat Support', credit: 0, agents: [], status: 'pending' },
+      { id: 12, name: 'Cheyenne Bator', email: 'cheyenne@email.com', access: 'Requested', group: 'Admin', credit: 0, agents: [], status: 'pending' },
+      { id: 13, name: 'James Levin', email: 'james@email.com', access: 'Requested', group: 'Tech Virtual Assistant', credit: 0, agents: [], status: 'pending' },
+    ]);
+    setInvitedUsers([
+      { email: 'invited1@email.com', group: 'Tech Virtual Assistant', status: 'Invited' },
+      { email: 'invited2@email.com', group: 'Chat Support', status: 'Invited' },
+    ]);
+  }, []);
 
   const unassignedCount = users.filter(user => user.group === 'Not Assigned').length;
   const allUsersCount = users.length;
@@ -304,44 +205,6 @@ export default function ManageUsersPage() {
     }
   };
 
-  const agents = [
-    {
-      id: 'N',
-      name: 'Navi',
-      description: 'Your smart, friendly assistant',
-      avatar: '/images/Navi.png',
-      color: 'emerald'
-    },
-    {
-      id: 'P',
-      name: 'Pixie',
-      description: 'Conversational AI',
-      avatar: '/images/Pixie.png',
-      color: 'pink'
-    },
-    {
-      id: 'PA',
-      name: 'Paige',
-      description: 'Image Generation',
-      avatar: '/images/Paige.png',
-      color: 'yellow'
-    },
-    {
-      id: 'A',
-      name: 'Audra',
-      description: 'Video Generation',
-      avatar: '/images/Audra.png',
-      color: 'teal'
-    },
-    {
-      id: 'F',
-      name: 'Flicka',
-      description: 'Audio Generation',
-      avatar: '/images/flicka.png',
-      color: 'purple'
-    }
-  ];
-
   const handleAgentSelect = (agentId: string) => {
     if (selectedAgents.includes(agentId)) {
       setSelectedAgents(selectedAgents.filter(id => id !== agentId));
@@ -374,163 +237,169 @@ export default function ManageUsersPage() {
 
   const renderUserTable = () => (
     <div className="mt-8 overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600 transition duration-150 ease-in-out" />
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agents</th>
-            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-          {filteredUsers.map((user) => (
-            <tr key={user.id} className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200`}>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600 transition duration-150 ease-in-out" />
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 h-10 w-10">
-                    <Image className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt={user.name} width={40} height={40} />
-                  </div>
-                  <div className="ml-4">
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {user.group === 'Not Assigned' ? (
-                  <select className={`block w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${isDarkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-700 border-gray-300'}`}>
-                    <option>Assign Group</option>
-                    <option>Admin</option>
-                    <option>Tech Virtual Assistant</option>
-                    <option>Chat Support</option>
-                  </select>
-                ) : (
-                  user.group
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {typeof user.credit === 'number' ? `$${user.credit.toLocaleString()}` : (
-                  <div className="flex items-center">
-                    <span className="inline-block w-2 h-2 rounded-full bg-teal-500 mr-2"></span>
-                    {user.credit}
-                  </div>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {user.agents.length > 0 ? (
-                  <div className="flex space-x-2">
-                    {user.agents.slice(0, 2).map((agent, agentIndex) => {
-                      const agentObj = agents.find(a => a.id === agent);
-                      return (
-                        <span key={agentIndex} className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${agentObj ? getAgentColor(agentObj.color, isDarkMode) : (isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700')}`}>
-                          {agent}
-                        </span>
-                      );
-                    })}
-                    {user.agents.length > 2 && (
-                      <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>
-                        +{user.agents.length - 2}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <span className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>-</span>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="relative inline-block text-right">
-                  <button
-                    onClick={() => setOpenDropdownId(openDropdownId === user.id ? null : user.id)}
-                    className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-100'} p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500`}
-                    aria-expanded={openDropdownId === user.id}
-                    aria-haspopup="true"
-                  >
-                    <span className="sr-only">Open options</span>
-                    <HiEllipsisHorizontal size={20} />
-                  </button>
-                  <AnimatePresence>
-                    {openDropdownId === user.id && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.1 }}
-                        className={`${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10`}
-                      >
-                        <div className="py-1">
-                          <button onClick={() => console.log('Edit')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
-                            <HiOutlinePencil size={18} className="mr-2" />
-                            Edit
-                          </button>
-                          <button onClick={() => console.log('Reassign Group')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
-                            <HiOutlineUserGroup size={18} className="mr-2" />
-                            Reassign Group
-                          </button>
-                          <button onClick={() => handleDeleteUser(user.id)} className={`${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
-                            <HiOutlineTrash size={18} className="mr-2" />
-                            Delete
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  <AnimatePresence>
-                    {showDeleteConfirm === user.id && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.1 }}
-                        className={`${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} origin-top-right absolute right-0 mt-2 w-96 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20`}
-                      >
-                        <div className="p-5">
-                          <div className="flex items-center mb-4">
-                            <div className={`flex-shrink-0 p-2 rounded-full ${isDarkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>
-                              <HiOutlineTrash size={20} className={`${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
-                            </div>
-                            <h3 className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-base font-semibold ml-3`}>Delete User</h3>
-                          </div>
-                          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-5 leading-relaxed`}>
-                            Are you sure you want to delete <span className="font-medium">{user.name}</span>?
-                          </p>
-                          <div className="flex justify-end space-x-3">
-                            <button
-                              onClick={cancelDelete}
-                              className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200`}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => confirmDelete(user.id)}
-                              className={`${isDarkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200`}
-                            >
-                              Delete User
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </td>
+      <div className="rounded-2xl shadow-sm bg-white font-poppins">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
+            <tr>
+              <th className="px-6 py-3">
+                <input
+                  type="checkbox"
+                  className="form-checkbox h-4 w-4 text-teal-600"
+                  checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setSelectedUsers(filteredUsers.map(u => u.id));
+                    } else {
+                      setSelectedUsers([]);
+                    }
+                  }}
+                />
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agents</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {filteredUsers.map((user) => {
+              const isSelected = selectedUsers.includes(user.id);
+              return (
+                <tr key={user.id} className={`transition-colors duration-200 hover:shadow-md font-poppins ${isSelected ? 'shadow-md bg-teal-50' : ''}`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {
+                        setSelectedUsers(isSelected
+                          ? selectedUsers.filter(id => id !== user.id)
+                          : [...selectedUsers, user.id]
+                        );
+                      }}
+                      className="form-checkbox h-4 w-4 text-teal-600"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className={`h-10 w-10 rounded-full shadow ring-2 ring-teal-400 flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(user.id)}`}>{getUserInitials(user.name)}</div>
+                      <div className="ml-4">
+                        <div className="text-sm font-semibold text-gray-900 font-poppins">{user.name}</div>
+                        <div className="text-xs font-normal text-gray-500 font-poppins">{user.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                    <HiOutlineUserGroup className="text-gray-400" />
+                    {user.group === 'Not Assigned' ? (
+                      <select className={`ml-1 border rounded px-2 py-1 text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-700 border-gray-300'}`}> 
+                        <option>Assign Group</option>
+                        {groups.map(group => <option key={group}>{group}</option>)}
+                      </select>
+                    ) : user.group}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <span className="inline-flex items-center">
+                      <svg className="w-4 h-4 mr-1 text-teal-400" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" /></svg>
+                      {user.credit === 'Unlimited' ? 'Unlimited' : user.credit.toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex gap-1">
+                      {user.agents.slice(0, 3).map((agent, i) => {
+                        const agentObj = agents.find(a => a.id === agent);
+                        return (
+                          <span
+                            key={i}
+                            className={`inline-flex items-center justify-center h-6 w-6 rounded text-xs font-bold
+                              ${agentObj ? getAgentColor(agentObj.color, isDarkMode) : (isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700')}`}
+                          >
+                            {agent}
+                          </span>
+                        );
+                      })}
+                      {user.agents.length > 3 && (
+                        <span className={`inline-flex items-center justify-center h-6 w-6 rounded text-xs font-bold ${isDarkMode ? 'bg-gray-200 text-gray-700' : 'bg-gray-200 text-gray-700'}`}>+{user.agents.length - 3}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="relative inline-block text-right">
+                      <button
+                        onClick={() => setOpenDropdownId(openDropdownId === user.id ? null : user.id)}
+                        className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-100'} p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500`}
+                        aria-expanded={openDropdownId === user.id}
+                        aria-haspopup="true"
+                      >
+                        <span className="sr-only">Open options</span>
+                        <HiEllipsisHorizontal size={20} />
+                      </button>
+                      <AnimatePresence>
+                        {openDropdownId === user.id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.1 }}
+                            className={`${isDarkMode ? 'bg-white border border-gray-200' : 'bg-white border border-gray-200'} origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10`}
+                          >
+                            <div className="py-1">
+                              <button
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                                aria-label="Edit user"
+                                onClick={() => {
+                                  setEditingUser(user);
+                                  setShowUserModal(true);
+                                  setOpenDropdownId(null);
+                                }}
+                              >
+                                <HiOutlinePencil size={18} className="mr-2" />Edit
+                              </button>
+                              <button
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                                aria-label="Reassign group"
+                                onClick={() => {
+                                  setReassignUser(user);
+                                  setShowReassignGroupModal(true);
+                                  setOpenDropdownId(null);
+                                }}
+                              >
+                                <HiOutlineUserGroup size={18} className="mr-2" />Reassign Group
+                              </button>
+                              <button
+                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded transition-colors"
+                                aria-label="Delete user"
+                                onClick={() => {
+                                  setDeleteUser(user);
+                                  setShowDeleteModal(true);
+                                  setOpenDropdownId(null);
+                                }}
+                              >
+                                <HiOutlineTrash size={18} className="mr-2" />Delete
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
   const renderGroupedUsers = () => {
+    // Map group names to display names as in the image
+    const groupDisplayNames: Record<string, string> = {
+      'Admin': 'Billing',
+      'Tech Virtual Assistant': 'Tech Virtual Group',
+      'Chat Support': 'Chat Support Group',
+    };
     const sortedGroupNames = Object.keys(groupedUsers).sort((a, b) => {
-      // Custom sorting for group names as per the image (Admins, Tech Virtual Group, Chat Support Group)
       const order = {
         'Admin': 1,
         'Tech Virtual Assistant': 2,
@@ -540,182 +409,179 @@ export default function ManageUsersPage() {
       const orderB = order[b as keyof typeof order] || 99;
       return orderA - orderB;
     });
-
     return (
       <div className="mt-8 space-y-8">
-        {sortedGroupNames.map(groupName => (
-          <div key={groupName} className={`${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} rounded-lg shadow-sm overflow-hidden`}>
-            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className={`${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-lg font-semibold`}>{groupName}</h2>
-              <div className="flex items-center space-x-4">
-                <button className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'} flex items-center space-x-2 text-sm font-medium p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700`} onClick={() => openAddMemberModal(groupName)}>
-                  <HiOutlineUserPlus size={18} />
-                  <span>Add Member</span>
-                </button>
-                <button className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'} p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700`}>
-                  <HiOutlineAdjustmentsHorizontal size={18} />
-                </button>
+        {sortedGroupNames.map(groupName => {
+          // const allSelected = groupedUsers[groupName].every(user => selectedUsers.includes(user.id));
+          return (
+            <div key={groupName} className={`rounded-2xl shadow-sm bg-white font-poppins mb-8 ${isDarkMode ? 'ring-2 ring-teal-400 bg-teal-50' : ''}`}>
+              <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-800">{groupDisplayNames[groupName] || groupName}</h2>
+                <div className="flex items-center space-x-4">
+                  <button className="flex items-center space-x-2 text-sm font-medium p-2 rounded hover:bg-gray-100 text-gray-600"><HiOutlineUserPlus size={18} /><span>Add Member</span></button>
+                  <button className="p-2 rounded hover:bg-gray-100 text-gray-600"><HiOutlineAdjustmentsHorizontal size={18} /></button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3"><input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600" /></th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agents</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {groupedUsers[groupName].map((user) => {
+                      const isSelected = selectedUsers.includes(user.id);
+                      return (
+                        <tr key={user.id} className={`transition-colors duration-200 hover:shadow-md font-poppins ${isSelected ? 'shadow-md bg-teal-50' : ''}`}>
+                          <td className="px-6 py-4 whitespace-nowrap"><input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600" /></td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className={`h-10 w-10 rounded-full shadow ring-2 ring-teal-400 flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(user.id)}`}>{getUserInitials(user.name)}</div>
+                              <div className="ml-4">
+                                <div className="text-sm font-semibold text-gray-900 font-poppins">{user.name}</div>
+                                <div className="text-xs font-normal text-gray-500 font-poppins">{user.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <span className="inline-flex items-center">
+                              <svg className="w-4 h-4 mr-1 text-teal-400" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" /></svg>
+                              {user.credit === 'Unlimited' ? 'Unlimited' : user.credit.toLocaleString()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex gap-1">
+                              {user.agents.slice(0, 3).map((agent, i) => {
+                                const agentObj = agents.find(a => a.id === agent);
+                                return (
+                                  <span
+                                    key={i}
+                                    className={`inline-flex items-center justify-center h-6 w-6 rounded text-xs font-bold
+                                      ${agentObj ? getAgentColor(agentObj.color, isDarkMode) : 'bg-gray-200 text-gray-700'}`}
+                                  >
+                                    {agent}
+                                  </span>
+                                );
+                              })}
+                              {user.agents.length > 3 && (
+                                <span className="inline-flex items-center justify-center h-6 w-6 rounded text-xs font-bold bg-gray-200 text-gray-700">+{user.agents.length - 3}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="relative inline-block text-right">
+                              <button
+                                onClick={() => setOpenDropdownId(openDropdownId === user.id ? null : user.id)}
+                                className="text-gray-600 p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                                aria-expanded={openDropdownId === user.id}
+                                aria-haspopup="true"
+                              >
+                                <span className="sr-only">Open options</span>
+                                <HiEllipsisHorizontal size={20} />
+                              </button>
+                              <AnimatePresence>
+                                {openDropdownId === user.id && (
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ duration: 0.1 }}
+                                    className="bg-white border border-gray-200 origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                                  >
+                                    <div className="py-1">
+                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-gray-700 hover:bg-gray-100"><HiOutlinePencil size={18} className="mr-2" />Edit</button>
+                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-gray-700 hover:bg-gray-100"><HiOutlineUserGroup size={18} className="mr-2" />Reassign Group</button>
+                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-red-600 hover:bg-gray-100"><HiOutlineTrash size={18} className="mr-2" />Delete</button>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600 transition duration-150 ease-in-out" />
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agents</th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {groupedUsers[groupName].map((user) => (
-                    <tr key={user.id} className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600 transition duration-150 ease-in-out" />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <Image className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt={user.name} width={40} height={40} />
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {user.group === 'Not Assigned' ? (
-                          <select className={`block w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 ${isDarkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-700 border-gray-300'}`}>
-                            <option>Assign Group</option>
-                            <option>Admin</option>
-                            <option>Tech Virtual Assistant</option>
-                            <option>Chat Support</option>
-                          </select>
-                        ) : (
-                          user.group
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {typeof user.credit === 'number' ? `$${user.credit.toLocaleString()}` : (
-                          <div className="flex items-center">
-                            <span className="inline-block w-2 h-2 rounded-full bg-teal-500 mr-2"></span>
-                            {user.credit}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {user.agents.length > 0 ? (
-                          <div className="flex space-x-2">
-                            {user.agents.slice(0, 2).map((agent, agentIndex) => {
-                              const agentObj = agents.find(a => a.id === agent);
-                              return (
-                                <span key={agentIndex} className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${agentObj ? getAgentColor(agentObj.color, isDarkMode) : (isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700')}`}>
-                                  {agent}
-                                </span>
-                              );
-                            })}
-                            {user.agents.length > 2 && (
-                              <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-medium ${isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>
-                                +{user.agents.length - 2}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="relative inline-block text-right">
-                          <button
-                            onClick={() => setOpenDropdownId(openDropdownId === user.id ? null : user.id)}
-                            className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-100'} p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500`}
-                            aria-expanded={openDropdownId === user.id}
-                            aria-haspopup="true"
-                          >
-                            <span className="sr-only">Open options</span>
-                            <HiEllipsisHorizontal size={20} />
-                          </button>
-                          <AnimatePresence>
-                            {openDropdownId === user.id && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                transition={{ duration: 0.1 }}
-                                className={`${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10`}
-                              >
-                                <div className="py-1">
-                                  <button onClick={() => console.log('Edit')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
-                                    <HiOutlinePencil size={18} className="mr-2" />
-                                    Edit
-                                  </button>
-                                  <button onClick={() => console.log('Reassign Group')} className={`${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
-                                    <HiOutlineUserGroup size={18} className="mr-2" />
-                                    Reassign Group
-                                  </button>
-                                  <button onClick={() => handleDeleteUser(user.id)} className={`${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'} flex items-center px-4 py-2 text-sm w-full text-left`}>
-                                    <HiOutlineTrash size={18} className="mr-2" />
-                                    Delete
-                                  </button>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                          <AnimatePresence>
-                            {showDeleteConfirm === user.id && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                transition={{ duration: 0.1 }}
-                                className={`${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'} origin-top-right absolute right-0 mt-2 w-96 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20`}
-                              >
-                                <div className="p-5">
-                                  <div className="flex items-center mb-4">
-                                    <div className={`flex-shrink-0 p-2 rounded-full ${isDarkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>
-                                      <HiOutlineTrash size={20} className={`${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
-                                    </div>
-                                    <h3 className={`${isDarkMode ? 'text-gray-200' : 'text-gray-900'} text-base font-semibold ml-3`}>Delete User</h3>
-                                  </div>
-                                  <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-5 leading-relaxed`}>
-                                    Are you sure you want to delete <span className="font-medium">{user.name}</span>?
-                                  </p>
-                                  <div className="flex justify-end space-x-3">
-                                    <button
-                                      onClick={cancelDelete}
-                                      className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200`}
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      onClick={() => confirmDelete(user.id)}
-                                      className={`${isDarkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200`}
-                                    >
-                                      Delete User
-                                    </button>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
 
+  // Add this section below the All Users table, before the return statement
+  const renderInvitedUsers = () => (
+    <div className="mt-12">
+      <h2 className="text-lg font-semibold mb-4">Invited Users</h2>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}> 
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {invitedUsers.map((user, idx) => (
+              <tr key={idx}>
+                <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{user.group}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{user.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // Open modal for new user
+  const openAddUserModal = () => {
+    setEditingUser(null);
+    setUserForm({ name: '', email: '', access: 'Support Agent', group: groups[0], credit: 'Unlimited', agents: [] });
+    setShowUserModal(true);
+  };
+  // Open modal for editing user
+  const openEditUserModal = (user: UserItem) => {
+    setEditingUser(user);
+    setUserForm({
+      name: user.name,
+      email: user.email,
+      access: user.access,
+      group: user.group,
+      credit: user.credit,
+      agents: user.agents,
+    });
+    setShowUserModal(true);
+  };
+  // Handle form change
+  const handleUserFormChange = (field: string, value: any) => {
+    setUserForm(prev => ({ ...prev, [field]: value }));
+  };
+  // Save user (add or edit)
+  const saveUser = () => {
+    const userToSave = {
+      ...userForm,
+      access: userForm.access as UserItem['access'],
+      credit: userForm.credit,
+    };
+    if (editingUser) {
+      setUsers(users.map(u => u.id === editingUser.id ? { ...editingUser, ...userToSave } : u));
+    } else {
+      setUsers([...users, { ...userToSave, id: Date.now() }]);
+    }
+    setShowUserModal(false);
+  };
+
+  // Add agent image mapping for Create Group modal
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-950' : 'bg-gray-50'} flex font-poppins transition-colors duration-300`}>
       <Sidebar
@@ -754,21 +620,7 @@ export default function ManageUsersPage() {
                   focus:outline-none focus:ring-2 focus:ring-teal-500`}>
                   <HiOutlineAdjustmentsHorizontal size={20} />
                 </button>
-                <button className={`border px-4 py-2.5 rounded-lg text-sm font-medium flex items-center space-x-2 shadow-sm transition-colors duration-200
-                  ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-gray-100' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900'}
-                  focus:outline-none focus:ring-2 focus:ring-teal-500`} onClick={() => setShowCreateGroupModal(true)}>
-                  <HiOutlinePlus size={20} />
-                  <span>Create Groups</span>
-                </button>
-                <button 
-                  onClick={() => setShowInviteUserModal(true)}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-medium flex items-center space-x-2 shadow-md transition-colors duration-200
-                    ${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'}
-                    focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                >
-                  <HiOutlineEnvelope size={20} />
-                  <span>Invite User</span>
-                </button>
+                
               </div>
             </div>
 
@@ -787,10 +639,19 @@ export default function ManageUsersPage() {
                   Groups ({groupsCount})
                 </button>
               </div>
+              <div className="flex items-center gap-2">
+                <button className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}><HiOutlineTrash size={20} /></button>
+                <button className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}><HiOutlineAdjustmentsHorizontal size={20} /></button>
+                <button className={`px-4 py-2 rounded-lg ${isDarkMode ? 'bg-white text-gray-900 border border-gray-200' : 'bg-white text-gray-900 border border-gray-200'} flex items-center gap-2`} onClick={() => setShowCreateGroupModal(true)}><HiOutlinePlus size={20} />Create Groups</button>
+                <button className={`px-4 py-2 rounded-lg bg-teal-500 text-white flex items-center gap-2 hover:bg-teal-600`} onClick={() => setShowInviteUserModal(true)}><HiOutlineEnvelope size={20} />Invite User</button>
+              </div>
             </div>
           </div>
 
-          {activeTab === 'groups' ? renderGroupedUsers() : (filteredUsers.length > 0 ? renderUserTable() : (
+          {activeTab === 'groups' ? renderGroupedUsers() : (filteredUsers.length > 0 ? <>
+            {renderUserTable()}
+            {renderInvitedUsers()}
+          </> : (
             <div className={`flex flex-col items-center justify-center py-16 text-center w-full max-w-lg mx-auto rounded-xl shadow-md border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
               <div className="relative mb-6">
                 <HiOutlineUserPlus size={56} className={`${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
@@ -950,13 +811,7 @@ export default function ManageUsersPage() {
                     </button>
                     {selectedGroupMembers.map((member) => (
                       <div key={member.id} className="relative group">
-                        <Image
-                          src={member.avatar}
-                          alt={member.name}
-                          width={48}
-                          height={48}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700"
-                        />
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(member.id)}`}>{getUserInitials(member.name)}</div>
                         <div className={`absolute -top-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-800 text-white'}`}>
                           {member.name}
                         </div>
@@ -1021,16 +876,10 @@ export default function ManageUsersPage() {
               </div>
 
               <div className="space-y-3 max-h-64 overflow-y-auto">
-                {filteredMembers.map((member) => (
+                {filteredUsers.map((member) => (
                   <div key={member.id} className={`flex items-center justify-between p-3 rounded-xl transition-colors duration-200 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'}`}>
                     <div className="flex items-center space-x-3">
-                      <Image
-                        src={member.avatar}
-                        alt={member.name}
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(member.id)}`}>{getUserInitials(member.name)}</div>
                       <div>
                         <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                           {member.name}
@@ -1116,13 +965,7 @@ export default function ManageUsersPage() {
                         className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50' : 'bg-gray-100 hover:bg-gray-200'}`}
                       >
                         <div className="flex items-center space-x-3">
-                          <Image
-                            src={user.avatar}
-                            alt={user.name}
-                            width={40}
-                            height={40}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(user.id)}`}>{getUserInitials(user.name)}</div>
                           <div>
                             <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                               {user.name}
@@ -1229,13 +1072,7 @@ export default function ManageUsersPage() {
                           : 'hover:bg-gray-100'
                       }`}
                     >
-                      <Image
-                        src={agent.avatar}
-                        alt={agent.name}
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 rounded-full"
-                      />
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(Number(agent.id))}`}>{agent.name[0]}</div>
                       <div className="ml-3">
                         <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                           {agent.name}
@@ -1307,53 +1144,12 @@ export default function ManageUsersPage() {
                   />
                 </div>
 
-                {/* Role Selection */}
-                <div>
-                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
-                    Role
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => setInviteRole('user')}
-                      className={`p-3 rounded-lg border transition-colors duration-200 ${
-                        inviteRole === 'user'
-                          ? isDarkMode
-                            ? 'bg-teal-600 border-teal-500 text-white'
-                            : 'bg-teal-500 border-teal-400 text-white'
-                          : isDarkMode
-                          ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
-                          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center space-x-2">
-                        <HiOutlineUser size={20} />
-                        <span>User</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setInviteRole('admin')}
-                      className={`p-3 rounded-lg border transition-colors duration-200 ${
-                        inviteRole === 'admin'
-                          ? isDarkMode
-                            ? 'bg-teal-600 border-teal-500 text-white'
-                            : 'bg-teal-500 border-teal-400 text-white'
-                          : isDarkMode
-                          ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700'
-                          : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center space-x-2">
-                        <HiOutlineShieldCheck size={20} />
-                        <span>Admin</span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
+
 
                 {/* Group Selection */}
                 <div>
                   <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>
-                    Add to Group (Optional)
+                    Add to Group
                   </label>
                   <select
                     value={inviteGroup}
@@ -1384,12 +1180,11 @@ export default function ManageUsersPage() {
                     setIsInviting(true);
                     try {
                       // Here you would typically make an API call to invite the user
-                      console.log('Inviting user:', { email: inviteEmail, role: inviteRole, group: inviteGroup });
+                      console.log('Inviting user:', { email: inviteEmail, group: inviteGroup });
                       // Simulate API call
                       await new Promise(resolve => setTimeout(resolve, 1000));
                       setShowInviteUserModal(false);
                       setInviteEmail('');
-                      setInviteRole('user');
                       setInviteGroup('');
                     } catch (error) {
                       console.error('Error inviting user:', error);
@@ -1422,6 +1217,187 @@ export default function ManageUsersPage() {
                       <span>Send Invite</span>
                     </>
                   )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add/Edit User Modal */}
+      <AnimatePresence>
+        {showUserModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => setShowUserModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{editingUser ? 'Edit User' : 'Add User'}</h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>Name</label>
+                  <input type="text" value={userForm.name} onChange={e => handleUserFormChange('name', e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}/>
+                </div>
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>Email</label>
+                  <input type="email" value={userForm.email} onChange={e => handleUserFormChange('email', e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}/>
+                </div>
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>Access</label>
+                  <select value={userForm.access} onChange={e => handleUserFormChange('access', e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}>
+                    <option value="Admin">Admin</option>
+                    <option value="Support Agent">Support Agent</option>
+                    <option value="Team Lead">Team Lead</option>
+                    <option value="Requested">Requested</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>Group</label>
+                  <select value={userForm.group} onChange={e => handleUserFormChange('group', e.target.value)} className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}>
+                    {groups.map(group => <option key={group} value={group}>{group}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>Credit</label>
+                  <input
+                    type="text"
+                    value={userForm.credit === 'Unlimited' ? 'Unlimited' : userForm.credit}
+                    onChange={e => {
+                      const val = e.target.value;
+                      handleUserFormChange('credit', val === 'Unlimited' ? 'Unlimited' : Number(val));
+                    }}
+                    placeholder="Unlimited or number"
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}
+                  />
+                </div>
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>Agents</label>
+                  <div className="flex flex-wrap gap-2">
+                    {agents.map(agent => (
+                      <button key={agent.id} type="button" onClick={() => handleUserFormChange('agents', userForm.agents.includes(agent.id) ? userForm.agents.filter(a => a !== agent.id) : [...userForm.agents, agent.id])} className={`px-3 py-1 rounded-full text-sm font-medium border ${userForm.agents.includes(agent.id) ? 'bg-teal-500 text-white border-teal-600' : isDarkMode ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>{agent.name}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 pt-4 flex justify-end space-x-3">
+                <button onClick={() => setShowUserModal(false)} className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Cancel</button>
+                <button onClick={saveUser} className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'}`}>{editingUser ? 'Save Changes' : 'Add User'}</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reassign Group Modal */}
+      <AnimatePresence>
+        {showReassignGroupModal && reassignUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => setShowReassignGroupModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border-gray-200'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Reassign Group</h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} text-sm block mb-2`}>Select Group</label>
+                  <select
+                    value={reassignUser.group}
+                    onChange={e => setReassignUser({ ...reassignUser, group: e.target.value })}
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                  >
+                    {groups.map(group => <option key={group} value={group}>{group}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="p-6 pt-4 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowReassignGroupModal(false)}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setUsers(users.map(u => u.id === reassignUser.id ? { ...u, group: reassignUser.group } : u));
+                    setShowReassignGroupModal(false);
+                    setReassignUser(null);
+                  }}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'bg-teal-600 hover:bg-teal-700 text-white' : 'bg-teal-500 hover:bg-teal-600 text-white'}`}
+                >
+                  Confirm
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && deleteUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border-gray-200'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center">
+                <div className={`flex-shrink-0 p-2 rounded-full ${isDarkMode ? 'bg-red-900/50' : 'bg-red-100'}`}>
+                  <HiOutlineTrash size={28} className={`${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
+                </div>
+                <h2 className={`text-xl font-semibold ml-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Delete User</h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-base leading-relaxed font-poppins`}>
+                  Are you sure you want to delete <span className="font-medium">{deleteUser.name}</span>? This action cannot be undone.
+                </p>
+              </div>
+              <div className="p-6 pt-4 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setUsers(users.filter(u => u.id !== deleteUser.id));
+                    setShowDeleteModal(false);
+                    setDeleteUser(null);
+                  }}
+                  className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}
+                >
+                  Delete
                 </button>
               </div>
             </motion.div>

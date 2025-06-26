@@ -2,7 +2,7 @@
 
 import React, { useState, useContext } from 'react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { Menu, Bell, Users, Link as LinkIcon, CreditCard, Trophy, ChevronDown, ChevronRight, BarChart2, ChevronLeft, Sun, Moon, LogOut, BookOpen, Settings, HelpCircle } from 'lucide-react';
+import { Menu, Bell, Users, Link as LinkIcon, CreditCard, Trophy, ChevronDown, ChevronRight, BarChart2, ChevronLeft, Sun, Moon, LogOut, BookOpen, Settings, HelpCircle, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -171,11 +171,88 @@ function NaviAgentsModal({ isOpen, onClose, isDarkMode }: { isOpen: boolean; onC
   );
 }
 
+interface TeamUser {
+  name: string;
+  usage: number;
+  credits: number;
+}
+
+function TeamUsageModal({ isOpen, onClose, teamData, isDarkMode }: { isOpen: boolean; onClose: () => void; teamData: TeamUser[]; isDarkMode: boolean }) {
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
+            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl w-full max-w-3xl p-8 transform transition-all scale-100 opacity-100`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-2xl font-bold`}>Team Usage Details</h2>
+              <button onClick={onClose} className={`${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} focus:outline-none`}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              <div className={`grid grid-cols-3 gap-4 text-sm font-medium sticky top-0 ${isDarkMode ? 'text-gray-300 bg-gray-800' : 'text-gray-700 bg-white'} pb-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} z-10 mb-2`}>
+                <span>User</span>
+                <span>Usage</span>
+                <span>Used credits</span>
+              </div>
+              {teamData.map((user, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className={`grid grid-cols-3 gap-4 text-sm items-center py-3 px-2 rounded-lg transition-colors duration-200
+                    ${isDarkMode
+                      ? index % 2 === 0
+                        ? 'bg-gray-800'
+                        : 'bg-gray-700'
+                      : index % 2 === 0
+                        ? 'bg-white'
+                        : 'bg-gray-50'}
+                  `}
+                >
+                  <div className="flex items-center space-x-2">                      <div className={`${isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-300 text-gray-700'} w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium`}>
+                      {user.name.split(' ').map((n: string) => n[0]).join('')}
+                    </div>
+                    <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{user.name}</span>
+                  </div>
+                  <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{user.usage}</span>
+                  <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-medium`}>{user.credits.toLocaleString()}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export default function Dashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
+  const [isTeamUsageModalOpen, setIsTeamUsageModalOpen] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
   const router = useRouter();
 
@@ -194,7 +271,16 @@ export default function Dashboard() {
     { name: 'Jaylon Torff', usage: 653, credits: 2235 },
     { name: 'Maria Workman', usage: 251, credits: 3784 },
     { name: 'Ahmad Geidt', usage: 987, credits: 241 },
+    { name: 'Alex Johnson', usage: 456, credits: 1890 },
+    { name: 'Sarah Chen', usage: 789, credits: 892 },
+    { name: 'Mike Rodriguez', usage: 234, credits: 1567 },
+    { name: 'Emily Davis', usage: 567, credits: 432 },
   ];
+
+  // Sort by credits in descending order and get top 6 for display
+  const sortedTeamData = teamUsageData.sort((a, b) => b.credits - a.credits);
+  const displayedUsers = sortedTeamData.slice(0, 6);
+  const hasMoreUsers = teamUsageData.length > 6;
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'} font-poppins transition-colors duration-300`}>
@@ -484,14 +570,14 @@ export default function Dashboard() {
                     <option>Filter by: Usage</option>
                   </select>
                 </div>
-                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4`}>Distribution of credits used among users.</p>
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm mb-4`}>Distribution of credits used among top users.</p>
                 <div className="space-y-4">
                   <div className={`grid grid-cols-3 gap-4 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} pb-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                     <span>User</span>
                     <span>Usage</span>
                     <span>Used credits</span>
                   </div>
-                  {teamUsageData.map((user, index) => (
+                  {displayedUsers.map((user, index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, y: 10 }}
@@ -510,14 +596,30 @@ export default function Dashboard() {
                     >
                       <div className="flex items-center space-x-2">
                         <div className={`${isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-300 text-gray-700'} w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium`}>
-                          {user.name.split(' ').map(n => n[0]).join('')}
+                          {user.name.split(' ').map((n: string) => n[0]).join('')}
                         </div>
                         <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{user.name}</span>
                       </div>
                       <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{user.usage}</span>
-                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-medium`}>{user.credits}</span>
+                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-medium`}>{user.credits.toLocaleString()}</span>
                     </motion.div>
                   ))}
+                  {hasMoreUsers && (
+                    <motion.button
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.3 }}
+                      onClick={() => setIsTeamUsageModalOpen(true)}
+                      className={`w-full py-3 px-4 rounded-lg border-2 border-dashed transition-all duration-200 text-sm font-medium
+                        ${isDarkMode 
+                          ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300 hover:bg-gray-800' 
+                          : 'border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-700 hover:bg-gray-50'}
+                      `}
+                    >
+                      <Users size={16} className="inline mr-2" />
+                      View All Team Members ({teamUsageData.length - 6} more users)
+                    </motion.button>
+                  )}
                 </div>
               </div>
             </div>
@@ -656,6 +758,14 @@ export default function Dashboard() {
           </div>
         </div>
       </motion.div>
+
+      {/* Team Usage Modal */}
+      <TeamUsageModal 
+        isOpen={isTeamUsageModalOpen}
+        onClose={() => setIsTeamUsageModalOpen(false)}
+        teamData={sortedTeamData}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 }
