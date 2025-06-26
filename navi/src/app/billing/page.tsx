@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from '@/context/ThemeContext';
 import { useSubscription } from '@/context/SubscriptionContext';
 import Sidebar from '@/app/components/Sidebar';
@@ -8,7 +8,7 @@ import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
 import CreditsUsageChart from '@/app/components/CreditsUsageChart';
 import SubscriptionManagementModal from '@/app/components/SubscriptionManagementModal';
 import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiOutlinePlus, HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineBell } from "react-icons/hi2";
-import { Download, TrendingUp, TrendingDown, Zap, Clock, CheckCircle, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
+import { TrendingUp, TrendingDown, Zap, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,21 +17,21 @@ export default function BillingPage() {
   const { subscription } = useSubscription();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
-  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('month');
+  const [isClient, setIsClient] = useState(false);
   
   // Subscription management modal state
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [subscriptionModalAction, setSubscriptionModalAction] = useState<'cancel' | 'update' | 'success'>('cancel');
-  const [subscriptionModalData, setSubscriptionModalData] = useState<{
-    planName?: string;
-    currentPlan?: string;
-  }>({});
   
   const router = useRouter();
+
+  // Fix hydration mismatch by ensuring client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -73,6 +73,7 @@ export default function BillingPage() {
   };
 
   const getCreditsPercentage = () => {
+    if (!isClient) return 0; // Return 0 during SSR to prevent hydration mismatch
     const used = Number(subscription.creditsUsed) || 0;
     const remaining = Number(subscription.creditsRemaining) || 0;
     const additional = Number(subscription.totalAdditionalCredits) || 0;
@@ -81,14 +82,11 @@ export default function BillingPage() {
   };
 
   const getTotalCreditsRemaining = () => {
+    if (!isClient) return 0; // Return 0 during SSR to prevent hydration mismatch
     const remaining = Number(subscription.creditsRemaining) || 0;
     const additional = Number(subscription.totalAdditionalCredits) || 0;
     const usedAdditional = Number(subscription.usedAdditionalCredits) || 0;
     return remaining + (additional - usedAdditional);
-  };
-
-  const getActiveAdditionalCredits = () => {
-    return (subscription.additionalCredits || []).filter(credit => credit.status === 'active');
   };
 
   const getStatusColor = (status: string) => {
@@ -111,52 +109,6 @@ export default function BillingPage() {
     return 'from-green-500 to-emerald-500';
   };
 
-  // Handle subscription cancellation
-  const handleSubscriptionCancel = async () => {
-    console.log('🔄 Cancellation button clicked');
-    
-    // Show modal immediately
-    setSubscriptionModalAction('cancel');
-    setSubscriptionModalData({});
-    setShowSubscriptionModal(true);
-    console.log('✅ Modal should be visible now');
-    
-    // TODO: Add API call here if needed
-    /*
-    try {
-      const response = await fetch('/api/subscription/cancel', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: 1,
-          reason: 'User requested cancellation',
-          feedback: 'Cancelled from billing page'
-        }),
-      });
-
-      if (!response.ok) {
-        console.error('Failed to cancel subscription');
-      }
-    } catch (error) {
-      console.error('Error cancelling subscription:', error);
-    }
-    */
-  };
-
-  // Handle subscription update
-  const handleSubscriptionUpdate = (newPlanName: string) => {
-    console.log('🔄 Update button clicked for plan:', newPlanName);
-    setSubscriptionModalAction('update');
-    setSubscriptionModalData({
-      planName: newPlanName,
-      currentPlan: subscription.currentPlan?.name
-    });
-    setShowSubscriptionModal(true);
-    console.log('✅ Update modal should be visible now');
-  };
-
   // Handle account deletion
   const handleDeleteAccount = async () => {
     try {
@@ -168,6 +120,29 @@ export default function BillingPage() {
       console.error('Error deleting account:', error);
     }
   };
+
+  // Don't render dynamic content until client-side
+  if (!isClient) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100" : "bg-gradient-to-br from-gray-50 via-white to-blue-50 text-gray-900"} flex font-poppins transition-all duration-500`}>
+        <Sidebar
+          isDarkMode={isDarkMode}
+          toggleDarkMode={toggleDarkMode}
+          isSidebarCollapsed={isSidebarCollapsed}
+          setIsSidebarCollapsed={setIsSidebarCollapsed}
+          isNaviModalOpen={isNaviModalOpen}
+          setIsNaviModalOpen={setIsNaviModalOpen}
+          isProfileOpen={isProfileOpen}
+          setIsProfileOpen={setIsProfileOpen}
+        />
+        <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-24" : "ml-72"} p-8 md:p-12 overflow-x-hidden`}>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100" : "bg-gradient-to-br from-gray-50 via-white to-blue-50 text-gray-900"} flex font-poppins transition-all duration-500`}>
@@ -550,11 +525,6 @@ export default function BillingPage() {
               </motion.div>
             </motion.div>
 
-<<<<<<< HEAD
-           
-
-=======
->>>>>>> 9272ded5e00d613161ef3601143ba6cdc3ffc8a5
             {/* Enhanced Billing History Section */}
             <motion.div variants={itemVariants} className="mb-8">
               <div className="font-semibold text-xl mb-4 flex items-center gap-3">
@@ -675,9 +645,7 @@ export default function BillingPage() {
       <SubscriptionManagementModal
         isOpen={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
-        action={subscriptionModalAction}
-        planName={subscriptionModalData.planName}
-        currentPlan={subscriptionModalData.currentPlan}
+        action="cancel"
         onDeleteAccount={handleDeleteAccount}
       />
     </div>

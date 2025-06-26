@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useTheme } from '../../context/ThemeContext';
-import { HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiLink, HiOutlinePlus, HiOutlineEnvelope, HiEllipsisHorizontal, HiOutlinePencil, HiOutlineKey, HiOutlineUserGroup, HiOutlineTrash, HiOutlineAdjustmentsHorizontal, HiOutlineUser, HiOutlineShieldCheck } from 'react-icons/hi2';
+import { HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiLink, HiOutlinePlus, HiOutlineEnvelope, HiEllipsisHorizontal, HiOutlinePencil, HiOutlineUserGroup, HiOutlineTrash, HiOutlineAdjustmentsHorizontal } from 'react-icons/hi2';
 import Sidebar from '../components/Sidebar';
 import { HiX } from 'react-icons/hi';
 
@@ -24,29 +24,23 @@ export default function ManageUsersPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'unassigned' | 'groups'>('all');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
-  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [creditLimit, setCreditLimit] = useState<number | ''>('');
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
   const [users, setUsers] = useState<UserItem[]>([]); // Will be initialized dynamically
-  const [groups, setGroups] = useState<string[]>(['Admin', 'Tech Virtual Assistant', 'Chat Support']);
-  const [agents, setAgents] = useState([
-    { id: 'N', name: 'Navi', description: 'Your smart, friendly assistant', color: 'emerald' },
-    { id: 'P', name: 'Pixie', description: 'Conversational AI', color: 'pink' },
-    { id: 'PA', name: 'Paige', description: 'Image Generation', color: 'yellow' },
-    { id: 'A', name: 'Audra', description: 'Video Generation', color: 'teal' },
-    { id: 'F', name: 'Flicka', description: 'Audio Generation', color: 'purple' },
+  const [groups] = useState<string[]>(['Admin', 'Tech Virtual Assistant', 'Chat Support']);
+  const [agents] = useState([
+    { id: 'N', name: 'Navi', description: 'Your smart, friendly assistant', color: 'emerald', image: '/images/Navi.png' },
+    { id: 'P', name: 'Pixie', description: 'Conversational AI', color: 'pink', image: '/images/Pixie.png' },
+    { id: 'PA', name: 'Paige', description: 'Image Generation', color: 'yellow', image: '/images/Paige.png' },
+    { id: 'A', name: 'Audra', description: 'Video Generation', color: 'teal', image: '/images/Audra.png' },
+    { id: 'F', name: 'Flicka', description: 'Audio Generation', color: 'purple', image: '/images/Flicka.png' },
   ]);
   const [invitedUsers, setInvitedUsers] = useState<{ email: string; group: string; status: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-  const [selectedGroupForAddMember, setSelectedGroupForAddMember] = useState<string | null>(null);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddMembersModal, setShowAddMembersModal] = useState(false);
@@ -591,14 +585,10 @@ export default function ManageUsersPage() {
         setIsSidebarCollapsed={setIsSidebarCollapsed}
         isNaviModalOpen={isNaviModalOpen}
         setIsNaviModalOpen={setIsNaviModalOpen}
-        isNaviDropdownOpen={isNaviDropdownOpen}
-        setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
-        isNaviChatbotOpen={isNaviChatbotOpen}
-        setIsNaviChatbotOpen={setIsNaviChatbotOpen}
       />
-      <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-12' : 'ml-32'} p-4 sm:p-6 lg:p-8 overflow-x-auto`}>
+      <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-24' : 'ml-72'} p-4 sm:p-6 lg:p-8 overflow-x-auto`}>
         <div className="w-full max-w-6xl mx-auto">
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
@@ -1072,7 +1062,15 @@ export default function ManageUsersPage() {
                           : 'hover:bg-gray-100'
                       }`}
                     >
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(Number(agent.id))}`}>{agent.name[0]}</div>
+                      <div className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center">
+                        <Image 
+                          src={agent.image} 
+                          alt={agent.name}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       <div className="ml-3">
                         <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                           {agent.name}
