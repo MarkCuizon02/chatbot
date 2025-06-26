@@ -10,6 +10,8 @@ export default function SettingsPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
+  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
+  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Profile state
@@ -375,6 +377,10 @@ export default function SettingsPage() {
         setIsSidebarCollapsed={setIsSidebarCollapsed}
         isNaviModalOpen={isNaviModalOpen}
         setIsNaviModalOpen={setIsNaviModalOpen}
+        isNaviDropdownOpen={isNaviDropdownOpen}
+        setIsNaviDropdownOpen={setIsNaviDropdownOpen}
+        isNaviChatbotOpen={isNaviChatbotOpen}
+        setIsNaviChatbotOpen={setIsNaviChatbotOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
       />
