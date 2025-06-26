@@ -35,8 +35,12 @@ export type SidebarProps = {
   setIsSidebarCollapsed: Dispatch<SetStateAction<boolean>>;
   isNaviModalOpen: boolean;
   setIsNaviModalOpen: Dispatch<SetStateAction<boolean>>;
+  isNaviDropdownOpen: boolean;
+  setIsNaviDropdownOpen: Dispatch<SetStateAction<boolean>>;
   isProfileOpen: boolean;
   setIsProfileOpen: Dispatch<SetStateAction<boolean>>;
+  isNaviChatbotOpen: boolean;
+  setIsNaviChatbotOpen: Dispatch<SetStateAction<boolean>>;
 };
 
 type NavItem = {
@@ -71,8 +75,12 @@ const Sidebar = React.memo(function Sidebar({
   setIsSidebarCollapsed,
   isNaviModalOpen,
   setIsNaviModalOpen,
+  isNaviDropdownOpen,
+  setIsNaviDropdownOpen,
   isProfileOpen,
   setIsProfileOpen,
+  isNaviChatbotOpen,
+  setIsNaviChatbotOpen,
 }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
