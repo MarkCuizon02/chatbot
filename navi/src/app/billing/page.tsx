@@ -26,6 +26,9 @@ export default function BillingPage() {
   // Subscription management modal state
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   
+  // Monthly discount toggle state
+  const [monthlyDiscountActive, setMonthlyDiscountActive] = useState(false);
+
   const router = useRouter();
 
   // Fix hydration mismatch by ensuring client-side rendering
@@ -71,6 +74,10 @@ export default function BillingPage() {
       }
     }
   };
+
+  // Calculate discounted price
+  const originalPrice = Number(subscription.currentPlan?.price) || 0;
+  const discountedPrice = (originalPrice * 0.8).toFixed(2);
 
   const getCreditsPercentage = () => {
     if (!isClient) return 0; // Return 0 during SSR to prevent hydration mismatch
@@ -205,6 +212,37 @@ export default function BillingPage() {
                     Notifications
                   </motion.button>
                 </div>
+              </div>
+            </motion.div>
+
+            {/* Monthly Subscription Promo */}
+            <motion.div
+              variants={itemVariants}
+              className={`flex items-center justify-between rounded-2xl border shadow-md mb-6 px-6 py-4 ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl"><span role="img" aria-label="crown">👑</span></span>
+                <div>
+                  <div className="font-bold text-lg md:text-xl">Monthly Subscription</div>
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Get 20% OFF on all packages when you subscribe to monthly packs</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="bg-green-100 text-green-600 text-xs font-semibold px-3 py-1 rounded-lg border border-green-200">20% OFF</span>
+                <label className="relative inline-flex items-center cursor-pointer ml-2">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={monthlyDiscountActive}
+                    onChange={() => setMonthlyDiscountActive(v => !v)}
+                  />
+                  <div
+                    className={`w-10 h-6 bg-gray-200 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-cyan-500 dark:bg-gray-700 transition-colors duration-200 ${monthlyDiscountActive ? 'bg-green-400' : 'bg-gray-200'}`}
+                  ></div>
+                  <div
+                    className={`absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${monthlyDiscountActive ? 'translate-x-4' : ''}`}
+                  ></div>
+                </label>
               </div>
             </motion.div>
 
@@ -397,8 +435,14 @@ export default function BillingPage() {
                       <div>
                         <div className="font-bold text-2xl mb-2">{subscription.currentPlan?.name}</div>
                         <div className="text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-                          ${subscription.currentPlan?.price}.00
-                          <span className="text-lg font-medium text-gray-500">/month</span>
+                          {monthlyDiscountActive ? (
+                            <>
+                              <span className="line-through text-gray-400 mr-2">${originalPrice.toFixed(2)}</span>
+                              <span>${discountedPrice}</span>
+                            </>
+                          ) : (
+                            <span>${originalPrice.toFixed(2)}</span>
+                          )}
                         </div>
                         <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-6`}>
                           {subscription.currentPlan?.description}
