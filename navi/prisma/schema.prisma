@@ -29,6 +29,7 @@ model User {
   subscriptions         Subscription[]
   chattieCoachsCreated  ChattieCoach[] @relation("UserChattieCoachCreator")
   paymentMethods       PaymentMethod[]
+  userSettings         UserSettings?
 }
 
 model Account {
@@ -396,4 +397,35 @@ model PaymentMethod {
   @@index([isDefault])
   @@index([status])
   @@index([isDeleted]) // Index for soft delete queries
+}
+
+model UserSettings {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
+  
+  // Profile Information
+  fullName        String?
+  preferredName   String?
+  
+  // Personal Information
+  phone           String?
+  contactMethod   String   @default("Email") // "Email" or "Phone"
+  
+  // Security Settings
+  twoFAEnabled    Boolean  @default(false)
+  twoFAPhone      String?
+  twoFACountry    String?
+  twoFARecoveryCode String?
+  
+  // Appearance Settings
+  appearance      String   @default("system") // "system", "light", "dark"
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }
