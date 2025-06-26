@@ -17,6 +17,8 @@ export default function BillingPage() {
   const { subscription } = useSubscription();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
+  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
+  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
@@ -142,6 +144,10 @@ export default function BillingPage() {
           setIsSidebarCollapsed={setIsSidebarCollapsed}
           isNaviModalOpen={isNaviModalOpen}
           setIsNaviModalOpen={setIsNaviModalOpen}
+          isNaviDropdownOpen={isNaviDropdownOpen}
+          setIsNaviDropdownOpen={setIsNaviDropdownOpen}
+          isNaviChatbotOpen={isNaviChatbotOpen}
+          setIsNaviChatbotOpen={setIsNaviChatbotOpen}
           isProfileOpen={isProfileOpen}
           setIsProfileOpen={setIsProfileOpen}
         />
