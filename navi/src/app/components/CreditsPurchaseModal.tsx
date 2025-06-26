@@ -2,47 +2,56 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiXMark, HiOutlineMap, HiOutlineClock, HiOutlineCheck, HiOutlineSparkles } from 'react-icons/hi2';
+import { HiXMark, HiOutlineMap, HiOutlineCheck, HiOutlineSparkles } from 'react-icons/hi2';
 import { useTheme } from '@/context/ThemeContext';
 import { useSubscription } from '@/context/SubscriptionContext';
 
 interface CreditsPurchaseModalProps {
   isOpen: boolean;
   onClose: () => void;
+  monthlyDiscountActive?: boolean;
 }
 
 const creditPackages = [
   {
     id: 'basic',
+    name: 'Basic Pack',
     credits: 100,
     price: 10,
     popular: false,
     savings: 0,
+    features: ['100 credits', '90 days expiry', 'Standard support']
   },
   {
     id: 'pro',
+    name: 'Pro Pack',
     credits: 500,
     price: 45,
     popular: true,
     savings: 10,
+    features: ['500 credits', '90 days expiry', 'Priority support', '10% savings']
   },
   {
     id: 'enterprise',
+    name: 'Enterprise Pack',
     credits: 1000,
     price: 80,
     popular: false,
     savings: 20,
+    features: ['1000 credits', '90 days expiry', 'Premium support', '20% savings']
   },
   {
     id: 'unlimited',
+    name: 'Unlimited Pack',
     credits: 2500,
     price: 180,
     popular: false,
     savings: 28,
+    features: ['2500 credits', '90 days expiry', '24/7 support', '28% savings']
   }
 ];
 
-export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchaseModalProps) {
+export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountActive = false }: CreditsPurchaseModalProps) {
   const { isDarkMode } = useTheme();
   const { purchaseAdditionalCredits, subscription } = useSubscription();
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
@@ -61,8 +70,22 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
     return savings > 0 ? savings : 0;
   };
 
+  // Calculate discounted price for monthly subscription
+  const getDiscountedPrice = (originalPrice: number) => {
+    return monthlyDiscountActive ? originalPrice * 0.8 : originalPrice;
+  };
+
+  // Calculate custom price with discount
+  const calculateCustomPrice = (amount: string) => {
+    const numAmount = parseInt(amount) || 0;
+    const basePrice = numAmount * 0.1; // $0.10 per credit
+    return getDiscountedPrice(basePrice).toFixed(2);
+  };
+
   const handlePurchase = async () => {
     if (!selectedPackage && !customAmount) return;
+    
+    setIsProcessing(true);
     
     let amount: number;
     let price: number;
@@ -77,8 +100,18 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
       price = parseFloat(customPrice);
     }
 
-    setPurchaseData({ amount, price });
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    purchaseAdditionalCredits(amount, price);
+    
+    setIsProcessing(false);
     setShowPurchaseModal(true);
+    setPurchaseData({ amount, price });
+    setSelectedPackage(null);
+    setCustomAmount('');
+    setCustomPrice('');
+    // Do NOT call onClose() here - let user see the confirmation modal
   };
 
   const confirmPurchase = async () => {
@@ -89,20 +122,10 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    purchaseAdditionalCredits(purchaseData.amount, purchaseData.price);
-    
     setIsProcessing(false);
     setShowPurchaseModal(false);
     setPurchaseData(null);
     onClose();
-    setSelectedPackage(null);
-    setCustomAmount('');
-    setCustomPrice('');
-  };
-
-  const calculateCustomPrice = (amount: string) => {
-    const numAmount = parseInt(amount) || 0;
-    return (numAmount * 0.1).toFixed(2); // $0.10 per credit
   };
 
   const handleCustomAmountChange = (value: string) => {
@@ -124,10 +147,10 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className={`w-full max-w-3xl ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-2xl overflow-hidden relative`}
+              className={`w-full max-w-4xl max-h-[90vh] ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-2xl overflow-hidden relative flex flex-col`}
             >
               {/* Header */}
-              <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900' : 'bg-blue-50'}`}>
                     <HiOutlineMap className={`w-5 h-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`} />
@@ -149,7 +172,22 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                 </motion.button>
               </div>
 
-              <div className="p-4 md:p-6">
+              <div className="p-4 md:p-6 overflow-y-auto flex-1">
+                {/* Monthly Discount Banner */}
+                {monthlyDiscountActive && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 rounded-xl flex items-center gap-3"
+                  >
+                    <HiOutlineSparkles className="w-5 h-5" />
+                    <div>
+                      <div className="font-semibold">Monthly Subscription Active!</div>
+                      <div className="text-sm opacity-90">You&apos;re getting 20% OFF on all credit packages</div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Package Selection */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
@@ -168,6 +206,8 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
                     {creditPackages.map((pkg, index) => {
                       const savings = calculateSavings(pkg.price, pkg.credits);
+                      const discountedPrice = getDiscountedPrice(pkg.price);
+                      const originalPrice = pkg.price;
                       return (
                         <motion.div
                           key={pkg.id}
@@ -202,17 +242,52 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                           
                           <div className="flex justify-between items-start mb-2">
                             <div>
-                              <h4 className="font-semibold text-base">{pkg.credits} Credits</h4>
+                              <h4 className="font-semibold text-base">{pkg.name}</h4>
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                90 days expiry
+                              </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-xl font-bold">${pkg.price}</div>
-                              {savings > 0 && (
-                                <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded mt-1">
-                                  Save ${savings.toFixed(2)}
-                                </div>
-                              )}
+                              <div className="text-xl font-bold">{pkg.credits}</div>
+                              <div className="text-xs text-gray-500">credits</div>
                             </div>
                           </div>
+                          
+                          <div className="mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                {monthlyDiscountActive && (
+                                  <span className="text-sm line-through text-gray-400">${originalPrice}</span>
+                                )}
+                                <span className="text-xl font-bold">${discountedPrice.toFixed(2)}</span>
+                              </div>
+                              {monthlyDiscountActive && (
+                                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                                  20% OFF
+                                </span>
+                              )}
+                              {savings > 0 && !monthlyDiscountActive && (
+                                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                                  Save ${savings.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ${(discountedPrice / pkg.credits).toFixed(2)} per credit
+                            </div>
+                          </div>
+                          
+                          <ul className="space-y-1">
+                            {pkg.features.map((feature, i) => (
+                              <li key={i} className="flex items-center gap-2 text-xs">
+                                <HiOutlineCheck className="w-3 h-3 text-green-500" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
                         </motion.div>
                       );
                     })}
@@ -272,16 +347,26 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                         <span>Price:</span>
                         <span className="font-semibold">
                           ${selectedPackage 
-                            ? creditPackages.find(p => p.id === selectedPackage)?.price 
+                            ? getDiscountedPrice(creditPackages.find(p => p.id === selectedPackage)?.price || 0).toFixed(2)
                             : customPrice}
                         </span>
+                      </div>
+                      {monthlyDiscountActive && (
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>Discount:</span>
+                          <span>20% OFF applied</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span>Expiry:</span>
+                        <span>90 days from purchase</span>
                       </div>
                     </div>
                   </motion.div>
                 )}
 
                 {/* Actions */}
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-3 flex-shrink-0">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -365,7 +450,7 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                       You have purchased <span className="font-semibold text-blue-600">{purchaseData.amount} credits</span> for <span className="font-semibold">${purchaseData.price}</span>.
                     </p>
                     <p>
-                      <span className="font-semibold text-green-600">These credits will not expire</span> and will be consumed separately from your plan credits.
+                      <span className="font-semibold text-green-600">These credits will expire in 90 days</span> and will be consumed separately from your plan credits.
                     </p>
                   </div>
                 </div>
@@ -378,7 +463,7 @@ export default function CreditsPurchaseModal({ isOpen, onClose }: CreditsPurchas
                       <ul className={`space-y-1 ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
                         <li>• Credits added to your account immediately</li>
                         <li>• Used before your plan credits</li>
-                        <li>• Never expire</li>
+                        <li>• Expire in 90 days</li>
                         <li>• Available for all features</li>
                       </ul>
                     </div>
