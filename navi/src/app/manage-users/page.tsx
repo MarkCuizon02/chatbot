@@ -236,9 +236,9 @@ export default function ManageUsersPage() {
 
   const renderUserTable = () => (
     <div className="mt-8 overflow-x-auto">
-      <div className="rounded-2xl shadow-sm bg-white font-poppins">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
+      <div className={`rounded-2xl overflow-hidden shadow-sm font-poppins border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <table className={`min-w-full ${isDarkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
+          <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} sticky top-0 z-10`}>
             <tr>
               <th className="px-6 py-3">
                 <input
@@ -254,14 +254,14 @@ export default function ManageUsersPage() {
                   }}
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agents</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Name</th>
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Group</th>
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Credit</th>
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Agents</th>
+              <th className={`px-6 py-3 text-right text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={`${isDarkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
             {filteredUsers.map((user) => {
               const isSelected = selectedUsers.includes(user.id);
               return (
@@ -283,7 +283,7 @@ export default function ManageUsersPage() {
                     <div className="flex items-center">
                       <div className={`h-10 w-10 rounded-full shadow ring-2 ring-teal-400 flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(user.id)}`}>{getUserInitials(user.name)}</div>
                       <div className="ml-4">
-                        <div className="text-sm font-semibold text-gray-900 font-poppins">{user.name}</div>
+                        <div className={`text-sm font-semibold font-poppins ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{user.name}</div>
                         <div className="text-xs font-normal text-gray-500 font-poppins">{user.email}</div>
                       </div>
                     </div>
@@ -413,47 +413,61 @@ export default function ManageUsersPage() {
         {sortedGroupNames.map(groupName => {
           // const allSelected = groupedUsers[groupName].every(user => selectedUsers.includes(user.id));
           return (
-            <div key={groupName} className={`rounded-2xl shadow-sm bg-white font-poppins mb-8 ${isDarkMode ? 'ring-2 ring-teal-400 bg-teal-50' : ''}`}>
-              <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-800">{groupDisplayNames[groupName] || groupName}</h2>
+            <div key={groupName} className={`rounded-2xl font-poppins mb-8 ${isDarkMode ? 'bg-gray-800 border border-gray-700 shadow-sm' : 'bg-white'}`}>
+              <div className="flex justify-between items-center px-6 py-4">
+                <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{groupDisplayNames[groupName] || groupName}</h2>
                 <div className="flex items-center space-x-4">
-                  <button className="flex items-center space-x-2 text-sm font-medium p-2 rounded hover:bg-gray-100 text-gray-600"><HiOutlineUserPlus size={18} /><span>Add Member</span></button>
+                  <button 
+                    className={`flex items-center space-x-2 text-sm font-medium p-2 rounded transition-colors
+                    ${isDarkMode ? 'text-white hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                    onClick={() => openAddMemberModal(groupName)}
+                  >
+                    <HiOutlineUserPlus size={18} /><span>Add Member</span>
+                  </button>
                   <button className="p-2 rounded hover:bg-gray-100 text-gray-600"><HiOutlineAdjustmentsHorizontal size={18} /></button>
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <table className={`min-w-full table-fixed ${isDarkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
+                  <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}> 
                     <tr>
-                      <th className="px-6 py-3"><input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600" /></th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agents</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                      <th className="px-6 py-3 w-16">
+                        <div className="flex items-center justify-center">
+                          <input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600" />
+                        </div>
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider w-1/2 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Name</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider w-32 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Credit</th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider w-32 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Agents</th>
+                      <th className={`px-6 py-3 text-right text-xs font-medium uppercase tracking-wider w-16 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                     {groupedUsers[groupName].map((user) => {
                       const isSelected = selectedUsers.includes(user.id);
                       return (
                         <tr key={user.id} className={`transition-colors duration-200 hover:shadow-md font-poppins ${isSelected ? 'shadow-md bg-teal-50' : ''}`}>
-                          <td className="px-6 py-4 whitespace-nowrap"><input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600" /></td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center justify-center">
+                              <input type="checkbox" className="form-checkbox h-4 w-4 text-teal-600" />
+                            </div>
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className={`h-10 w-10 rounded-full shadow ring-2 ring-teal-400 flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(user.id)}`}>{getUserInitials(user.name)}</div>
                               <div className="ml-4">
-                                <div className="text-sm font-semibold text-gray-900 font-poppins">{user.name}</div>
+                                <div className={`text-sm font-semibold font-poppins ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{user.name}</div>
                                 <div className="text-xs font-normal text-gray-500 font-poppins">{user.email}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             <span className="inline-flex items-center">
                               <svg className="w-4 h-4 mr-1 text-teal-400" fill="currentColor" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" /></svg>
                               {user.credit === 'Unlimited' ? 'Unlimited' : user.credit.toLocaleString()}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             <div className="flex gap-1">
                               {user.agents.slice(0, 3).map((agent, i) => {
                                 const agentObj = agents.find(a => a.id === agent);
@@ -493,9 +507,33 @@ export default function ManageUsersPage() {
                                     className="bg-white border border-gray-200 origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
                                   >
                                     <div className="py-1">
-                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-gray-700 hover:bg-gray-100"><HiOutlinePencil size={18} className="mr-2" />Edit</button>
-                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-gray-700 hover:bg-gray-100"><HiOutlineUserGroup size={18} className="mr-2" />Reassign Group</button>
-                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-red-600 hover:bg-gray-100"><HiOutlineTrash size={18} className="mr-2" />Delete</button>
+                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-gray-700 hover:bg-gray-100"
+                                        onClick={() => {
+                                          setEditingUser(user);
+                                          setShowUserModal(true);
+                                          setOpenDropdownId(null);
+                                        }}
+                                      >
+                                        <HiOutlinePencil size={18} className="mr-2" />Edit
+                                      </button>
+                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-gray-700 hover:bg-gray-100"
+                                        onClick={() => {
+                                          setReassignUser(user);
+                                          setShowReassignGroupModal(true);
+                                          setOpenDropdownId(null);
+                                        }}
+                                      >
+                                        <HiOutlineUserGroup size={18} className="mr-2" />Reassign Group
+                                      </button>
+                                      <button className="flex items-center px-4 py-2 text-sm w-full text-left text-red-600 hover:bg-gray-100"
+                                        onClick={() => {
+                                          setDeleteUser(user);
+                                          setShowDeleteModal(true);
+                                          setOpenDropdownId(null);
+                                        }}
+                                      >
+                                        <HiOutlineTrash size={18} className="mr-2" />Delete
+                                      </button>
                                     </div>
                                   </motion.div>
                                 )}
@@ -520,24 +558,26 @@ export default function ManageUsersPage() {
     <div className="mt-12">
       <h2 className="text-lg font-semibold mb-4">Invited Users</h2>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}> 
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {invitedUsers.map((user, idx) => (
-              <tr key={idx}>
-                <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{user.group}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{user.status}</td>
+        <div className={`rounded-2xl overflow-hidden shadow-sm font-poppins border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <table className={`min-w-full ${isDarkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
+            <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}> 
+              <tr>
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Email</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Group</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              {invitedUsers.map((user, idx) => (
+                <tr key={idx}>
+                  <td className={`px-6 py-4 whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{user.email}</td>
+                  <td className={`px-6 py-4 whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{user.group}</td>
+                  <td className={`px-6 py-4 whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{user.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -1406,6 +1446,96 @@ export default function ManageUsersPage() {
                 >
                   Delete
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Member Modal */}
+      <AnimatePresence>
+        {showAddMemberModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => setShowAddMemberModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`${isDarkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200'} rounded-3xl shadow-xl w-full max-w-md mx-4 overflow-hidden`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  Add Members to {selectedGroupForAddMember}
+                </h2>
+                <button
+                  onClick={() => setShowAddMemberModal(false)}
+                  className={`${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'} p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors absolute top-6 right-6`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6">
+                <div className="relative mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`w-full px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors
+                      ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500'}`}
+                  />
+                </div>
+
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {users
+                    .filter(user => 
+                      user.group !== selectedGroupForAddMember &&
+                      (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+                    )
+                    .map((user) => (
+                      <div
+                        key={user.id}
+                        onClick={() => {
+                          if (selectedGroupForAddMember) {
+                            handleAddMembersToGroup(selectedGroupForAddMember, [user.id]);
+                          }
+                        }}
+                        className={`flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-200 ${isDarkMode ? 'bg-gray-700/50 hover:bg-gray-600/50' : 'bg-gray-100 hover:bg-gray-200'}`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-white text-lg ${getAvatarColor(user.id)}`}>{getUserInitials(user.name)}</div>
+                          <div>
+                            <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {user.name}
+                            </h3>
+                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={() => setShowAddMemberModal(false)}
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200
+                      ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
