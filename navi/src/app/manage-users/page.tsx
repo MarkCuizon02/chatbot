@@ -236,8 +236,8 @@ export default function ManageUsersPage() {
 
   const renderUserTable = () => (
     <div className="mt-8 overflow-x-auto">
-      <div className={`rounded-2xl overflow-hidden shadow-sm font-poppins border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <table className={`min-w-full ${isDarkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
+      <div className={`rounded-2xl overflow-hidden shadow-sm font-poppins ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <table className={`min-w-full ${isDarkMode ? 'divide-y divide-gray-800' : 'divide-y divide-gray-100'}`}>
           <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} sticky top-0 z-10`}>
             <tr>
               <th className="px-6 py-3">
@@ -261,7 +261,7 @@ export default function ManageUsersPage() {
               <th className={`px-6 py-3 text-right text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}></th>
             </tr>
           </thead>
-          <tbody className={`${isDarkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
+          <tbody className={`${isDarkMode ? 'divide-y divide-gray-800' : 'divide-y divide-gray-100'}`}>
             {filteredUsers.map((user) => {
               const isSelected = selectedUsers.includes(user.id);
               return (
@@ -558,8 +558,8 @@ export default function ManageUsersPage() {
     <div className="mt-12">
       <h2 className="text-lg font-semibold mb-4">Invited Users</h2>
       <div className="overflow-x-auto">
-        <div className={`rounded-2xl overflow-hidden shadow-sm font-poppins border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-          <table className={`min-w-full ${isDarkMode ? 'divide-y divide-gray-700' : 'divide-y divide-gray-200'}`}>
+        <div className={`rounded-2xl overflow-hidden shadow-sm font-poppins ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <table className={`min-w-full ${isDarkMode ? 'divide-y divide-gray-800' : 'divide-y divide-gray-100'}`}>
             <thead className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}> 
               <tr>
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Email</th>
@@ -567,7 +567,7 @@ export default function ManageUsersPage() {
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>Status</th>
               </tr>
             </thead>
-            <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <tbody className={`divide-y ${isDarkMode ? 'divide-gray-800' : 'divide-gray-100'}`}>
               {invitedUsers.map((user, idx) => (
                 <tr key={idx}>
                   <td className={`px-6 py-4 whitespace-nowrap ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{user.email}</td>
