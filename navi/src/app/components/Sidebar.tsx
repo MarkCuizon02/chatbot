@@ -221,7 +221,7 @@ const Sidebar = React.memo(function Sidebar({
           boxShadow: '0 4px 30px rgba(0, 0, 0, 0.05)',
         }}
       >
-        <div className="flex-grow overflow-y-auto overflow-x-hidden">
+        <div className="flex-grow overflow-y-auto overflow-x-hidden scrollbar-hide">
           <div className={`p-5 flex items-start ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
             <AnimatePresence>
               {!isSidebarCollapsed && (
