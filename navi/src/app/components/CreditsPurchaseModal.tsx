@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiXMark, HiOutlineMap, HiOutlineCheck, HiOutlineSparkles } from 'react-icons/hi2';
 import { useTheme } from '@/context/ThemeContext';
 import { useSubscription } from '@/context/SubscriptionContext';
+import { CREDIT_PACKS, formatPrice, formatPricePerCredit, getCreditPackPrice } from '@/lib/creditPricing';
 
 interface CreditsPurchaseModalProps {
   isOpen: boolean;
@@ -13,44 +14,21 @@ interface CreditsPurchaseModalProps {
   setMonthlyDiscountActive?: (value: boolean) => void;
 }
 
-const creditPackages = [
-  {
-    id: 'basic',
-    name: 'Basic Pack',
-    credits: 100,
-    price: 10,
-    popular: false,
-    savings: 0,
-    features: ['100 credits', '90 days expiry', 'Standard support']
-  },
-  {
-    id: 'pro',
-    name: 'Pro Pack',
-    credits: 500,
-    price: 45,
-    popular: true,
-    savings: 10,
-    features: ['500 credits', '90 days expiry', 'Priority support', '10% savings']
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise Pack',
-    credits: 1000,
-    price: 80,
-    popular: false,
-    savings: 20,
-    features: ['1000 credits', '90 days expiry', 'Premium support', '20% savings']
-  },
-  {
-    id: 'unlimited',
-    name: 'Unlimited Pack',
-    credits: 2500,
-    price: 180,
-    popular: false,
-    savings: 28,
-    features: ['2500 credits', '90 days expiry', '24/7 support', '28% savings']
-  }
-];
+// Use the new credit packs from the pricing system
+const creditPackages = CREDIT_PACKS.map((pack, index) => ({
+  id: `pack-${index}`,
+  name: `${pack.credits.toLocaleString()} Credits`,
+  credits: pack.credits,
+  price: pack.totalPrice,
+  popular: pack.popular || false,
+  savings: 0, // Will be calculated dynamically
+  features: [
+    `${pack.credits.toLocaleString()} credits`,
+    '90 days expiry',
+    'Standard support',
+    `${formatPricePerCredit(pack.pricePerCredit)} per credit`
+  ]
+}));
 
 export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountActive = false, setMonthlyDiscountActive }: CreditsPurchaseModalProps) {
   const { isDarkMode } = useTheme();
@@ -66,7 +44,7 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
 
   const calculateSavings = (packagePrice: number, packageCredits: number) => {
     if (!isSubscribed) return 0;
-    const regularPrice = packageCredits * 0.1; // $0.10 per credit
+    const regularPrice = packageCredits * 0.200; // $0.200 per credit (highest tier)
     const savings = regularPrice - packagePrice;
     return savings > 0 ? savings : 0;
   };
@@ -79,7 +57,7 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
   // Calculate custom price with discount
   const calculateCustomPrice = (amount: string) => {
     const numAmount = parseInt(amount) || 0;
-    const basePrice = numAmount * 0.1; // $0.10 per credit
+    const basePrice = getCreditPackPrice(numAmount);
     return getDiscountedPrice(basePrice).toFixed(2);
   };
 
@@ -95,24 +73,46 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
       const pkg = creditPackages.find(p => p.id === selectedPackage);
       if (!pkg) return;
       amount = pkg.credits;
-      price = pkg.price;
+      price = getDiscountedPrice(pkg.price);
     } else {
       amount = parseInt(customAmount);
       price = parseFloat(customPrice);
     }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    purchaseAdditionalCredits(amount, price);
-    
-    setIsProcessing(false);
-    setShowPurchaseModal(true);
-    setPurchaseData({ amount, price });
-    setSelectedPackage(null);
-    setCustomAmount('');
-    setCustomPrice('');
-    // Do NOT call onClose() here - let user see the confirmation modal
+    try {
+      // Call the new API endpoint
+      const response = await fetch('/api/billing/purchase-credits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accountId: 1, // TODO: Get actual account ID from user context
+          credits: amount,
+          applyDiscount: monthlyDiscountActive,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to purchase credits');
+      }
+
+      const result = await response.json();
+      
+      // Update the subscription context
+      purchaseAdditionalCredits(amount, price);
+      
+      setIsProcessing(false);
+      setShowPurchaseModal(true);
+      setPurchaseData({ amount, price });
+      setSelectedPackage(null);
+      setCustomAmount('');
+      setCustomPrice('');
+    } catch (error) {
+      console.error('Error purchasing credits:', error);
+      setIsProcessing(false);
+      // TODO: Show error message to user
+    }
   };
 
   const confirmPurchase = async () => {
@@ -295,9 +295,9 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                             <div className="flex items-center gap-2">
                               <div className="flex items-center gap-1">
                                 {monthlyDiscountActive && (
-                                  <span className="text-sm line-through text-gray-400">${originalPrice}</span>
+                                  <span className="text-sm line-through text-gray-400">{formatPrice(originalPrice)}</span>
                                 )}
-                                <span className="text-xl font-bold">${discountedPrice.toFixed(2)}</span>
+                                <span className="text-xl font-bold">{formatPrice(discountedPrice)}</span>
                               </div>
                               {monthlyDiscountActive && (
                                 <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
@@ -306,12 +306,12 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                               )}
                               {savings > 0 && !monthlyDiscountActive && (
                                 <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                  Save ${savings.toFixed(2)}
+                                  Save {formatPrice(savings)}
                                 </span>
                               )}
                             </div>
                             <div className="text-xs text-gray-500">
-                              ${(discountedPrice / pkg.credits).toFixed(2)} per credit
+                              {formatPricePerCredit(discountedPrice / pkg.credits)} per credit
                             </div>
                           </div>
                           
@@ -354,7 +354,7 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                           Total Price
                         </label>
                         <div className={`w-full p-2 border rounded-lg ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'}`}>
-                          <span className="text-xl font-bold">${customPrice || '0.00'}</span>
+                          <span className="text-xl font-bold">{customPrice ? formatPrice(parseFloat(customPrice)) : formatPrice(0)}</span>
                         </div>
                       </div>
                     </div>
@@ -381,9 +381,9 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                       <div className="flex justify-between text-sm">
                         <span>Price:</span>
                         <span className="font-semibold">
-                          ${selectedPackage 
-                            ? getDiscountedPrice(creditPackages.find(p => p.id === selectedPackage)?.price || 0).toFixed(2)
-                            : customPrice}
+                          {selectedPackage 
+                            ? formatPrice(getDiscountedPrice(creditPackages.find(p => p.id === selectedPackage)?.price || 0))
+                            : customPrice ? formatPrice(parseFloat(customPrice)) : formatPrice(0)}
                         </span>
                       </div>
                       {monthlyDiscountActive && (

@@ -587,7 +587,6 @@ export default function BillingPage() {
                     <table className="min-w-full text-sm">
                       <thead>
                         <tr className={`text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-semibold border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                          <th className="py-4 pr-6">Invoice ID</th>
                           <th className="py-4 pr-6">Description</th>
                           <th className="py-4 pr-6">Type</th>
                           <th className="py-4 pr-6">Amount</th>
@@ -605,9 +604,6 @@ export default function BillingPage() {
                             transition={{ delay: index * 0.1 }}
                             className={`border-b last:border-0 group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
                           >
-                            <td className="py-4 pr-6 font-mono text-blue-600 dark:text-blue-400">
-                              {row.status === 'Failed' ? '------' : row.id}
-                            </td>
                             <td className="py-4 pr-6 font-medium">{row.plan}</td>
                             <td className="py-4 pr-6">
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
