@@ -7,6 +7,7 @@ import Sidebar from '@/app/components/Sidebar';
 import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
 import CreditsUsageChart from '@/app/components/CreditsUsageChart';
 import SubscriptionManagementModal from '@/app/components/SubscriptionManagementModal';
+import InvoicePreviewModal from '@/app/components/InvoicePreviewModal';
 import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiOutlinePlus, HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineBell } from "react-icons/hi2";
 import { TrendingUp, TrendingDown, Zap, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -28,6 +29,19 @@ export default function BillingPage() {
   
   // Subscription management modal state
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  
+  // Invoice preview modal state
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<{
+    id: string;
+    amount: number;
+    status: string;
+    date: string;
+    accountId: number;
+    invoiceId?: number;
+    type?: string;
+    description?: string;
+  } | null>(null);
   
   // Monthly discount toggle state - only enabled if user is subscribed
   const [monthlyDiscountActive, setMonthlyDiscountActive] = useState(false);
@@ -143,6 +157,60 @@ export default function BillingPage() {
     } catch (error) {
       console.error('Error deleting account:', error);
     }
+  };
+
+  // Handle invoice preview
+  const handleInvoicePreview = (invoice: {
+    id: string;
+    amount: number;
+    status: string;
+    date: string;
+    type?: string;
+    plan?: string;
+  }) => {
+    setSelectedInvoice({
+      ...invoice,
+      accountId: 1, // Default account ID
+      description: invoice.plan
+    });
+    setShowInvoicePreview(true);
+    setMenuOpen(null);
+  };
+
+  // Handle invoice download
+  const handleInvoiceDownload = (invoice: {
+    id: string;
+    amount: number;
+    status: string;
+    date: string;
+    type?: string;
+    plan?: string;
+  }) => {
+    // Create a simple text-based invoice for download
+    const invoiceContent = `
+INVOICE
+
+Invoice ID: ${invoice.id}
+Date: ${invoice.date}
+Amount: $${invoice.amount}
+Status: ${invoice.status}
+Type: ${invoice.type === 'plan' ? 'Subscription' : 'Credits Purchase'}
+Description: ${invoice.plan || 'N/A'}
+
+Thank you for your business!
+    `.trim();
+
+    // Create blob and download
+    const blob = new Blob([invoiceContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoice-${invoice.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setMenuOpen(null);
   };
 
   // Don't render dynamic content until client-side
@@ -645,15 +713,17 @@ export default function BillingPage() {
                                   >
                                     <motion.button 
                                       whileHover={{ backgroundColor: isDarkMode ? '#374151' : '#f3f4f6' }}
-                                      className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-gray-50 text-sm transition-colors"
+                                      className={`flex items-center gap-3 px-4 py-3 w-full text-left text-sm transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                                      onClick={() => handleInvoicePreview(row)}
                                     >
-                                      <HiOutlineEye className="w-4 h-4" /> View Details
+                                      <HiOutlineEye className="w-4 h-4" /> Preview
                                     </motion.button>
                                     <motion.button 
                                       whileHover={{ backgroundColor: isDarkMode ? '#374151' : '#f3f4f6' }}
-                                      className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-gray-50 text-sm transition-colors"
+                                      className={`flex items-center gap-3 px-4 py-3 w-full text-left text-sm transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                                      onClick={() => handleInvoiceDownload(row)}
                                     >
-                                      <HiOutlineArrowDownTray className="w-4 h-4" /> Download Invoice
+                                      <HiOutlineArrowDownTray className="w-4 h-4" /> Download
                                     </motion.button>
                                   </motion.div>
                                 )}
@@ -685,6 +755,13 @@ export default function BillingPage() {
         onClose={() => setShowSubscriptionModal(false)}
         action="cancel"
         onDeleteAccount={handleDeleteAccount}
+      />
+
+      {/* Invoice Preview Modal */}
+      <InvoicePreviewModal
+        isOpen={showInvoicePreview}
+        onClose={() => setShowInvoicePreview(false)}
+        invoice={selectedInvoice}
       />
     </div>
   );
