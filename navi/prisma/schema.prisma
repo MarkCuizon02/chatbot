@@ -1,93 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  firstname String?
-  lastname  String?
-  customerId String?
-  verified    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  accounts            UserAccount[]
-  admins              Admin[]       @relation("UserAdmin")
-  oauths              OAuth[]       @relation("UserOAuth")
-  onboardings         Onboarding[]  @relation("UserOnboarding")
-  verificationTokens  VerificationToken[]
+  id                     Int                     @id @default(autoincrement())
+  username               String                  @unique
+  email                  String                  @unique
+  password               String
+  firstname              String?
+  lastname               String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  verified               Boolean                 @default(false)
+  AccountLinkRequest     AccountLinkRequest[]
+  admins                 Admin?                  @relation("UserAdmin")
+  chattieCoachsCreated   ChattieCoach[]          @relation("UserChattieCoachCreator")
   knowledgeBaseResponses KnowledgeBaseResponse[]
-  subscriptions         Subscription[]
-  chattieCoachsCreated  ChattieCoach[] @relation("UserChattieCoachCreator")
-  paymentMethods       PaymentMethod[]
-  userSettings         UserSettings?
+  oauths                 OAuth[]                 @relation("UserOAuth")
+  onboardings            Onboarding[]            @relation("UserOnboarding")
+  Transaction            Transaction[]
+  accounts               UserAccount[]
+  verificationTokens     VerificationToken[]
 }
 
 model Account {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  type        String   @default("personal")
-  credits     Int      @default(0)
-  setup       Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  users           UserAccount[]
-  chatThreads     ChatThread[]
-  chatties        ChattieSettings[]
+  id                     Int                     @id @default(autoincrement())
+  name                   String
+  description            String?
+  type                   String                  @default("personal")
+  credits                Float                   @default(0)
+  setup                  Boolean                 @default(false)
+  stripCustomerId        String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  AccountLinkRequest     AccountLinkRequest[]
+  chatThreads            ChatThread[]
+  chattieCoachs          ChattieCoach[]
+  chatties               ChattieSettings[]
+  Invoice                Invoice[]
   knowledgeBaseResponses KnowledgeBaseResponse[]
-  chattieCoachs   ChattieCoach[] // Add this line for relation
+  Subscription           Subscription[]
+  Transaction            Transaction[]
+  users                  UserAccount[]
 }
 
 model UserAccount {
-  id        Int          @id @default(autoincrement())
-  userId    Int
-  accountId Int
-  role      String
-
-  user    User    @relation(fields: [userId], references: [id])
-  account Account @relation(fields: [accountId], references: [id])
-
+  userId     Int
+  accountId  Int
+  role       String
+  id         Int          @id @default(autoincrement())
+  account    Account      @relation(fields: [accountId], references: [id])
+  user       User         @relation(fields: [userId], references: [id])
   UserAssets UserAssets[]
-
-  @@unique([userId, accountId])
 }
 
 model UserAssets {
-  id           Int         @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   userAccountId Int
-  key          String
-  type         String
-  source       String
-  status       String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  userAccount  UserAccount @relation(fields: [userAccountId], references: [id])
+  agentId       Int
+  key           String
+  type          String
+  prompt        String?
+  source        String
+  status        String
+  metadata      String?
+  generatedBy   String?
+  publishedBy   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  publishedAt   DateTime?
+  deletedAt     DateTime?
+  userAccount   UserAccount @relation(fields: [userAccountId], references: [id])
 }
 
 model VerificationToken {
-  id          Int      @id @default(autoincrement())
-  userId      Int      // Changed from String to Int to match User.id
-  token       String   @unique // Store a hashed version of the token
-  type        String   // e.g., 'email', 'password_reset'
-  createdAt   DateTime @default(now())
-  expiresAt   DateTime
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  type      String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
 
-  // Foreign key relation
-  user        User     @relation(fields: [userId], references: [id])
-
-  @@index([userId]) // Index for efficient lookups
+  @@index([userId])
 }
 
 model Contact {
@@ -111,7 +111,7 @@ model Email {
   to        String
   subject   String
   body      String
-  status    String   @default("queued") // e.g., 'queued', 'sent', 'failed'
+  status    String   @default("queued")
   createdAt DateTime @default(now())
 }
 
@@ -120,8 +120,7 @@ model Admin {
   userId    Int      @unique
   role      String   @default("admin")
   createdAt DateTime @default(now())
-
-  user User @relation("UserAdmin", fields: [userId], references: [id])
+  user      User     @relation("UserAdmin", fields: [userId], references: [id])
 }
 
 model OAuth {
@@ -131,8 +130,7 @@ model OAuth {
   providerId String   @unique
   email      String
   createdAt  DateTime @default(now())
-
-  user User @relation("UserOAuth", fields: [userId], references: [id])
+  user       User     @relation("UserOAuth", fields: [userId], references: [id])
 }
 
 model Onboarding {
@@ -141,47 +139,43 @@ model Onboarding {
   step      String
   completed Boolean
   createdAt DateTime @default(now())
-
-  user User @relation("UserOnboarding", fields: [userId], references: [id])
+  user      User     @relation("UserOnboarding", fields: [userId], references: [id])
 }
 
 model ChatThread {
-  id           Int      @id @default(autoincrement())
+  id           Int          @id @default(autoincrement())
   accountId    Int
-  userId       Int      // Added userId to associate thread with specific user
-  coachId      Int   @default(0)     // Added userId to associate thread with specific user
+  userId       Int
   title        String?
-  companyShare Boolean  @default(false) // Added for company-wide sharing
-  publicShare  Boolean  @default(false) // Added for public exposure
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  account      Account  @relation(fields: [accountId], references: [id])
+  companyShare Boolean      @default(false)
+  publicShare  Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  coachId      Int          @default(0)
   chats        Chat[]
   summary      ChatSummary?
+  account      Account      @relation(fields: [accountId], references: [id])
 
   @@index([accountId])
-  @@index([userId])  // Added index for faster user-specific queries
+  @@index([userId])
 }
 
 model Chat {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   chatThreadId Int
-  role         String   // 'user' or 'assistant'
+  role         String
   content      String
-  createdAt    DateTime @default(now())
-
+  createdAt    DateTime   @default(now())
   chatThread   ChatThread @relation(fields: [chatThreadId], references: [id])
 
   @@index([chatThreadId])
 }
 
 model ChatSummary {
-  id           Int      @id @default(autoincrement())
-  chatThreadId Int      @unique
+  id           Int        @id @default(autoincrement())
+  chatThreadId Int        @unique
   summary      String
-  updatedAt    DateTime @updatedAt
-
+  updatedAt    DateTime   @updatedAt
   chatThread   ChatThread @relation(fields: [chatThreadId], references: [id])
 }
 
@@ -198,139 +192,215 @@ model ChattieSettings {
   theme               String
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-
   account             Account  @relation(fields: [accountId], references: [id])
 }
 
 model KnowledgeBaseQuestion {
-  id        Int       @id @default(autoincrement())
+  id        Int                     @id @default(autoincrement())
   text      String
   type      String
   options   Json?
   order     Int
   purpose   String
+  createdAt DateTime                @default(now())
   field     String?
-  createdAt DateTime  @default(now())
-  
-  // Relationships
   responses KnowledgeBaseResponse[]
 }
 
 model KnowledgeBaseResponse {
-  id         Int      @id @default(autoincrement())
+  id         Int                   @id @default(autoincrement())
   userId     Int
   accountId  Int
   questionId Int
   response   String
-  createdAt  DateTime @default(now())
-  
-  // Relationships
-  user     User                 @relation(fields: [userId], references: [id])
-  account  Account              @relation(fields: [accountId], references: [id])
-  question KnowledgeBaseQuestion @relation(fields: [questionId], references: [id])
-  
+  createdAt  DateTime              @default(now())
+  account    Account               @relation(fields: [accountId], references: [id])
+  question   KnowledgeBaseQuestion @relation(fields: [questionId], references: [id])
+  user       User                  @relation(fields: [userId], references: [id])
+
   @@index([userId])
   @@index([accountId])
   @@index([questionId])
 }
 
 model PricingPlan {
-  id          String  @id @default(cuid())
-  title       String
-  price       Int     // Price in cents (e.g., 1900 for $19.00)
-  description String
-  buttonText  String  @default("Subscribe")
-  href        String  @default("#")
-  billing     String  @default("/month")
-  popular     Boolean @default(false)
-  isActive    Boolean @default(true)
-  
-  // Stripe integration fields
-  stripeProductId String? @unique
-  stripePriceId   String? @unique
-  
-  // Metadata
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  features      PlanFeature[]
+  id              Int           @id @default(autoincrement())
+  title           String
+  price           Int
+  credits         Float
+  description     String
+  buttonText      String        @default("Subscribe")
+  href            String        @default("#")
+  billing         String        @default("/month")
+  popular         Boolean       @default(false)
+  category        String        @default("personal")
+  isActive        Boolean       @default(true)
+  stripeProductId String?       @unique
+  stripePriceId   String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  features        PlanFeature[]
 }
 
 model PlanFeature {
-  id            String      @id @default(cuid())
   name          String
   description   String?
   included      Boolean     @default(true)
-  pricingPlanId String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  id            Int         @id @default(autoincrement())
+  pricingPlanId Int
   pricingPlan   PricingPlan @relation(fields: [pricingPlanId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Subscription {
-  id     Int            @id @default(autoincrement())
-  status SubscriptionStatus @default(ACTIVE)
-  
-  // User relation
-  userId Int
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Stripe fields
-  stripeSubscriptionId String? @unique
+  id                   Int                @id @default(autoincrement())
+  accountId            Int?
+  stripeSubscriptionId String?            @unique
   stripeCustomerId     String?
   stripePriceId        String?
-  
-  // Billing details
-  currentPeriodStart DateTime?
-  currentPeriodEnd   DateTime?
-  cancelAtPeriodEnd  Boolean   @default(false)
-  canceledAt         DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  status               SubscriptionStatus @default(ACTIVE)
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  Account              Account?           @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model ChattieCoach {
-  id          Int    @id @default(autoincrement())
-  name        String    
-  slug        String    @unique
-  category    String
-  aiModel     String    @default("gpt-4.0")
-  basePrompt  String    @db.Text
-  expert      String?    @db.Text
-  image       String?
-  visible     Boolean   @default(false)
-  favorite    Boolean   @default(false)
-  shared      Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  accountId   Int
-  account     Account   @relation(fields: [accountId], references: [id])
-  createdBy   Int
-  creator     User      @relation("UserChattieCoachCreator", fields: [createdBy], references: [id])
+  id            Int             @id @default(autoincrement())
+  name          String
+  slug          String          @unique
+  category      String
+  aiModel       String          @default("gpt-4.0")
+  basePrompt    String
+  expert        String?
+  image         String?
+  visible       Boolean         @default(false)
+  favorite      Boolean         @default(false)
+  shared        Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
+  accountId     Int
+  createdBy     Int
+  content       String?
+  account       Account         @relation(fields: [accountId], references: [id])
+  creator       User            @relation("UserChattieCoachCreator", fields: [createdBy], references: [id])
+  CoachPinecone CoachPinecone[]
 }
 
 model CoachTemplate {
-  id          Int    @id @default(autoincrement())
-  name        String    
-  category    String
-  aiModel     String    @default("gpt-4.0")
-  basePrompt  String    @db.Text
-  expert      String?    @db.Text
-  image       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         Int      @id @default(autoincrement())
+  name       String
+  category   String
+  aiModel    String   @default("gpt-4.0")
+  basePrompt String
+  expert     String?
+  image      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model ChatExpert {
-  id          Int    @id @default(autoincrement())
-  name        String    
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model AIEngine {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  type        String
+  snapshot    String
+  description String?
+  cost        Float    @default(0.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Agent {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique
+  slug          String          @unique
+  description   String
+  displayOrder  Int             @default(0)
+  status        String          @default("coming_soon")
+  releaseDate   DateTime
+  imageUrl      String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  category      String
+  tagline       String
+  tagname       String
+  videoUrl      String?
+  AgentFeatures AgentFeatures[]
+  Transaction   Transaction[]
+}
+
+model Invoice {
+  id              Int       @id @default(autoincrement())
+  accountId       Int
+  subscriptionId  String?
+  stripeInvoiceId String    @unique
+  amountDue       Float
+  amountPaid      Float
+  currency        String    @default("usd")
+  status          String
+  dueDate         DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  Account         Account   @relation(fields: [accountId], references: [id])
+}
+
+model AccountLinkRequest {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  accountId Int
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Account   Account  @relation(fields: [accountId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model AgentFeatures {
+  id        Int      @id @default(autoincrement())
+  agentId   Int
+  feature   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  Agent     Agent    @relation(fields: [agentId], references: [id])
+}
+
+model CoachPinecone {
+  id           Int          @id @default(autoincrement())
+  pindex       String       @unique
+  pnamespace   String
+  coachId      Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime
+  ChattieCoach ChattieCoach @relation(fields: [coachId], references: [id])
+}
+
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  accountId       Int
+  snapshotId      Int
+  agentId         Int
+  itemCount       Int
+  itemType        String
+  credits         Float
+  transactionDate DateTime @default(now())
+  createdAt       DateTime @default(now())
+  Account         Account  @relation(fields: [accountId], references: [id])
+  Agent           Agent    @relation(fields: [agentId], references: [id])
+  User            User     @relation(fields: [userId], references: [id])
 }
 
 enum SubscriptionStatus {
@@ -339,93 +409,4 @@ enum SubscriptionStatus {
   PAST_DUE
   UNPAID
   TRIALING
-}
-
-model AIEngine {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  type        String   // e.g., "Chat", "Image Generation", "Video Generation", "Audio Generation"
-  snapshot    String   // e.g., "o4-mini-2025-04-16" or specific version tags
-  description String?
-  cost        Float    @default(0.0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Agent {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
-  slug         String   @unique
-  description  String
-  displayOrder Int      @default(0) // New field for manual sorting
-  status       String   @default("coming_soon")
-  releaseDate  DateTime
-  imageUrl     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-model PaymentMethod {
-  id              Int      @id @default(autoincrement())
-  userId          Int
-  brand           String   // Visa, Mastercard, PayPal, etc.
-  logo            String?  // URL to payment method logo
-  number          String   // Masked card number or email for PayPal
-  expiry          String?  // MM/YY format for cards, null for others
-  cardholderName  String?
-  cvv             String?  // Should be encrypted in production
-  zipCode         String?
-  country         String   @default("United States")
-  isDefault       Boolean  @default(false)
-  paymentMethod   String   // 'card', 'paypal', 'bank'
-  status          String   @default("active") // 'active', 'expired', 'suspended'
-  lastUsed        DateTime?
-  securityFeatures String[] // Array of security features
-  bankName        String?  // For bank accounts
-  accountNumber   String?  // For bank accounts (masked)
-  routingNumber   String?  // For bank accounts
-  email           String?  // For PayPal
-  isDeleted       Boolean  @default(false) // Soft delete flag
-  deletedAt       DateTime? // When the record was soft deleted
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([isDefault])
-  @@index([status])
-  @@index([isDeleted]) // Index for soft delete queries
-}
-
-model UserSettings {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @unique
-  
-  // Profile Information
-  fullName        String?
-  preferredName   String?
-  
-  // Personal Information
-  phone           String?
-  contactMethod   String   @default("Email") // "Email" or "Phone"
-  
-  // Security Settings
-  twoFAEnabled    Boolean  @default(false)
-  twoFAPhone      String?
-  twoFACountry    String?
-  twoFARecoveryCode String?
-  
-  // Appearance Settings
-  appearance      String   @default("system") // "system", "light", "dark"
-  
-  // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([userId])
 }

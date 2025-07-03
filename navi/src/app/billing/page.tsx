@@ -7,11 +7,34 @@ import Sidebar from '@/app/components/Sidebar';
 import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
 import CreditsUsageChart from '@/app/components/CreditsUsageChart';
 import SubscriptionManagementModal from '@/app/components/SubscriptionManagementModal';
+import InvoicePreviewModal from '@/app/components/InvoicePreviewModal';
 import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiOutlinePlus, HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineBell } from "react-icons/hi2";
 import { TrendingUp, TrendingDown, Zap, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+
+interface BillingHistoryItem {
+  id: string;
+  amount: number;
+  status: string;
+  date: string;
+  accountId: number;
+  invoiceId?: number;
+  type?: string;
+  description?: string;
+}
+
+interface ApiInvoice {
+  id: string;
+  amount: number;
+  status: string;
+  date: string;
+  accountId: number;
+  invoiceId?: number;
+  type?: string;
+  description?: string;
+}
 
 export default function BillingPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -26,8 +49,17 @@ export default function BillingPage() {
   const [selectedTimeframe, setSelectedTimeframe] = useState('month');
   const [isClient, setIsClient] = useState(false);
   
+  // Billing history state
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
+  const [isLoadingBillingHistory, setIsLoadingBillingHistory] = useState(true);
+  const [billingHistoryError, setBillingHistoryError] = useState<string | null>(null);
+  
   // Subscription management modal state
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  
+  // Invoice preview modal state
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<BillingHistoryItem | null>(null);
   
   // Monthly discount toggle state - only enabled if user is subscribed
   const [monthlyDiscountActive, setMonthlyDiscountActive] = useState(false);
@@ -44,6 +76,66 @@ export default function BillingPage() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Fetch billing history from API
+  useEffect(() => {
+    const fetchBillingHistory = async () => {
+      try {
+        setIsLoadingBillingHistory(true);
+        setBillingHistoryError(null);
+        
+        // For now, using account ID 1 as default - you should get this from user context
+        const response = await fetch('/api/billing/history?accountId=1');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Transform the data to match the expected format
+          const transformedHistory = data.data.map((invoice: ApiInvoice) => ({
+            id: invoice.id,
+            amount: invoice.amount,
+            status: invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1), // Capitalize status
+            date: new Date(invoice.date).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }),
+            accountId: invoice.accountId,
+            invoiceId: invoice.invoiceId,
+            type: invoice.type || 'plan',
+            description: invoice.description || 'Subscription'
+          }));
+          
+          setBillingHistory(transformedHistory);
+        } else {
+          throw new Error(data.error || 'Failed to fetch billing history');
+        }
+      } catch (error) {
+        console.error('Error fetching billing history:', error);
+        setBillingHistoryError(error instanceof Error ? error.message : 'Failed to fetch billing history');
+        // Fallback to mock data if API fails
+        setBillingHistory(subscription.billingHistory.map(item => ({
+          id: item.id,
+          amount: item.amount,
+          status: item.status,
+          date: item.date,
+          accountId: 1,
+          type: item.type,
+          description: item.plan
+        })));
+      } finally {
+        setIsLoadingBillingHistory(false);
+      }
+    };
+
+    if (isClient) {
+      fetchBillingHistory();
+    }
+  }, [isClient, subscription.billingHistory]);
 
   // Automatically enable monthly discount if user is subscribed (only once)
   useEffect(() => {
@@ -143,6 +235,42 @@ export default function BillingPage() {
     } catch (error) {
       console.error('Error deleting account:', error);
     }
+  };
+
+  // Handle invoice preview
+  const handleInvoicePreview = (invoice: BillingHistoryItem) => {
+    setSelectedInvoice(invoice);
+    setShowInvoicePreview(true);
+    setMenuOpen(null);
+  };
+
+  // Handle invoice download
+  const handleInvoiceDownload = (invoice: BillingHistoryItem) => {
+    // Create a simple text-based invoice for download
+    const invoiceContent = `
+INVOICE
+
+Invoice ID: ${invoice.id}
+Date: ${invoice.date}
+Amount: $${invoice.amount}
+Status: ${invoice.status}
+Type: ${invoice.type === 'plan' ? 'Subscription' : 'Credits Purchase'}
+Description: ${invoice.description || 'N/A'}
+
+Thank you for your business!
+    `.trim();
+
+    // Create blob and download
+    const blob = new Blob([invoiceContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoice-${invoice.id}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setMenuOpen(null);
   };
 
   // Don't render dynamic content until client-side
@@ -583,91 +711,106 @@ export default function BillingPage() {
               >
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 rounded-full -translate-y-32 translate-x-32"></div>
                 <div className="relative z-10 p-8">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead>
-                        <tr className={`text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-semibold border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                          <th className="py-4 pr-6">Invoice ID</th>
-                          <th className="py-4 pr-6">Description</th>
-                          <th className="py-4 pr-6">Type</th>
-                          <th className="py-4 pr-6">Amount</th>
-                          <th className="py-4 pr-6">Date</th>
-                          <th className="py-4 pr-6">Status</th>
-                          <th className="py-4 pr-6"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {subscription.billingHistory.map((row, index) => (
-                          <motion.tr 
-                            key={row.id} 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className={`border-b last:border-0 group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
-                          >
-                            <td className="py-4 pr-6 font-mono text-blue-600 dark:text-blue-400">
-                              {row.status === 'Failed' ? '------' : row.id}
-                            </td>
-                            <td className="py-4 pr-6 font-medium">{row.plan}</td>
-                            <td className="py-4 pr-6">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                row.type === 'plan' 
-                                  ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 dark:from-purple-900 dark:to-pink-900 dark:text-purple-300'
-                                  : 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 dark:from-blue-900 dark:to-cyan-900 dark:text-blue-300'
-                              }`}>
-                                {row.type === 'plan' ? 'Plan' : 'Credits'}
-                              </span>
-                            </td>
-                            <td className="py-4 pr-6 font-bold text-lg">${row.amount}</td>
-                            <td className="py-4 pr-6">{row.date}</td>
-                            <td className="py-4 pr-6">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(row.status)}`}>
-                                {row.status}
-                              </span>
-                            </td>
-                            <td className="py-4 pr-6 relative text-right">
-                              <motion.button
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
-                                onClick={() => setMenuOpen(menuOpen === row.id ? null : row.id)}
-                              >
-                                <span className="sr-only">Actions</span>
-                                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-gray-400">
-                                  <circle cx="12" cy="6" r="1.5" />
-                                  <circle cx="12" cy="12" r="1.5" />
-                                  <circle cx="12" cy="18" r="1.5" />
-                                </svg>
-                              </motion.button>
-                              <AnimatePresence>
-                                {menuOpen === row.id && (
-                                  <motion.div
-                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    className={`absolute right-0 mt-2 w-36 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-xl shadow-lg z-10 overflow-hidden`}
-                                  >
-                                    <motion.button 
-                                      whileHover={{ backgroundColor: isDarkMode ? '#374151' : '#f3f4f6' }}
-                                      className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-gray-50 text-sm transition-colors"
+                  {isLoadingBillingHistory ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="ml-3 text-gray-600 dark:text-gray-400">Loading billing history...</span>
+                    </div>
+                  ) : billingHistoryError ? (
+                    <div className="text-center py-12">
+                      <div className="text-red-500 mb-2">⚠️ {billingHistoryError}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Showing fallback data</div>
+                    </div>
+                  ) : billingHistory.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-gray-500 dark:text-gray-400 mb-2">No billing history found</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Your invoices will appear here once you have billing activity</div>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className={`text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-semibold border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                            <th className="py-4 pr-6">Description</th>
+                            <th className="py-4 pr-6">Type</th>
+                            <th className="py-4 pr-6">Amount</th>
+                            <th className="py-4 pr-6">Date</th>
+                            <th className="py-4 pr-6">Status</th>
+                            <th className="py-4 pr-6"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {billingHistory.map((row, index) => (
+                            <motion.tr 
+                              key={row.id} 
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              className={`border-b last:border-0 group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
+                            >
+                              <td className="py-4 pr-6 font-medium">{row.description}</td>
+                              <td className="py-4 pr-6">
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                  row.type === 'plan' 
+                                    ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 dark:from-purple-900 dark:to-pink-900 dark:text-purple-300'
+                                    : 'bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 dark:from-blue-900 dark:to-cyan-900 dark:text-blue-300'
+                                }`}>
+                                  {row.type === 'plan' ? 'Plan' : 'Credits'}
+                                </span>
+                              </td>
+                              <td className="py-4 pr-6 font-bold text-lg">${row.amount}</td>
+                              <td className="py-4 pr-6">{row.date}</td>
+                              <td className="py-4 pr-6">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(row.status)}`}>
+                                  {row.status}
+                                </span>
+                              </td>
+                              <td className="py-4 pr-6 relative text-right">
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                                  onClick={() => setMenuOpen(menuOpen === row.id ? null : row.id)}
+                                >
+                                  <span className="sr-only">Actions</span>
+                                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-gray-400">
+                                    <circle cx="12" cy="6" r="1.5" />
+                                    <circle cx="12" cy="12" r="1.5" />
+                                    <circle cx="12" cy="18" r="1.5" />
+                                  </svg>
+                                </motion.button>
+                                <AnimatePresence>
+                                  {menuOpen === row.id && (
+                                    <motion.div
+                                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                      className={`absolute right-0 mt-2 w-36 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-xl shadow-lg z-10 overflow-hidden`}
                                     >
-                                      <HiOutlineEye className="w-4 h-4" /> View Details
-                                    </motion.button>
-                                    <motion.button 
-                                      whileHover={{ backgroundColor: isDarkMode ? '#374151' : '#f3f4f6' }}
-                                      className="flex items-center gap-3 px-4 py-3 w-full text-left text-gray-700 hover:bg-gray-50 text-sm transition-colors"
-                                    >
-                                      <HiOutlineArrowDownTray className="w-4 h-4" /> Download Invoice
-                                    </motion.button>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                                      <motion.button 
+                                        whileHover={{ backgroundColor: isDarkMode ? '#374151' : '#f3f4f6' }}
+                                        className={`flex items-center gap-3 px-4 py-3 w-full text-left text-sm transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                                        onClick={() => handleInvoicePreview(row)}
+                                      >
+                                        <HiOutlineEye className="w-4 h-4" /> Preview
+                                      </motion.button>
+                                      <motion.button 
+                                        whileHover={{ backgroundColor: isDarkMode ? '#374151' : '#f3f4f6' }}
+                                        className={`flex items-center gap-3 px-4 py-3 w-full text-left text-sm transition-colors ${isDarkMode ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                                        onClick={() => handleInvoiceDownload(row)}
+                                      >
+                                        <HiOutlineArrowDownTray className="w-4 h-4" /> Download
+                                      </motion.button>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </td>
+                            </motion.tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </motion.div>
@@ -689,6 +832,13 @@ export default function BillingPage() {
         onClose={() => setShowSubscriptionModal(false)}
         action="cancel"
         onDeleteAccount={handleDeleteAccount}
+      />
+
+      {/* Invoice Preview Modal */}
+      <InvoicePreviewModal
+        isOpen={showInvoicePreview}
+        onClose={() => setShowInvoicePreview(false)}
+        invoice={selectedInvoice}
       />
     </div>
   );
