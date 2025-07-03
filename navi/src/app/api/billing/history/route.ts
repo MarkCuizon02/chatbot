@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch invoices from the database (no include, just raw fields)
+    // Fetch invoices from the database
     const invoices = await prisma.invoice.findMany({
       where: {
         accountId: parseInt(accountId),
@@ -27,15 +27,27 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform the data to match the expected format
-    const billingHistory = invoices.map((invoice) => ({
-      id: invoice.stripeInvoiceId,
-      amount: invoice.amountDue,
-      status: invoice.status,
-      date: invoice.createdAt.toISOString(),
-      accountId: invoice.accountId,
-      // Hide invoice ID from display but keep it for internal use
-      invoiceId: invoice.id,
-    }));
+    const billingHistory = invoices.map((invoice) => {
+      // Determine type based on subscriptionId
+      const isPlan = !!invoice.subscriptionId;
+      const type = isPlan ? 'plan' : 'credits';
+      
+      // Generate description based on type and amount
+      const description = isPlan 
+        ? `Subscription Plan` 
+        : `${invoice.amountDue} Credits Purchase`;
+
+      return {
+        id: invoice.stripeInvoiceId,
+        amount: invoice.amountDue,
+        status: invoice.status,
+        date: invoice.createdAt.toISOString(),
+        accountId: invoice.accountId,
+        invoiceId: invoice.id,
+        type,
+        description,
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -45,8 +57,9 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching billing history:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to fetch billing history', details: error.message },
+      { error: 'Failed to fetch billing history', details: errorMessage },
       { status: 500 }
     );
   }
