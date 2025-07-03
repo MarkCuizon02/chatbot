@@ -58,7 +58,6 @@ export default function AgentsModal({ isOpen, onClose, isDarkMode, agent }: Agen
         }}
         onClick={handleClose}
       >
-       
 
         {/* Main Modal */}
         <div className="flex items-center justify-center min-h-screen p-4">

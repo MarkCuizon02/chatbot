@@ -9,7 +9,7 @@ import Sidebar from "../components/Sidebar";
 import { useTheme } from "@/context/ThemeContext";
 import Head from 'next/head';
 
-// Fix for window.tawkLoaded type
+
 declare global {
   interface Window {
     tawkLoaded?: boolean;
@@ -367,7 +367,7 @@ export default function HelpSupportPage() {
               <h2 className="text-2xl font-bold mb-4 text-emerald-700 dark:text-emerald-300 tracking-tight">Support & Community Resources</h2>
             </div>
             {/* Platform Status, Live Chat, Community Forum */}
-            <div className="mb-12 grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="mb-12 grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Product Updates Card */}
               <div className={`rounded-2xl p-6 shadow-lg flex flex-col gap-2 relative overflow-hidden group transition-all duration-300 hover:scale-[1.04] hover:shadow-2xl ${isDarkMode ? "bg-gradient-to-br from-yellow-900 via-gray-800 to-yellow-700 border border-yellow-700" : "bg-gradient-to-br from-white via-yellow-50 to-yellow-100 border border-yellow-200"}`}>
               <div className="flex items-center gap-2 mb-2">
@@ -391,18 +391,6 @@ export default function HelpSupportPage() {
                   <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#10b981" /></svg>
                 </div>
               </div>
-              {/* Community Forum Card */}
-              <div className={`rounded-2xl p-6 shadow-lg flex flex-col items-start gap-2 relative overflow-hidden group transition-all duration-300 hover:scale-[1.04] hover:shadow-2xl ${isDarkMode ? "bg-gradient-to-br from-blue-900 via-gray-800 to-blue-700 border border-blue-700" : "bg-gradient-to-br from-white via-blue-50 to-blue-100 border border-blue-200"}`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2h5m6-8a4 4 0 1 0-8 0 4 4 0 0 0 8 0Zm6 0a4 4 0 1 0-8 0 4 4 0 0 0 8 0Z" /></svg>
-                  <h2 className="text-xl font-semibold text-blue-600">Community Forum</h2>
-                </div>
-                <p>Join our user community to ask questions, share tips, and connect with other users.</p>
-                <a href="https://community.simplabots.com" target="_blank" rel="noopener noreferrer" className="mt-3 inline-block px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-all text-sm">Visit Forum</a>
-                <div className="absolute right-0 bottom-0 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
-                  <svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#3b82f6" /></svg>
-                </div>
-            </div>
               {/* Video Tutorials Card */}
               <div className={`rounded-2xl p-6 shadow-lg flex flex-col items-start gap-2 relative overflow-hidden group transition-all duration-300 hover:scale-[1.04] hover:shadow-2xl ${isDarkMode ? "bg-gradient-to-br from-pink-900 via-gray-800 to-pink-700 border border-pink-700" : "bg-gradient-to-br from-white via-pink-50 to-pink-100 border border-pink-200"}`}>
               <div className="flex items-center gap-2 mb-2">
@@ -520,7 +508,7 @@ export default function HelpSupportPage() {
             <div className="fixed z-50 bottom-8 right-8 flex flex-col items-end gap-2">
               {/* Floating message bubble above chatbot icon */}
               {showChatBadge && (
-                <motion.div
+                <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}

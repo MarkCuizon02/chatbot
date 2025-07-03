@@ -188,7 +188,7 @@ function TeamUsageModal({ isOpen, onClose, teamData, isDarkMode }: { isOpen: boo
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-md flex items-center justify-center z-50"
+          className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50"
           onClick={onClose}
         >
           <motion.div
