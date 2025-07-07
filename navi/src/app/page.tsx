@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Menu, Bell, Users, Link as LinkIcon, CreditCard, Trophy, ChevronDown, ChevronRight, BarChart2, ChevronLeft, Sun, Moon, LogOut, BookOpen, Settings, HelpCircle, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
@@ -9,29 +9,19 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Sidebar from './components/Sidebar';
 
-interface AgentActivity {
-  title: string;
-  time: string;
-  color: string;
-}
-
-const agentActivity: AgentActivity[] = [
-  {
-    title: "Generated 10 new images for project 'Alpha'",
-    time: "01:00 AM - Jun 07, 2025",
-    color: "bg-green-500"
-  },
-  {
-    title: "Handled 50 user queries with 98% satisfaction",
-    time: "01:00 AM - Jun 07, 2025",
-    color: "bg-yellow-500"
-  },
-  {
-    title: "Knowledge base updated with new documents",
-    time: "01:00 AM - Jun 07, 2025",
-    color: "bg-blue-500"
-  }
-];
+// Import database functions
+import {
+  fetchDashboardStats,
+  fetchAgentStatuses,
+  fetchChartData,
+  fetchTeamUsage,
+  fetchAgentActivities,
+  type DashboardStats,
+  type AgentStatus,
+  type ChartDataPoint,
+  type TeamUser as DatabaseTeamUser,
+  type AgentActivity
+} from '../lib/dashboard-data';
 
 const fadeInUp: Variants = {
   initial: { opacity: 0, y: 20 },
@@ -256,26 +246,35 @@ export default function Dashboard() {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const router = useRouter();
 
-  const chartData = [
-    { name: 'Jun 05', Navi: 60, Pixie: 40, Paige: 50, Audra: 20, Flicka: 15 },
-    { name: 'Jun 06', Navi: 80, Pixie: 45, Paige: 55, Audra: 25, Flicka: 18 },
-    { name: 'Jun 07', Navi: 90, Pixie: 60, Paige: 60, Audra: 35, Flicka: 20 },
-    { name: 'Jun 08', Navi: 110, Pixie: 80, Paige: 65, Audra: 30, Flicka: 25 },
-    { name: 'Jun 09', Navi: 100, Pixie: 70, Paige: 58, Audra: 22, Flicka: 28 },
-  ];
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [agentStatuses, setAgentStatuses] = useState<AgentStatus[]>([]);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [teamUsageData, setTeamUsageData] = useState<TeamUser[]>([]);
+  const [agentActivities, setAgentActivities] = useState<AgentActivity[]>([]);
 
-  const teamUsageData = [
-    { name: 'Skylar Westervelt', usage: 321, credits: 545 },
-    { name: 'Jordyn Bergson', usage: 645, credits: 76 },
-    { name: 'Gustavo Dias', usage: 123, credits: 785 },
-    { name: 'Jaylon Torff', usage: 653, credits: 2235 },
-    { name: 'Maria Workman', usage: 251, credits: 3784 },
-    { name: 'Ahmad Geidt', usage: 987, credits: 241 },
-    { name: 'Alex Johnson', usage: 456, credits: 1890 },
-    { name: 'Sarah Chen', usage: 789, credits: 892 },
-    { name: 'Mike Rodriguez', usage: 234, credits: 1567 },
-    { name: 'Emily Davis', usage: 567, credits: 432 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      // TODO: Replace hardcoded accountId with actual user's account ID
+      const accountId = 1; // This should come from user session/context
+      
+      const stats = await fetchDashboardStats(accountId);
+      setDashboardStats(stats);
+
+      const statuses = await fetchAgentStatuses(accountId);
+      setAgentStatuses(statuses);
+
+      const chartData = await fetchChartData(accountId);
+      setChartData(chartData);
+
+      const teamData = await fetchTeamUsage(accountId);
+      setTeamUsageData(teamData);
+
+      const activities = await fetchAgentActivities(accountId);
+      setAgentActivities(activities);
+    };
+
+    fetchData();
+  }, []);
 
   // Sort by credits in descending order and get top 6 for display
   const sortedTeamData = teamUsageData.sort((a, b) => b.credits - a.credits);
@@ -368,8 +367,12 @@ export default function Dashboard() {
               <CreditCard size={20} className={`${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
             </span>
             <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Total Credits</div>
-            <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-extrabold mb-1`}>15,700</div>
-            <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-medium`}>- 1,200 this month</div>
+            <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-extrabold mb-1`}>
+              {dashboardStats ? dashboardStats.totalCredits.toLocaleString() : '---'}
+            </div>
+            <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-medium`}>
+              - {dashboardStats ? dashboardStats.creditsUsed.toLocaleString() : '---'} this month
+            </div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -382,8 +385,12 @@ export default function Dashboard() {
               <CreditCard size={20} className={`${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
             </span>
             <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Credit Used</div>
-            <div className="text-white text-3xl font-extrabold mb-1">1,500</div>
-            <div className="text-sm text-green-500 font-medium">+5% from last week</div>
+            <div className="text-white text-3xl font-extrabold mb-1">
+              {dashboardStats ? dashboardStats.creditsUsed.toLocaleString() : '---'}
+            </div>
+            <div className="text-sm text-green-500 font-medium">
+              {dashboardStats ? dashboardStats.creditsUsedChange : '---'}
+            </div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -396,8 +403,12 @@ export default function Dashboard() {
               <BarChart2 size={20} className={`${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
             </span>
             <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Total Active Sessions</div>
-            <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-extrabold mb-1`}>1,250</div>
-            <div className="text-sm text-green-500 font-medium">+5% from last week</div>
+            <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-extrabold mb-1`}>
+              {dashboardStats ? dashboardStats.totalActiveSessions.toLocaleString() : '---'}
+            </div>
+            <div className="text-sm text-green-500 font-medium">
+              {dashboardStats ? dashboardStats.sessionsChange : '---'}
+            </div>
           </motion.div>
         </div>
 
@@ -408,126 +419,33 @@ export default function Dashboard() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                whileHover={{ scale: 1.02 }}
-                className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-2xl p-5 flex flex-col relative min-h-[180px]`}
-              >
-                <div className="flex items-center">
-                  <Image src="/images/Navi.png" alt="Navi" width={48} height={48} className="rounded-full mr-3" />
-                  <div>
-                    <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg`}>Navi</div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-light`}>Your smart, friendly assistant</div>
+              {agentStatuses.map((agent, index) => (
+                <motion.div
+                  key={agent.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.02 }}
+                  className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-2xl p-5 flex flex-col relative min-h-[180px]`}
+                >
+                  <div className="flex items-center">
+                    <Image src={agent.image} alt={agent.name} width={48} height={48} className="rounded-full mr-3" />
+                    <div>
+                      <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg`}>{agent.name}</div>
+                      <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-light`}>{agent.description}</div>
+                    </div>
+                    <span className={`absolute right-5 top-5 ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'} text-xs font-semibold px-3 py-1 rounded-full`}>{agent.status}</span>
                   </div>
-                  <span className={`absolute right-5 top-5 ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'} text-xs font-semibold px-3 py-1 rounded-full`}>ACTIVE</span>
-                </div>
-                <div className={`mt-4 font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Activity: 120 tasks</div>
-                <div className="mt-2 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Performance</span>
-                  <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>70%</span>
-                </div>
-                <div className={`w-full h-2 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full mt-1`}>
-                  <div className="h-2 bg-sky-400 rounded-full" style={{ width: '70%' }}></div>
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                whileHover={{ scale: 1.02 }}
-                className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-2xl p-5 flex flex-col relative min-h-[180px]`}
-              >
-                <div className="flex items-center">
-                  <Image src="/images/Pixie.png" alt="Pixie" width={48} height={48} className="rounded-full mr-3" />
-                  <div>
-                    <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg`}>Pixie</div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-light`}>Conversational AI</div>
+                  <div className={`mt-4 font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Activity: {agent.recentActivity} tasks</div>
+                  <div className="mt-2 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    <span>Performance</span>
+                    <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{agent.performance}%</span>
                   </div>
-                  <span className={`absolute right-5 top-5 ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'} text-xs font-semibold px-3 py-1 rounded-full`}>ACTIVE</span>
-                </div>
-                <div className={`mt-4 font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Activity: 350 tasks</div>
-                <div className="mt-2 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Performance</span>
-                  <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>20%</span>
-                </div>
-                <div className={`w-full h-2 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full mt-1`}>
-                  <div className="h-2 bg-sky-400 rounded-full" style={{ width: '20%' }}></div>
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-                whileHover={{ scale: 1.02 }}
-                className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-2xl p-5 flex flex-col relative min-h-[180px]`}
-              >
-                <div className="flex items-center">
-                  <Image src="/images/Paige.png" alt="Paige" width={48} height={48} className="rounded-full mr-3" />
-                  <div>
-                    <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg`}>Paige</div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-light`}>Image Generation</div>
+                  <div className={`w-full h-2 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full mt-1`}>
+                    <div className="h-2 bg-sky-400 rounded-full" style={{ width: `${agent.performance}%` }}></div>
                   </div>
-                  <span className={`absolute right-5 top-5 ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'} text-xs font-semibold px-3 py-1 rounded-full`}>ACTIVE</span>
-                </div>
-                <div className={`mt-4 font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Activity: 500 tasks</div>
-                <div className="mt-2 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Performance</span>
-                  <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>40%</span>
-                </div>
-                <div className={`w-full h-2 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full mt-1`}>
-                  <div className="h-2 bg-sky-400 rounded-full" style={{ width: '40%' }}></div>
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-                whileHover={{ scale: 1.02 }}
-                className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-2xl p-5 flex flex-col relative min-h-[180px]`}
-              >
-                <div className="flex items-center">
-                  <Image src="/images/Audra.png" alt="Audra" width={48} height={48} className="rounded-full mr-3" />
-                  <div>
-                    <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg`}>Audra</div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-light`}>Video Generation</div>
-                  </div>
-                  <span className={`absolute right-5 top-5 ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'} text-xs font-semibold px-3 py-1 rounded-full`}>ACTIVE</span>
-                </div>
-                <div className={`mt-4 font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Activity: 500 tasks</div>
-                <div className="mt-2 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Performance</span>
-                  <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>10%</span>
-                </div>
-                <div className={`w-full h-2 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full mt-1`}>
-                  <div className="h-2 bg-sky-400 rounded-full" style={{ width: '10%' }}></div>
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.5 }}
-                whileHover={{ scale: 1.02 }}
-                className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'} border rounded-2xl p-5 flex flex-col relative min-h-[180px]`}
-              >
-                <div className="flex items-center">
-                  <Image src="/images/flicka.png" alt="Flicka" width={48} height={48} className="rounded-full mr-3" />
-                  <div>
-                    <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-bold text-lg`}>Flicka</div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-light`}>Audio Generation</div>
-                  </div>
-                  <span className={`absolute right-5 top-5 ${isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-700'} text-xs font-semibold px-3 py-1 rounded-full`}>INACTIVE</span>
-                </div>
-                <div className={`mt-4 font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Activity: 500 tasks</div>
-                <div className="mt-2 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Performance</span>
-                  <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>5%</span>
-                </div>
-                <div className={`w-full h-2 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} rounded-full mt-1`}>
-                  <div className="h-2 bg-sky-400 rounded-full" style={{ width: '5%' }}></div>
-                </div>
-              </motion.div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </div>
@@ -639,121 +557,32 @@ export default function Dashboard() {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-                className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} flex items-center justify-between p-4 rounded-lg transition-all`}
-              >
-                <div className="flex items-center space-x-4">
-                  <Image src="/images/Pixie.png" alt="Pixie" width={40} height={40} className="rounded-full" />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Pixie:</span>
-                      <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Generated 10 new images for project "Alpha"</span>
+              {agentActivities.map((activity) => (
+                <motion.div
+                  key={activity.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
+                  className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} flex items-center justify-between p-4 rounded-lg transition-all`}
+                >
+                  <div className="flex items-center space-x-4">
+                    <Image src={activity.agentImage} alt={activity.agentName} width={40} height={40} className="rounded-full" />
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>{activity.agentName}:</span>
+                        <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{activity.title}</span>
+                      </div>
+                      <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>{activity.time}</div>
                     </div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>12:09 AM - Jun 10, 2025</div>
                   </div>
-                </div>
-                <div className={`${isDarkMode ? 'bg-green-900' : 'bg-green-100'} w-6 h-6 rounded-full flex items-center justify-center`}>
-                  <svg className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-                className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} flex items-center justify-between p-4 rounded-lg transition-all`}
-              >
-                <div className="flex items-center space-x-4">
-                  <Image src="/images/Chattie.png" alt="Chattie" width={40} height={40} className="rounded-full" />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Chattie:</span>
-                      <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Handled 50 user queries with 98% satisfaction.</span>
-                    </div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>12:09 AM - Jun 10, 2025</div>
+                  <div className={`${isDarkMode ? 'bg-green-900' : 'bg-green-100'} w-6 h-6 rounded-full flex items-center justify-center`}>
+                    <svg className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
                   </div>
-                </div>
-                <div className={`${isDarkMode ? 'bg-yellow-900' : 'bg-yellow-100'} w-6 h-6 rounded-full flex items-center justify-center`}>
-                  <svg className={`w-4 h-4 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`} fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-                whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-                className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} flex items-center justify-between p-4 rounded-lg transition-all`}
-              >
-                <div className="flex items-center space-x-4">
-                  <Image src="/images/Navi.png" alt="Navi" width={40} height={40} className="rounded-full" />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Navi:</span>
-                      <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Knowledge base updated with new documents.</span>
-                    </div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>12:09 AM - Jun 10, 2025</div>
-                  </div>
-                </div>
-                <div className={`${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'} w-6 h-6 rounded-full flex items-center justify-center`}>
-                  <svg className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-                whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-                className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} flex items-center justify-between p-4 rounded-lg transition-all`}
-              >
-                <div className="flex items-center space-x-4">
-                  <Image src="/images/flicka.png" alt="Flicka" width={40} height={40} className="rounded-full" />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Flicka:</span>
-                      <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Video rendering "Beta" failed. Retrying.</span>
-                    </div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>12:09 AM - Jun 10, 2025</div>
-                  </div>
-                </div>
-                <div className={`${isDarkMode ? 'bg-green-900' : 'bg-green-100'} w-6 h-6 rounded-full flex items-center justify-center`}>
-                  <svg className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.5 }}
-                whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
-                className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} flex items-center justify-between p-4 rounded-lg transition-all`}
-              >
-                <div className="flex items-center space-x-4">
-                  <Image src="/images/Audra.png" alt="Audra" width={40} height={40} className="rounded-full" />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Audra:</span>
-                      <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Generated voiceover for tutorial video.</span>
-                    </div>
-                    <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-sm`}>12:09 AM - Jun 10, 2025</div>
-                  </div>
-                </div>
-                <div className={`${isDarkMode ? 'bg-green-900' : 'bg-green-100'} w-6 h-6 rounded-full flex items-center justify-center`}>
-                  <svg className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </motion.div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </div>
