@@ -2,12 +2,14 @@
 
 import React, { useState, useContext, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { Menu, Bell, Users, Link as LinkIcon, CreditCard, Trophy, ChevronDown, ChevronRight, BarChart2, ChevronLeft, Sun, Moon, LogOut, BookOpen, Settings, HelpCircle, ChevronUp } from 'lucide-react';
+import { Menu, Bell, Users, Link as LinkIcon, CreditCard, Trophy, ChevronDown, ChevronRight, BarChart2, ChevronLeft, Sun, Moon, LogOut, BookOpen, Settings, HelpCircle, ChevronUp, AlertTriangle, Info } from 'lucide-react';
 import Image from 'next/image';
 import { useTheme } from '../context/ThemeContext';
+import { useSubscription } from '../context/SubscriptionContext';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Sidebar from './components/Sidebar';
+import CreditDetailsModal from './components/CreditDetailsModal';
 
 // Import database functions
 import {
@@ -22,6 +24,15 @@ import {
   type TeamUser as DatabaseTeamUser,
   type AgentActivity
 } from '../lib/dashboard-data';
+
+// Import credit-billing integration
+import { 
+  calculateIntegratedCredits, 
+  getCreditAlerts, 
+  formatCredits, 
+  formatCurrency,
+  type IntegratedCreditData 
+} from '../lib/credit-billing-integration';
 
 const fadeInUp: Variants = {
   initial: { opacity: 0, y: 20 },
@@ -243,7 +254,9 @@ export default function Dashboard() {
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
   const [isTeamUsageModalOpen, setIsTeamUsageModalOpen] = useState(false);
+  const [isCreditDetailsModalOpen, setIsCreditDetailsModalOpen] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const { subscription } = useSubscription();
   const router = useRouter();
 
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
@@ -251,6 +264,7 @@ export default function Dashboard() {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [teamUsageData, setTeamUsageData] = useState<TeamUser[]>([]);
   const [agentActivities, setAgentActivities] = useState<AgentActivity[]>([]);
+  const [integratedCredits, setIntegratedCredits] = useState<IntegratedCreditData | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -271,10 +285,19 @@ export default function Dashboard() {
 
       const activities = await fetchAgentActivities(accountId);
       setAgentActivities(activities);
+
+      // Calculate integrated credit data
+      if (stats) {
+        const integrated = calculateIntegratedCredits(stats, subscription, accountId);
+        setIntegratedCredits(integrated);
+      }
     };
 
     fetchData();
-  }, []);
+  }, [subscription]);
+
+  // Get credit alerts
+  const creditAlerts = integratedCredits ? getCreditAlerts(integratedCredits) : [];
 
   // Sort by credits in descending order and get top 6 for display
   const sortedTeamData = teamUsageData.sort((a, b) => b.credits - a.credits);
@@ -354,6 +377,28 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
+        {/* Credit Alerts */}
+        {creditAlerts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            {creditAlerts.map((alert, index) => (
+              <div key={index} className={`flex items-center gap-3 p-4 rounded-lg mb-3 ${
+                alert.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' :
+                alert.type === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
+                'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+              }`}>
+                {alert.type === 'error' && <AlertTriangle size={20} />}
+                {alert.type === 'warning' && <AlertTriangle size={20} />}
+                {alert.type === 'info' && <Info size={20} />}
+                <span className="text-sm font-medium">{alert.message}</span>
+              </div>
+            ))}
+          </motion.div>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <motion.div
@@ -361,18 +406,21 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
             whileHover={{ scale: 1.02 }}
-            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-sm flex flex-col relative min-h-[140px]`}
+            className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 shadow-sm flex flex-col relative min-h-[140px] cursor-pointer`}
+            onClick={() => setIsCreditDetailsModalOpen(true)}
           >
             <span className={`absolute top-5 right-5 w-8 h-8 ${isDarkMode ? 'bg-cyan-900' : 'bg-cyan-100'} rounded-full flex items-center justify-center`}>
               <CreditCard size={20} className={`${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
             </span>
-            <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Total Credits</div>
+            <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Total Credits Available</div>
             <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-extrabold mb-1`}>
-              {dashboardStats ? dashboardStats.totalCredits.toLocaleString() : '---'}
+              {integratedCredits ? formatCredits(integratedCredits.totalCredits.available) : '---'}
             </div>
             <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} text-sm font-medium`}>
-              - {dashboardStats ? dashboardStats.creditsUsed.toLocaleString() : '---'} this month
+              Plan: {integratedCredits ? formatCredits(integratedCredits.planCredits.monthly) : '---'} + 
+              Additional: {integratedCredits ? formatCredits(integratedCredits.additionalCredits.total) : '---'}
             </div>
+            <div className="mt-2 text-xs text-blue-500 font-medium">Click for details →</div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -384,13 +432,18 @@ export default function Dashboard() {
             <span className={`absolute top-5 right-5 w-8 h-8 ${isDarkMode ? 'bg-cyan-900' : 'bg-cyan-100'} rounded-full flex items-center justify-center`}>
               <CreditCard size={20} className={`${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
             </span>
-            <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Credit Used</div>
+            <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Credits Used This Period</div>
             <div className="text-white text-3xl font-extrabold mb-1">
-              {dashboardStats ? dashboardStats.creditsUsed.toLocaleString() : '---'}
+              {integratedCredits ? formatCredits(integratedCredits.totalCredits.used) : '---'}
             </div>
             <div className="text-sm text-green-500 font-medium">
-              {dashboardStats ? dashboardStats.creditsUsedChange : '---'}
+              {integratedCredits ? `${integratedCredits.totalCredits.usagePercentage.toFixed(1)}% of available` : '---'}
             </div>
+            {integratedCredits && integratedCredits.billing.overage.credits > 0 && (
+              <div className="text-sm text-red-400 font-medium mt-1">
+                Overage: {formatCredits(integratedCredits.billing.overage.credits)} ({formatCurrency(integratedCredits.billing.overage.cost)})
+              </div>
+            )}
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -402,12 +455,15 @@ export default function Dashboard() {
             <span className={`absolute top-5 right-5 w-8 h-8 ${isDarkMode ? 'bg-cyan-900' : 'bg-cyan-100'} rounded-full flex items-center justify-center`}>
               <BarChart2 size={20} className={`${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
             </span>
-            <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Total Active Sessions</div>
+            <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Estimated Period Cost</div>
             <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-extrabold mb-1`}>
-              {dashboardStats ? dashboardStats.totalActiveSessions.toLocaleString() : '---'}
+              {integratedCredits ? formatCurrency(integratedCredits.billing.estimatedCost) : '---'}
             </div>
             <div className="text-sm text-green-500 font-medium">
-              {dashboardStats ? dashboardStats.sessionsChange : '---'}
+              Base: {integratedCredits ? formatCurrency(subscription.currentPlan?.price || 0) : '---'} 
+              {integratedCredits && integratedCredits.billing.overage.cost > 0 && (
+                <span className="text-red-400"> + {formatCurrency(integratedCredits.billing.overage.cost)} overage</span>
+              )}
             </div>
           </motion.div>
         </div>
@@ -595,6 +651,16 @@ export default function Dashboard() {
         teamData={sortedTeamData}
         isDarkMode={isDarkMode}
       />
+
+      {/* Credit Details Modal */}
+      {integratedCredits && (
+        <CreditDetailsModal
+          isOpen={isCreditDetailsModalOpen}
+          onClose={() => setIsCreditDetailsModalOpen(false)}
+          integratedCredits={integratedCredits}
+          isDarkMode={isDarkMode}
+        />
+      )}
     </div>
   );
 }
