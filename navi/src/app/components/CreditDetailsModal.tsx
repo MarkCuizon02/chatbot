@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Calendar, AlertTriangle, TrendingUp, DollarSign } from 'lucide-react';
+import { CreditCard, Calendar, TrendingUp, DollarSign } from 'lucide-react';
 import { IntegratedCreditData, formatCredits, formatCurrency, AdditionalCredits } from '../../lib/credit-billing-integration';
 
 interface CreditDetailsModalProps {
@@ -187,23 +187,6 @@ export default function CreditDetailsModal({
                   </div>
                 </div>
               </div>
-
-              {/* Expiring Credits Warning */}
-              {integratedCredits.additionalCredits.expiring.length > 0 && (
-                <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                  <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-300">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span className="text-sm font-medium">Credits Expiring Soon</span>
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    {integratedCredits.additionalCredits.expiring.map((credit, index) => (
-                      <div key={index} className="text-xs text-yellow-700 dark:text-yellow-400">
-                        {formatCredits(credit.amount)} credits expire on {new Date(credit.expiryDate).toLocaleDateString()}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 

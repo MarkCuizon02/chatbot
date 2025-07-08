@@ -4,6 +4,25 @@
 
 This guide explains how to integrate dashboard credit tracking with your billing/subscription system to provide a unified view of credit usage, billing, and cost management.
 
+## Credit System Design
+
+### Credit Types
+
+1. **Subscription Credits** - Monthly allowance that resets each billing period
+2. **Additional Credits** - Permanent credits purchased separately that never expire
+
+### Usage Priority
+
+Credits are consumed in this order:
+1. **Subscription credits first** - Use monthly plan allowance
+2. **Additional credits second** - Use permanent purchased credits only after plan credits are exhausted
+
+### Key Benefits
+
+- **No Credit Expiration** - Additional purchased credits never expire
+- **Fair Usage** - Plan credits are used before additional credits
+- **Transparent Billing** - Clear separation between plan and additional credit costs
+
 ## Key Components
 
 ### 1. Credit-Billing Integration Service (`src/lib/credit-billing-integration.ts`)
@@ -11,14 +30,14 @@ This guide explains how to integrate dashboard credit tracking with your billing
 This service combines data from multiple sources:
 - Dashboard credit usage statistics
 - Subscription plan details
-- Additional credit purchases
+- Additional credit purchases (permanent)
 - Billing period information
 
 ### 2. Integrated Credit Data Structure
 
 ```typescript
 interface IntegratedCreditData {
-  // Subscription Plan Credits
+  // Subscription Plan Credits (reset monthly)
   planCredits: {
     monthly: number;          // Monthly credit allowance from plan
     used: number;             // Credits used from monthly allowance
@@ -26,12 +45,11 @@ interface IntegratedCreditData {
     resetDate: string;        // When monthly credits reset
   };
   
-  // Additional Credits (purchased separately)
+  // Additional Credits (permanent until used)
   additionalCredits: {
-    total: number;            // Total additional credits purchased
-    used: number;             // Additional credits used
-    remaining: number;        // Additional credits remaining
-    expiring: AdditionalCredits[]; // Credits expiring soon
+    total: number;            // Total additional credits purchased (lifetime)
+    used: number;             // Additional credits used (lifetime)
+    remaining: number;        // Additional credits remaining (permanent balance)
   };
   
   // Total Credits (combined)

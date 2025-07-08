@@ -433,7 +433,7 @@ export default function Dashboard() {
               <CreditCard size={20} className={`${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
             </span>
             <div className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} font-medium mb-1`}>Credits Used This Period</div>
-            <div className="text-white text-3xl font-extrabold mb-1">
+            <div className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-extrabold mb-1`}>
               {integratedCredits ? formatCredits(integratedCredits.totalCredits.used) : '---'}
             </div>
             <div className="text-sm text-green-500 font-medium">

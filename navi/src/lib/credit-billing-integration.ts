@@ -17,12 +17,11 @@ export interface IntegratedCreditData {
     resetDate: string;        // When monthly credits reset
   };
   
-  // Additional Credits (purchased separately)
+  // Additional Credits (purchased separately - permanent until used)
   additionalCredits: {
-    total: number;            // Total additional credits purchased
-    used: number;             // Additional credits used
-    remaining: number;        // Additional credits remaining
-    expiring: AdditionalCredits[]; // Credits expiring soon
+    total: number;            // Total additional credits purchased (lifetime)
+    used: number;             // Additional credits used (lifetime)
+    remaining: number;        // Additional credits remaining (permanent balance)
   };
   
   // Total Credits (combined)
@@ -57,7 +56,7 @@ export function calculateIntegratedCredits(
   // Get plan monthly credits
   const planMonthlyCredits = getPlanMonthlyCredits(subscription.currentPlan?.name || '');
   
-  // Calculate additional credits
+  // Calculate additional credits (permanent, no expiration)
   const activeAdditionalCredits = subscription.additionalCredits.filter(
     credit => credit.status === 'active'
   );
@@ -68,32 +67,24 @@ export function calculateIntegratedCredits(
   const remainingAdditionalCredits = totalAdditionalCredits - usedAdditionalCredits;
   
   // Calculate totals
-  const totalAvailable = planMonthlyCredits + totalAdditionalCredits;
+  const totalAvailable = planMonthlyCredits + remainingAdditionalCredits;
   const totalUsed = dashboardStats.creditsUsed;
   const totalRemaining = totalAvailable - totalUsed;
   const usagePercentage = totalAvailable > 0 ? (totalUsed / totalAvailable) * 100 : 0;
   
-  // Calculate plan vs additional usage
+  // Calculate usage priority: plan credits first, then additional credits
   const planCreditsUsed = Math.min(totalUsed, planMonthlyCredits);
-  const additionalCreditsUsed = Math.max(0, totalUsed - planMonthlyCredits);
+  const additionalCreditsUsedThisPeriod = Math.max(0, totalUsed - planMonthlyCredits);
   const planCreditsRemaining = planMonthlyCredits - planCreditsUsed;
   
   // Calculate billing info
   const costPerCredit = getCostPerCredit(subscription.currentPlan?.name || '');
-  const overage = Math.max(0, totalUsed - planMonthlyCredits);
+  const overage = Math.max(0, totalUsed - totalAvailable);
   const overageCost = overage * costPerCredit;
   const estimatedCost = calculateEstimatedCost(subscription.currentPlan?.price || 0, overageCost);
   
   // Get billing period dates
   const { periodStart, periodEnd, resetDate } = getBillingPeriod();
-  
-  // Find expiring credits (within 30 days)
-  const expiringCredits = activeAdditionalCredits.filter(credit => {
-    const expiryDate = new Date(credit.expiryDate);
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-    return expiryDate <= thirtyDaysFromNow;
-  });
   
   return {
     planCredits: {
@@ -104,9 +95,8 @@ export function calculateIntegratedCredits(
     },
     additionalCredits: {
       total: totalAdditionalCredits,
-      used: additionalCreditsUsed,
-      remaining: remainingAdditionalCredits,
-      expiring: expiringCredits
+      used: usedAdditionalCredits,
+      remaining: remainingAdditionalCredits
     },
     totalCredits: {
       available: totalAvailable,
@@ -208,22 +198,11 @@ export function getCreditAlerts(integratedData: IntegratedCreditData): {
     });
   }
   
-  // Check overage
+  // Check overage (only if no additional credits available)
   if (integratedData.billing.overage.credits > 0) {
     alerts.push({
       type: 'warning',
-      message: `You've used ${integratedData.billing.overage.credits} credits beyond your plan allowance. Overage cost: $${integratedData.billing.overage.cost.toFixed(2)}`
-    });
-  }
-  
-  // Check expiring additional credits
-  if (integratedData.additionalCredits.expiring.length > 0) {
-    const expiringTotal = integratedData.additionalCredits.expiring.reduce(
-      (sum, credit) => sum + (credit.amount - (credit.status === 'active' ? 0 : credit.amount)), 0
-    );
-    alerts.push({
-      type: 'info',
-      message: `${expiringTotal} additional credits will expire within 30 days.`
+      message: `You've used ${integratedData.billing.overage.credits} credits beyond your available balance. Overage cost: $${integratedData.billing.overage.cost.toFixed(2)}`
     });
   }
   

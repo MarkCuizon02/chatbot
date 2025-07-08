@@ -21,8 +21,7 @@ export interface AdditionalCredits {
   amount: number;
   price: number;
   purchaseDate: string;
-  expiryDate: string;
-  status: 'active' | 'expired' | 'used';
+  status: 'active' | 'used';
 }
 
 export interface SubscriptionState {
@@ -100,7 +99,6 @@ const defaultSubscription: SubscriptionState = {
       amount: 500,
       price: 50,
       purchaseDate: "March 1, 2025",
-      expiryDate: "June 1, 2025",
       status: "active"
     },
     {
@@ -108,7 +106,6 @@ const defaultSubscription: SubscriptionState = {
       amount: 200,
       price: 20,
       purchaseDate: "February 15, 2025",
-      expiryDate: "May 15, 2025",
       status: "used"
     }
   ],
@@ -190,11 +187,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       amount,
       price,
       purchaseDate: new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }),
-      expiryDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
