@@ -69,88 +69,47 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      userId,
+      accountId,
       description,
       amount,
-      type = 'SUBSCRIPTION',
-      planName,
-      creditsAmount,
-      paymentMethodId,
+      type = 'credits',
       stripeInvoiceId,
-      notes,
     } = body;
 
-    if (!userId || !description || !amount) {
+    if (!accountId || !description || !amount) {
       return NextResponse.json(
-        { error: 'User ID, description, and amount are required' },
+        { error: 'Account ID, description, and amount are required' },
         { status: 400 }
       );
     }
 
-    // Generate invoice number
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    
-    // Get count of invoices for this year/month to generate sequential number
-    const invoiceCount = await prisma.invoice.count({
-      where: {
-        userId: parseInt(userId),
-        billingDate: {
-          gte: new Date(year, date.getMonth(), 1),
-          lt: new Date(year, date.getMonth() + 1, 1),
-        },
-      },
-    });
-    
-    const invoiceNumber = `INV-${year}-${month}-${String(invoiceCount + 1).padStart(3, '0')}`;
-
     // Create new invoice
     const invoice = await prisma.invoice.create({
       data: {
-        userId: parseInt(userId),
-        invoiceNumber,
+        accountId: parseInt(accountId),
+        subscriptionId: stripeInvoiceId,
         stripeInvoiceId,
-        description,
-        amount: Math.round(amount * 100), // Convert dollars to cents
-        type: type as any,
-        planName,
-        creditsAmount,
-        paymentMethodId: paymentMethodId ? parseInt(paymentMethodId) : null,
-        notes,
-        billingDate: new Date(),
-        status: 'PENDING',
-      },
-      include: {
-        paymentMethod: {
-          select: {
-            brand: true,
-            number: true,
-            last4: true,
-          },
-        },
+        amountDue: amount, // Amount should already be in correct format
+        amountPaid: 0, // Initially unpaid
+        status: 'pending',
       },
     });
 
     return NextResponse.json({
       success: true,
       data: {
-        id: invoice.invoiceNumber,
-        plan: invoice.description,
-        date: invoice.billingDate.toLocaleDateString('en-US', {
+        id: invoice.stripeInvoiceId,
+        plan: description,
+        date: invoice.createdAt.toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
         }),
-        status: 'Pending',
-        amount: (invoice.amount / 100).toFixed(2),
-        type: invoice.type === 'SUBSCRIPTION' ? 'plan' : 'credits',
+        status: invoice.status,
+        amount: invoice.amountDue.toFixed(2),
+        type: type.toLowerCase() === 'subscription' ? 'plan' : 'credits',
         stripeInvoiceId: invoice.stripeInvoiceId,
-        creditsAmount: invoice.creditsAmount,
-        paymentMethod: invoice.paymentMethod ? {
-          brand: invoice.paymentMethod.brand,
-          last4: invoice.paymentMethod.last4 || '****',
-        } : null,
+        accountId: invoice.accountId,
       },
     });
 

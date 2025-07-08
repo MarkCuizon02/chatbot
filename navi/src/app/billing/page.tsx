@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from '@/context/ThemeContext';
 import { useSubscription } from '@/context/SubscriptionContext';
+import { useCurrentAccount } from '@/context/UserContext';
 import Sidebar from '@/app/components/Sidebar';
 import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
 import CreditsUsageChart from '@/app/components/CreditsUsageChart';
@@ -39,6 +40,7 @@ interface ApiInvoice {
 export default function BillingPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const { subscription } = useSubscription();
+  const { currentAccount } = useCurrentAccount();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
@@ -84,8 +86,14 @@ export default function BillingPage() {
         setIsLoadingBillingHistory(true);
         setBillingHistoryError(null);
         
-        // For now, using account ID 1 as default - you should get this from user context
-        const response = await fetch('/api/billing/history?accountId=1');
+        // Use the current account ID from context
+        if (!currentAccount) {
+          console.log('No current account available');
+          setIsLoadingBillingHistory(false);
+          return;
+        }
+
+        const response = await fetch(`/api/billing/history?accountId=${currentAccount.id}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -135,7 +143,7 @@ export default function BillingPage() {
     if (isClient) {
       fetchBillingHistory();
     }
-  }, [isClient, subscription.billingHistory]);
+  }, [isClient, subscription.billingHistory, currentAccount]);
 
   // Automatically enable monthly discount if user is subscribed (only once)
   useEffect(() => {

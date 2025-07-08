@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiXMark, HiOutlineMap, HiOutlineCheck, HiOutlineSparkles } from 'react-icons/hi2';
 import { useTheme } from '@/context/ThemeContext';
 import { useSubscription } from '@/context/SubscriptionContext';
+import { useCurrentAccount } from '@/context/UserContext';
 import { CREDIT_PACKS, formatPrice, formatPricePerCredit, getCreditPackPrice } from '@/lib/creditPricing';
 
 interface CreditsPurchaseModalProps {
@@ -33,12 +34,14 @@ const creditPackages = CREDIT_PACKS.map((pack, index) => ({
 export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountActive = false, setMonthlyDiscountActive }: CreditsPurchaseModalProps) {
   const { isDarkMode } = useTheme();
   const { purchaseAdditionalCredits, subscription } = useSubscription();
+  const { currentAccount, refreshAccount } = useCurrentAccount();
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
   const [customPrice, setCustomPrice] = useState('');
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [purchaseData, setPurchaseData] = useState<{ amount: number; price: number } | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isSubscribed = subscription.currentPlan && subscription.currentPlan.name !== "No Active Plan";
 
@@ -65,6 +68,7 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
     if (!selectedPackage && !customAmount) return;
     
     setIsProcessing(true);
+    setErrorMessage(null); // Clear any previous errors
     
     let amount: number;
     let price: number;
@@ -80,6 +84,11 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
     }
 
     try {
+      // Check if we have an account
+      if (!currentAccount) {
+        throw new Error('No account selected. Please try again.');
+      }
+
       // Call the new API endpoint
       const response = await fetch('/api/billing/purchase-credits', {
         method: 'POST',
@@ -87,20 +96,26 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          accountId: 1, // TODO: Get actual account ID from user context
+          accountId: currentAccount.id, // Use actual account ID from context
           credits: amount,
           applyDiscount: monthlyDiscountActive,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to purchase credits');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to purchase credits');
       }
 
       const result = await response.json();
+      console.log('Purchase successful:', result);
       
       // Update the subscription context
       purchaseAdditionalCredits(amount, price);
+      
+      // Refresh account credits
+      await refreshAccount();
       
       setIsProcessing(false);
       setShowPurchaseModal(true);
@@ -111,7 +126,7 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
     } catch (error) {
       console.error('Error purchasing credits:', error);
       setIsProcessing(false);
-      // TODO: Show error message to user
+      setErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.');
     }
   };
 
@@ -166,7 +181,10 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={onClose}
+                  onClick={() => {
+                    setErrorMessage(null);
+                    onClose();
+                  }}
                   className={`p-1 md:p-2 rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
                 >
                   <HiXMark className="w-5 h-5" />
@@ -400,12 +418,34 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                   </motion.div>
                 )}
 
+                {/* Error Message */}
+                {errorMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`rounded-xl p-3 mb-4 border ${isDarkMode ? 'bg-red-900/20 border-red-700 text-red-300' : 'bg-red-50 border-red-200 text-red-700'}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div>
+                        <h4 className="font-semibold text-sm mb-1">Purchase Failed</h4>
+                        <p className="text-sm">{errorMessage}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Actions */}
                 <div className="flex justify-end gap-3 flex-shrink-0">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={onClose}
+                    onClick={() => {
+                      setErrorMessage(null);
+                      onClose();
+                    }}
                     className={`px-4 py-2 rounded-lg font-medium border text-sm ${
                       isDarkMode 
                         ? 'bg-gray-700 text-white hover:bg-gray-600 border-gray-600' 

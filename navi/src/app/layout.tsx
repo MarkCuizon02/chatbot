@@ -5,6 +5,7 @@ import "./globals.css";
 import { Poppins } from 'next/font/google';
 import { ThemeProvider } from '../context/ThemeContext';
 import { SubscriptionProvider } from '../context/SubscriptionContext';
+import { UserProvider } from '../context/UserContext';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,9 +34,11 @@ export default function RootLayout({
         className={`${inter.variable} ${poppins.variable} font-poppins antialiased`}
       >
         <ThemeProvider>
-          <SubscriptionProvider>
-            {children}
-          </SubscriptionProvider>
+          <UserProvider>
+            <SubscriptionProvider>
+              {children}
+            </SubscriptionProvider>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>
