@@ -10,12 +10,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('📦 API: Request body:', body);
     
-    const { userId, planName } = body;
+    const { userId, accountId, planName } = body;
 
-    if (!userId || !planName) {
-      console.log('❌ API: Missing required fields:', { userId, planName });
+    if ((!userId && !accountId) || !planName) {
+      console.log('❌ API: Missing required fields:', { userId, accountId, planName });
       return NextResponse.json(
-        { error: 'Missing required fields: userId and planName' },
+        { error: 'Missing required fields: userId or accountId, and planName' },
         { status: 400 }
       );
     }
@@ -38,14 +38,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 API: Looking for subscription for user:', userId);
+    console.log('🔍 API: Looking for subscription for:', { userId, accountId });
 
-    // Find the user's subscription
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: userId
-      }
-    });
+    // Find the subscription - prioritize accountId for new subscriptions
+    let subscription;
+    if (accountId) {
+      subscription = await prisma.subscription.findFirst({
+        where: { accountId: accountId }
+      });
+    } else if (userId) {
+      subscription = await prisma.subscription.findFirst({
+        where: { userId: userId }
+      });
+    }
 
     console.log('📦 API: Found subscription:', subscription);
 

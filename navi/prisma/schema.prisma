@@ -23,6 +23,7 @@ model User {
   knowledgeBaseResponses KnowledgeBaseResponse[]
   oauths                 OAuth[]                 @relation("UserOAuth")
   onboardings            Onboarding[]            @relation("UserOnboarding")
+  subscriptions          Subscription[]          // Temporary relation - will be removed later
   Transaction            Transaction[]
   accounts               UserAccount[]
   verificationTokens     VerificationToken[]
@@ -57,6 +58,8 @@ model UserAccount {
   account    Account      @relation(fields: [accountId], references: [id])
   user       User         @relation(fields: [userId], references: [id])
   UserAssets UserAssets[]
+  
+  @@unique([userId, accountId])
 }
 
 model UserAssets {
@@ -224,7 +227,7 @@ model KnowledgeBaseResponse {
 }
 
 model PricingPlan {
-  id              Int           @id @default(autoincrement())
+  id              String        @id
   title           String
   price           Int
   credits         Float
@@ -249,13 +252,14 @@ model PlanFeature {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   id            Int         @id @default(autoincrement())
-  pricingPlanId Int
+  pricingPlanId String
   pricingPlan   PricingPlan @relation(fields: [pricingPlanId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {
   id                   Int                @id @default(autoincrement())
-  accountId            Int?
+  accountId            Int?               // Make this optional for now 
+  userId               Int?               // Temporary field for migration - will be removed later
   stripeSubscriptionId String?            @unique
   stripeCustomerId     String?
   stripePriceId        String?
@@ -267,6 +271,7 @@ model Subscription {
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   Account              Account?           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  User                 User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ChattieCoach {

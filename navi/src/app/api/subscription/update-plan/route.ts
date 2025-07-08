@@ -10,12 +10,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('📦 API: Request body:', body);
     
-    const { planName, userId, actionType } = body;
+    const { planName, userId, accountId, actionType } = body;
 
-    if (!planName || !userId) {
-      console.log('❌ API: Missing required fields:', { planName, userId });
+    if (!planName || (!userId && !accountId)) {
+      console.log('❌ API: Missing required fields:', { planName, userId, accountId });
       return NextResponse.json(
-        { error: 'Missing required fields: planName and userId' },
+        { error: 'Missing required fields: planName and (userId or accountId)' },
         { status: 400 }
       );
     }
@@ -57,14 +57,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 API: Updating subscription for user:', userId);
+    console.log('🔍 API: Updating subscription for:', { userId, accountId });
 
-    // Find existing subscription for this user
-    const existingSubscription = await prisma.subscription.findFirst({
-      where: {
-        userId: userId
-      }
-    });
+    // Find existing subscription - prioritize accountId
+    let existingSubscription;
+    if (accountId) {
+      existingSubscription = await prisma.subscription.findFirst({
+        where: { accountId: accountId }
+      });
+    } else if (userId) {
+      existingSubscription = await prisma.subscription.findFirst({
+        where: { userId: userId }
+      });
+    }
 
     let subscription;
     
@@ -85,14 +90,19 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Create new subscription
-      console.log('📝 API: Creating new subscription for user:', userId);
+      console.log('📝 API: Creating new subscription for:', { userId, accountId });
+      const subscriptionData = {
+        stripePriceId: pricingPlan.stripePriceId,
+        status: 'ACTIVE' as const,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        ...(accountId ? { accountId } : {}),
+        ...(userId ? { userId } : {})
+      };
+      
       subscription = await prisma.subscription.create({
         data: {
-          userId: userId,
-          stripePriceId: pricingPlan.stripePriceId,
-          status: 'ACTIVE',
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          ...subscriptionData,
           cancelAtPeriodEnd: false
         }
       });

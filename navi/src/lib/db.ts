@@ -90,8 +90,33 @@ export const db = {
         status: { in: ['ACTIVE', 'TRIALING'] }
       },
       include: {
-        user: true
+        User: true
       }
     });
+  },
+
+  async getAccountSubscription(accountId: number) {
+    return await prisma.subscription.findFirst({
+      where: { 
+        accountId,
+        status: { in: ['ACTIVE', 'TRIALING'] }
+      },
+      include: {
+        Account: true
+      }
+    });
+  },
+
+  // Get subscription by either userId or accountId (prioritize accountId)
+  async getSubscription(params: { userId?: number; accountId?: number }) {
+    const { userId, accountId } = params;
+    
+    if (accountId) {
+      return this.getAccountSubscription(accountId);
+    } else if (userId) {
+      return this.getUserSubscription(userId);
+    }
+    
+    return null;
   }
 }; 

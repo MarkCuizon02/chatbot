@@ -2,6 +2,17 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Helper function to generate a consistent hash
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return hash;
+}
+
 async function main() {
   console.log('🌱 Starting database seeding...');
 
@@ -70,7 +81,10 @@ async function main() {
       displayOrder: 1,
       status: 'active',
       releaseDate: new Date('2024-01-01'),
-      imageUrl: '/images/Navi.png'
+      imageUrl: '/images/Navi.png',
+      category: 'assistant',
+      tagline: 'Your Smart Assistant',
+      tagname: 'smart-assistant'
     },
     {
       name: 'Pixie',
@@ -79,7 +93,10 @@ async function main() {
       displayOrder: 2,
       status: 'active',
       releaseDate: new Date('2024-01-01'),
-      imageUrl: '/images/Pixie.png'
+      imageUrl: '/images/Pixie.png',
+      category: 'conversation',
+      tagline: 'Conversational AI',
+      tagname: 'conversation-ai'
     },
     {
       name: 'Paige',
@@ -88,7 +105,10 @@ async function main() {
       displayOrder: 3,
       status: 'active',
       releaseDate: new Date('2024-01-01'),
-      imageUrl: '/images/Paige.png'
+      imageUrl: '/images/Paige.png',
+      category: 'image',
+      tagline: 'Image Creator',
+      tagname: 'image-generation'
     },
     {
       name: 'Audra',
@@ -97,7 +117,10 @@ async function main() {
       displayOrder: 4,
       status: 'coming_soon',
       releaseDate: new Date('2024-06-01'),
-      imageUrl: '/images/Audra.png'
+      imageUrl: '/images/Audra.png',
+      category: 'video',
+      tagline: 'Video Creator',
+      tagname: 'video-generation'
     },
     {
       name: 'Flicka',
@@ -106,7 +129,10 @@ async function main() {
       displayOrder: 5,
       status: 'coming_soon',
       releaseDate: new Date('2024-07-01'),
-      imageUrl: '/images/flicka.png'
+      imageUrl: '/images/flicka.png',
+      category: 'audio',
+      tagline: 'Audio Creator',
+      tagname: 'audio-generation'
     }
   ];
 
@@ -125,6 +151,7 @@ async function main() {
       id: 'personal',
       title: 'Personal',
       price: 1900, // $19.00
+      credits: 200,
       description: 'Great for steady personal use with rollover and solid credit limits.',
       buttonText: 'Upgrade Plan',
       href: '/billing/plan/personal',
@@ -138,6 +165,7 @@ async function main() {
       id: 'family',
       title: 'Family',
       price: 3900, // $39.00
+      credits: 500,
       description: 'Flexible plan for families or small teams with shared credits.',
       buttonText: 'Upgrade Plan',
       href: '/billing/plan/family',
@@ -151,6 +179,7 @@ async function main() {
       id: 'family-plus',
       title: 'Family Plus',
       price: 9900, // $99.00
+      credits: 1500,
       description: 'A solid starting point for businesses with scalable credits.',
       buttonText: 'Current Plan',
       href: '/billing/plan/family-plus',
@@ -164,6 +193,7 @@ async function main() {
       id: 'launch',
       title: 'Launch',
       price: 9900, // $99.00
+      credits: 1500,
       description: 'Ideal for starting your teams needing more credits, storage and BYOK.',
       buttonText: 'Upgrade Plan',
       href: '/billing/plan/launch',
@@ -177,6 +207,7 @@ async function main() {
       id: 'growth',
       title: 'Growth',
       price: 29900, // $299.00
+      credits: 5000,
       description: 'Ideal for growing teams needing more credits, storage and BYOK.',
       buttonText: 'Upgrade Plan',
       href: '/billing/plan/growth',
@@ -190,6 +221,7 @@ async function main() {
       id: 'pro',
       title: 'Pro',
       price: 69900, // $699.00
+      credits: 15000,
       description: 'Full-featured plan for pro teams with max credits, storage and BYOK.',
       buttonText: 'Upgrade Plan',
       href: '/billing/plan/pro',
@@ -203,6 +235,7 @@ async function main() {
       id: 'human-digital-manager',
       title: 'Human Digital Manager',
       price: 250000, // $2500.00
+      credits: 50000,
       description: 'Full-featured plan for pro teams with max credits, storage and BYOK.',
       buttonText: 'Upgrade Plan',
       href: '/billing/plan/human-digital-manager',
@@ -216,6 +249,7 @@ async function main() {
       id: 'founders-club',
       title: "Founder's Club",
       price: 250000, // $2500.00
+      credits: 50000,
       description: 'Exclusive plan for local small business owners.',
       buttonText: 'Upgrade Plan',
       href: '/billing/plan/founders-club',
@@ -443,13 +477,10 @@ async function main() {
   for (const feature of planFeatures) {
     await prisma.planFeature.upsert({
       where: { 
-        id: `${feature.pricingPlanId}_${feature.name.toLowerCase().replace(/\s+/g, '_')}` 
+        id: Math.abs(hashCode(`${feature.pricingPlanId}_${feature.name}`))
       },
       update: feature,
-      create: {
-        ...feature,
-        id: `${feature.pricingPlanId}_${feature.name.toLowerCase().replace(/\s+/g, '_')}`
-      }
+      create: feature
     });
   }
 
