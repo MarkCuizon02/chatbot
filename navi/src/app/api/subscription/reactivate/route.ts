@@ -82,6 +82,36 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ API: Subscription reactivated successfully:', updatedSubscription);
 
+    // Create invoice for subscription reactivation
+    try {
+      // Determine the account ID for the invoice
+      const invoiceAccountId = accountId || (await prisma.user.findUnique({
+        where: { id: userId },
+        include: { accounts: true }
+      }))?.accounts[0]?.accountId;
+
+      if (invoiceAccountId) {
+        // Create invoice for subscription reactivation
+        await prisma.invoice.create({
+          data: {
+            accountId: invoiceAccountId,
+            subscriptionId: updatedSubscription.stripeSubscriptionId || `sub_${updatedSubscription.id}`,
+            stripeInvoiceId: `reactivation_${updatedSubscription.id}_${Date.now()}`,
+            amountDue: pricingPlan.price / 100, // Convert cents to dollars
+            amountPaid: pricingPlan.price / 100,
+            currency: 'usd',
+            status: 'paid',
+            paidAt: new Date(),
+          },
+        });
+
+        console.log(`📄 API: Invoice created for subscription reactivation: ${planName} plan`);
+      }
+    } catch (invoiceError) {
+      console.error('⚠️ API: Failed to create invoice for reactivation, but subscription was reactivated:', invoiceError);
+      // Don't fail the entire request if invoice creation fails
+    }
+
     return NextResponse.json({
       success: true,
       subscription: updatedSubscription,
@@ -98,4 +128,4 @@ export async function POST(request: NextRequest) {
   } finally {
     await prisma.$disconnect();
   }
-} 
+}

@@ -110,6 +110,53 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ API: Subscription updated successfully:', subscription);
 
+    // Create invoice for plan change
+    try {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      
+      // Determine the account ID for the invoice
+      const invoiceAccountId = accountId || (await prisma.user.findUnique({
+        where: { id: userId },
+        include: { accounts: true }
+      }))?.accounts[0]?.accountId;
+
+      if (invoiceAccountId) {
+        // Get count of invoices for this year/month to generate sequential number
+        const invoiceCount = await prisma.invoice.count({
+          where: {
+            accountId: invoiceAccountId,
+            createdAt: {
+              gte: new Date(year, date.getMonth(), 1),
+              lt: new Date(year, date.getMonth() + 1, 1),
+            },
+          },
+        });
+        
+        const invoiceNumber = `SUB-${year}-${month}-${String(invoiceCount + 1).padStart(3, '0')}`;
+
+        // Create invoice for subscription change
+        await prisma.invoice.create({
+          data: {
+            accountId: invoiceAccountId,
+            subscriptionId: subscription.stripeSubscriptionId || `sub_${subscription.id}`,
+            stripeInvoiceId: `subscription_${subscription.id}_${Date.now()}`,
+            amountDue: pricingPlan.price / 100, // Convert cents to dollars
+            amountPaid: pricingPlan.price / 100,
+            currency: 'usd',
+            status: 'paid',
+            paidAt: new Date(),
+          },
+        });
+
+        console.log(`📄 API: Invoice created for ${actionType}: ${planName} plan`);
+      }
+    } catch (invoiceError) {
+      console.error('⚠️ API: Failed to create invoice, but subscription was updated:', invoiceError);
+      // Don't fail the entire request if invoice creation fails
+    }
+
     // Log the plan change
     console.log(`📝 API: Plan updated for user ${userId}: ${planName} (${actionType})`);
 

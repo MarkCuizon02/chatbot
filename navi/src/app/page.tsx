@@ -6,6 +6,7 @@ import { Menu, Bell, Users, Link as LinkIcon, CreditCard, Trophy, ChevronDown, C
 import Image from 'next/image';
 import { useTheme } from '../context/ThemeContext';
 import { useSubscription } from '../context/SubscriptionContext';
+import { useCurrentAccount } from '../context/UserContext';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Sidebar from './components/Sidebar';
@@ -257,6 +258,7 @@ export default function Dashboard() {
   const [isCreditDetailsModalOpen, setIsCreditDetailsModalOpen] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
   const { subscription } = useSubscription();
+  const { currentAccount } = useCurrentAccount();
   const router = useRouter();
 
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
@@ -268,33 +270,39 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // TODO: Replace hardcoded accountId with actual user's account ID
-      const accountId = 1; // This should come from user session/context
-      
-      const stats = await fetchDashboardStats(accountId);
-      setDashboardStats(stats);
+      if (!currentAccount) {
+        console.log('No current account available');
+        return;
+      }
 
-      const statuses = await fetchAgentStatuses(accountId);
-      setAgentStatuses(statuses);
+      try {
+        const stats = await fetchDashboardStats(currentAccount.id);
+        setDashboardStats(stats);
 
-      const chartData = await fetchChartData(accountId);
-      setChartData(chartData);
+        const statuses = await fetchAgentStatuses(currentAccount.id);
+        setAgentStatuses(statuses);
 
-      const teamData = await fetchTeamUsage(accountId);
-      setTeamUsageData(teamData);
+        const chartData = await fetchChartData(currentAccount.id);
+        setChartData(chartData);
 
-      const activities = await fetchAgentActivities(accountId);
-      setAgentActivities(activities);
+        const teamData = await fetchTeamUsage(currentAccount.id);
+        setTeamUsageData(teamData);
 
-      // Calculate integrated credit data
-      if (stats) {
-        const integrated = calculateIntegratedCredits(stats, subscription, accountId);
-        setIntegratedCredits(integrated);
+        const activities = await fetchAgentActivities(currentAccount.id);
+        setAgentActivities(activities);
+
+        // Calculate integrated credit data
+        if (stats) {
+          const integrated = calculateIntegratedCredits(stats, subscription, currentAccount.id);
+          setIntegratedCredits(integrated);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
       }
     };
 
     fetchData();
-  }, [subscription]);
+  }, [subscription, currentAccount]);
 
   // Get credit alerts
   const creditAlerts = integratedCredits ? getCreditAlerts(integratedCredits) : [];

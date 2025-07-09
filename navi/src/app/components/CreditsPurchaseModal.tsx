@@ -25,7 +25,6 @@ const creditPackages = CREDIT_PACKS.map((pack, index) => ({
   savings: 0, // Will be calculated dynamically
   features: [
     `${pack.credits.toLocaleString()} credits`,
-    '90 days expiry',
     'Standard support',
     `${formatPricePerCredit(pack.pricePerCredit)} per credit`
   ]
@@ -296,12 +295,6 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                           <div className="flex justify-between items-start mb-2">
                             <div>
                               <h4 className="font-semibold text-base">{pkg.name}</h4>
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                90 days expiry
-                              </div>
                             </div>
                             <div className="text-right">
                               <div className="text-xl font-bold">{pkg.credits}</div>
@@ -410,10 +403,6 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                           <span>20% OFF applied</span>
                         </div>
                       )}
-                      <div className="flex justify-between text-sm">
-                        <span>Expiry:</span>
-                        <span>90 days from purchase</span>
-                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -525,7 +514,7 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                       You have purchased <span className="font-semibold text-blue-600">{purchaseData.amount} credits</span> for <span className="font-semibold">${purchaseData.price}</span>.
                     </p>
                     <p>
-                      <span className="font-semibold text-green-600">These credits will expire in 90 days</span> and will be consumed separately from your plan credits.
+                      <span className="font-semibold text-green-600">These credits will be consumed separately from your plan credits.</span>
                     </p>
                   </div>
                 </div>
@@ -538,7 +527,6 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
                       <ul className={`space-y-1 ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
                         <li>• Credits added to your account immediately</li>
                         <li>• Used before your plan credits</li>
-                        <li>• Expire in 90 days</li>
                         <li>• Available for all features</li>
                       </ul>
                     </div>

@@ -258,8 +258,8 @@ model PlanFeature {
 
 model Subscription {
   id                   Int                @id @default(autoincrement())
-  accountId            Int?               // Make this optional for now 
-  userId               Int?               // Temporary field for migration - will be removed later
+  accountId            Int?               // Make this optional for now // temporary data type int? so i can build locally
+  userId               Int?               // Temporary field for migration - will be removed later // temporary data type int? so i can build locally
   stripeSubscriptionId String?            @unique
   stripeCustomerId     String?
   stripePriceId        String?

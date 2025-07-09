@@ -69,6 +69,36 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ API: Subscription canceled successfully:', updatedSubscription);
 
+    // Create invoice record for cancellation (for billing history tracking)
+    try {
+      // Determine the account ID for the invoice
+      const invoiceAccountId = accountId || (await prisma.user.findUnique({
+        where: { id: userId },
+        include: { accounts: true }
+      }))?.accounts[0]?.accountId;
+
+      if (invoiceAccountId) {
+        // Create a $0 invoice record for cancellation tracking
+        await prisma.invoice.create({
+          data: {
+            accountId: invoiceAccountId,
+            subscriptionId: updatedSubscription.stripeSubscriptionId || `sub_${updatedSubscription.id}`,
+            stripeInvoiceId: `cancellation_${updatedSubscription.id}_${Date.now()}`,
+            amountDue: 0.00, // $0 for cancellation
+            amountPaid: 0.00,
+            currency: 'usd',
+            status: 'paid', // Mark as paid since it's just a record
+            paidAt: new Date(),
+          },
+        });
+
+        console.log('📄 API: Cancellation record created in billing history');
+      }
+    } catch (invoiceError) {
+      console.error('⚠️ API: Failed to create cancellation record, but subscription was canceled:', invoiceError);
+      // Don't fail the entire request if invoice creation fails
+    }
+
     // Log the cancellation with feedback
     console.log(`📝 API: Subscription canceled for user ${userId}:`, {
       reason: reason || 'No reason provided',
@@ -99,4 +129,4 @@ export async function POST(request: NextRequest) {
   } finally {
     await prisma.$disconnect();
   }
-} 
+}
