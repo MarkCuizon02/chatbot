@@ -1,20 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { Database } from '@/lib/model/database';
 import { getCreditPackPrice } from '@/lib/creditPricing';
+import { createCustomer, oneTimePayment } from '@/lib/stripe';
 
-const prisma = new PrismaClient();
+const db = new Database();
 
 export async function POST(request: NextRequest) {
+  console.log('🔧 Purchase Credits API called');
+  
   try {
     const body = await request.json();
+    console.log('📝 Request body:', body);
+    
     const { accountId, credits, applyDiscount = false } = body;
 
     if (!accountId || !credits) {
+      console.log('❌ Missing required fields:', { accountId, credits });
       return NextResponse.json(
         { error: 'Account ID and credits are required' },
         { status: 400 }
       );
     }
+
+    console.log('🔍 Looking up account with ID:', accountId);
+    // Get the account by its ID
+    const account = await db.account.getAccountById(accountId);
+
+    if (!account) {
+      console.log('❌ Account not found for ID:', accountId);
+      return NextResponse.json(
+        { error: 'Account not found' },
+        { status: 404 }
+      );
+    }
+
+    console.log('✅ Account found:', account.name, 'ID:', account.id);
 
     // Calculate price using the new pricing system
     let totalPrice = getCreditPackPrice(credits);
@@ -24,67 +44,86 @@ export async function POST(request: NextRequest) {
       totalPrice = totalPrice * 0.8;
     }
 
-    // Generate invoice number
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    
-    // Get count of invoices for this year/month to generate sequential number
-    const invoiceCount = await prisma.invoice.count({
-      where: {
-        accountId: parseInt(accountId),
-        createdAt: {
-          gte: new Date(year, date.getMonth(), 1),
-          lt: new Date(year, date.getMonth() + 1, 1),
-        },
-      },
-    });
-    
-    const invoiceNumber = `INV-${year}-${month}-${String(invoiceCount + 1).padStart(3, '0')}`;
+    // Get or create Stripe customer if needed
+    let stripeCustomerId = account.stripCustomerId;
+    if (!stripeCustomerId) {
+      // We need user email to create customer - get it from account
+      const userAccount = await db.account.getUserAccountForAccount(account.id);
+      if (!userAccount?.user?.email) {
+        return NextResponse.json(
+          { error: 'User email not found for account' },
+          { status: 400 }
+        );
+      }
 
-    // Create invoice for credits purchase
-    const invoice = await prisma.invoice.create({
-      data: {
-        accountId: parseInt(accountId),
-        subscriptionId: null, // This is a credits purchase, not a subscription
-        stripeInvoiceId: `credits_${Date.now()}`, // Generate a unique ID for credits
-        amountDue: totalPrice,
-        amountPaid: 0, // Will be updated when payment is processed
-        currency: 'usd',
-        status: 'pending',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-        paidAt: null,
-      },
+      const customerResult = await createCustomer({
+        email: userAccount.user.email,
+        fname: userAccount.user.firstname || '',
+        lname: userAccount.user.lastname || '',
+        phone: ''
+      });
+
+      if ('error_message' in customerResult) {
+        return NextResponse.json(
+          { error: 'Failed to create Stripe customer', details: customerResult.error_message },
+          { status: 500 }
+        );
+      }
+
+      stripeCustomerId = customerResult.customer_id;
+      
+      // Update account with Stripe customer ID
+      await db.account.updateAccountStripeCustomerId(account.id, stripeCustomerId);
+    }
+
+    // Create Stripe Payment Intent for credit purchase
+    const paymentResult = await oneTimePayment({
+      customer_id: stripeCustomerId,
+      amount: totalPrice,
+      description: `Purchase ${credits} credits`,
+      metadata: {
+        type: 'credit_purchase',
+        credits: credits.toString(),
+        accountId: account.id.toString()
+      }
     });
 
-    // Here you would typically integrate with Stripe to process the payment
-    // For now, we'll simulate a successful payment
-    const updatedInvoice = await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: {
-        amountPaid: totalPrice,
-        status: 'paid',
-        paidAt: new Date(),
-      },
-    });
+    if ('error_message' in paymentResult) {
+      return NextResponse.json(
+        { error: 'Failed to create payment intent', details: paymentResult.error_message },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        invoiceId: invoice.id,
-        invoiceNumber: invoiceNumber,
+        paymentId: paymentResult.payment_id,
+        clientSecret: paymentResult.client_secret,
         credits: credits,
         totalPrice: totalPrice,
-        status: 'paid',
         discountApplied: applyDiscount,
-        message: 'Credits purchased successfully!',
+        message: 'Payment intent created successfully! Complete payment to receive credits.',
       },
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error purchasing credits:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    
+    console.error('Full error details:', {
+      message: errorMessage,
+      stack: errorStack,
+      error: error
+    });
+    
     return NextResponse.json(
-      { error: 'Failed to purchase credits', details: error.message },
+      { 
+        error: 'Failed to purchase credits', 
+        details: errorMessage,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }

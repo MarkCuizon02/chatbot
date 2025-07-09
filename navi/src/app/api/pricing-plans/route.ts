@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../../lib/db';
+import { Database } from '@/lib/model/database';
+
+const db = new Database();
 
 export async function GET() {
   try {
-    const pricingPlans = await db.getPricingPlans();
+    const pricingPlans = await db.pricingPlan.getPricingPlans();
     
     return NextResponse.json({
       success: true,

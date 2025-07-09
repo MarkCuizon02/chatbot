@@ -21,8 +21,9 @@ export async function oneTimePayment(data: any) {
             customer: customer_id,
             amount: data.amount * 100,
             currency: 'usd',
-            description: data.ddecation !== "" ? data.ddecation : "Amount",
+            description: data.description !== "" ? data.description : "Amount",
             automatic_payment_methods: { enabled: true },
+            metadata: data.metadata || {},
         });
 
         return {
