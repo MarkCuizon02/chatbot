@@ -6,68 +6,182 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import Sidebar from '../components/Sidebar';
 import {
-  HiOutlineInformationCircle,
-  HiOutlineEllipsisHorizontal,
   HiOutlinePlus,
   HiMagnifyingGlass,
   HiChevronDown,
   HiChevronUp,
 } from 'react-icons/hi2';
 
-interface ConnectionCardProps {
-  name: string;
+interface ModelItem {
+  id: string;
+  title: string;
   description: string;
   credits: string;
   isAvailable: boolean;
-  bgColor?: string;
 }
 
-const ConnectionCard: React.FC<ConnectionCardProps> = ({
-  name,
-  description,
-  credits,
-  isAvailable,
-  bgColor = 'bg-white',
-}) => {
+interface CategoryData {
+  id: string;
+  name: string;
+  items: ModelItem[];
+  subcategories?: {
+    id: string;
+    name: string;
+    items: ModelItem[];
+  }[];
+}
+
+interface ToggleSwitchProps {
+  isEnabled: boolean;
+  onChange: (enabled: boolean) => void;
+  id: string;
+}
+
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ isEnabled, onChange, id }) => {
   const { isDarkMode } = useTheme();
-  const [isEnabled, setIsEnabled] = useState(isAvailable);
+  
+  return (
+    <label htmlFor={id} className="flex items-center cursor-pointer">
+      <div className="relative">
+        <input
+          type="checkbox"
+          id={id}
+          className="sr-only"
+          checked={isEnabled}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <div
+          className={`block w-12 h-6 rounded-full ${
+            isEnabled 
+              ? (isDarkMode ? 'bg-teal-700' : 'bg-teal-500') 
+              : (isDarkMode ? 'bg-gray-600' : 'bg-gray-300')
+          } transition-colors duration-200`}
+        ></div>
+        <div
+          className={`dot absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
+            isEnabled ? 'translate-x-6' : 'translate-x-0'
+          }`}
+        ></div>
+      </div>
+    </label>
+  );
+};
+
+interface ModelItemComponentProps {
+  item: ModelItem;
+  onToggle: (id: string, enabled: boolean) => void;
+}
+
+const ModelItemComponent: React.FC<ModelItemComponentProps> = ({ item, onToggle }) => {
+  const { isDarkMode } = useTheme();
+  
+  return (
+    <div className={`flex items-center justify-between py-4 px-6 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200`}>
+      <div className="flex-1">
+        <h4 className="font-medium text-base mb-1">{item.title}</h4>
+        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          {item.description}
+        </p>
+      </div>
+      <div className="flex items-center space-x-4 ml-4">
+        <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} whitespace-nowrap`}>
+          {item.credits}
+        </span>
+        {item.isAvailable && (
+          <ToggleSwitch
+            isEnabled={item.isAvailable}
+            onChange={(enabled) => onToggle(item.id, enabled)}
+            id={`toggle-${item.id}`}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface CategorySectionProps {
+  category: CategoryData;
+  onToggle: (id: string, enabled: boolean) => void;
+}
+
+const CategorySection: React.FC<CategorySectionProps> = ({ category, onToggle }) => {
+  const { isDarkMode } = useTheme();
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set());
+
+  const toggleSubcategory = (subcategoryId: string) => {
+    const newExpanded = new Set(expandedSubcategories);
+    if (newExpanded.has(subcategoryId)) {
+      newExpanded.delete(subcategoryId);
+    } else {
+      newExpanded.add(subcategoryId);
+    }
+    setExpandedSubcategories(newExpanded);
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-      className={`rounded-xl p-5 shadow-xl border ${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-100' : `${bgColor} border-gray-200 text-gray-900`} flex flex-col`}
-    >
-      <div className="flex justify-between items-center mb-3">
-        <label htmlFor={`toggle-${name}`} className="flex items-center cursor-pointer">
-          <div className="relative">
-            <input
-              type="checkbox"
-              id={`toggle-${name}`}
-              className="sr-only"
-              checked={isEnabled}
-              onChange={() => setIsEnabled(!isEnabled)}
-            />
-            <div
-              className={`block w-12 h-6 rounded-full ${isEnabled ? (isDarkMode ? 'bg-teal-700' : 'bg-teal-500') : (isDarkMode ? 'bg-gray-600' : 'bg-gray-300')} transition-colors duration-200`}
-            ></div>
-            <div
-              className={`dot absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${isEnabled ? 'translate-x-6' : 'translate-x-0'}
-              `}
-            ></div>
-          </div>
-        </label>
-        <div className="flex items-center space-x-3">
-          <HiOutlineInformationCircle size={22} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} cursor-pointer hover:text-teal-500`} />
-          <HiOutlineEllipsisHorizontal size={22} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'} cursor-pointer hover:text-teal-500`} />
-        </div>
-      </div>
-      <h3 className="text-xl font-semibold mb-2">{name}</h3>
-      <p className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} flex-grow`}>{description}</p>
-      <p className={`text-sm mt-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{credits}</p>
-    </motion.div>
+    <div className={`border rounded-lg ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} mb-4`}>
+      {/* Main Category Header */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className={`w-full flex items-center justify-between p-6 text-left ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200`}
+      >
+        <h3 className="text-lg font-semibold">{category.name}</h3>
+        {isExpanded ? <HiChevronUp size={20} /> : <HiChevronDown size={20} />}
+      </button>
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              {/* Direct category items */}
+              {category.items.map((item) => (
+                <ModelItemComponent key={item.id} item={item} onToggle={onToggle} />
+              ))}
+
+              {/* Subcategories */}
+              {category.subcategories?.map((subcategory) => (
+                <div key={subcategory.id} className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <button
+                    onClick={() => toggleSubcategory(subcategory.id)}
+                    className={`w-full flex items-center justify-between p-6 pl-8 text-left ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200`}
+                  >
+                    <h4 className="text-base font-medium">{subcategory.name}</h4>
+                    {expandedSubcategories.has(subcategory.id) ? <HiChevronUp size={18} /> : <HiChevronDown size={18} />}
+                  </button>
+                  
+                  <AnimatePresence>
+                    {expandedSubcategories.has(subcategory.id) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className={`border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                          {subcategory.items.map((item) => (
+                            <div key={item.id} className="pl-4">
+                              <ModelItemComponent item={item} onToggle={onToggle} />
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
@@ -77,27 +191,158 @@ export default function ConnectionsPage() {
   const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
   const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('All');
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState('Status');
 
-  const connectionCategories = ['All', 'OpenAI', 'Anthropic', 'Google DeepMind', 'Mistral / Mixtral', 'More'];
-  const statusOptions = ['Status', 'Active', 'Inactive', 'Coming Soon'];
+  const [categories, setCategories] = useState<CategoryData[]>([
+    {
+      id: 'text-writing',
+      name: 'TEXT & WRITING',
+      items: []
+    },
+    {
+      id: 'image-generation',
+      name: 'Image Generation',
+      items: [],
+      subcategories: [
+        {
+          id: 'dalle-3',
+          name: 'DALL-E 3 (OpenAI)',
+          items: [
+            {
+              id: 'dalle-3-1',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: false
+            },
+            {
+              id: 'dalle-3-2',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: true
+            },
+            {
+              id: 'dalle-3-3',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'midjourney',
+      name: 'Midjourney',
+      items: [
+        {
+          id: 'midjourney-1',
+          title: 'Title-4.1',
+          description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+          credits: '0.8 Credits / 1k Tokens',
+          isAvailable: false
+        },
+        {
+          id: 'midjourney-2',
+          title: 'Title-4.1',
+          description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+          credits: '0.8 Credits / 1k Tokens',
+          isAvailable: false
+        },
+        {
+          id: 'midjourney-3',
+          title: 'Title-4.1',
+          description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+          credits: '0.8 Credits / 1k Tokens',
+          isAvailable: false
+        }
+      ]
+    },
+    {
+      id: 'audio-music',
+      name: 'AUDIO & MUSIC',
+      items: [],
+      subcategories: [
+        {
+          id: 'elevenlabs',
+          name: 'ElevenLabs',
+          items: [
+            {
+              id: 'elevenlabs-1',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: true
+            },
+            {
+              id: 'elevenlabs-2',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: false
+            },
+            {
+              id: 'elevenlabs-3',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: false
+            }
+          ]
+        },
+        {
+          id: 'google-audiolm',
+          name: 'Google AudioLM',
+          items: [
+            {
+              id: 'audiolm-1',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: false
+            },
+            {
+              id: 'audiolm-2',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: true
+            },
+            {
+              id: 'audiolm-3',
+              title: 'Title-4.1',
+              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              credits: '0.8 Credits / 1k Tokens',
+              isAvailable: false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'research-data',
+      name: 'RESEARCH & DATA',
+      items: []
+    }
+  ]);
 
-  const connections = [
-    { name: 'GPT-4.1', description: 'Internal name often used to refer to improved GPT-4-turbo in 2024.', credits: '0.8 Credits / 1k Tokens', isAvailable: false },
-    { name: 'GPT-4.1 nano', description: 'Hypothetical or future model variants for mobile/local deployment (not officially branded).', credits: 'FREE • For paid account only', isAvailable: true },
-    { name: 'o4-mini', description: 'Hypothetical or future model variants for mobile/local deployment (not officially branded).', credits: '0.8 Credits / 1k Tokens', isAvailable: false },
-    { name: 'GPT-4-turbo', description: 'Not officially branded, but often refers to an interim improvement in 2024.', credits: '0.8 Credits / 1k Tokens', isAvailable: false },
-    { name: 'GPT-3.5-turbo-instruct', description: 'Instruct-tuned version of 3.5, mostly for API compatibility.', credits: '0.8 Credits / 1k Tokens', isAvailable: false },
-    { name: 'Claude 1, 2, 3', description: 'Claude 3 family includes Opus (most powerful), Sonnet (balanced), and Haiku (fastest).', credits: '0.8 Credits / 1k Tokens', isAvailable: true },
-    { name: 'Claude 3.5 Opus', description: 'Latest flagship model from Anthropic (mid-2025).', credits: '0.8 Credits / 1k Tokens', isAvailable: true },
-    { name: 'Claude-instant', description: 'Lighter, faster Claude variant.', credits: '0.8 Credits / 1k Tokens', isAvailable: true },
-    { name: 'Gemini 1, 1.5', description: 'Multimodal models with text, image, code understanding.', credits: '0.8 Credits / 1k Tokens', isAvailable: false },
-    { name: 'Gemini Nano', description: 'On-device variant used in Android and Pixel devices.', credits: '0.8 Credits / 1k Tokens', isAvailable: false },
-    { name: 'Mistral 7B', description: 'Open-weight LLM by Mistral AI.', credits: '0.8 Credits / 1k Tokens', isAvailable: true },
-    { name: 'Mixtral 8x7B', description: 'Mixture-of-Experts model with 8 experts.', credits: '0.8 Credits / 1k Tokens', isAvailable: true },
-  ];
+  const handleToggle = (itemId: string, enabled: boolean) => {
+    setCategories(prevCategories =>
+      prevCategories.map(category => ({
+        ...category,
+        items: category.items.map(item =>
+          item.id === itemId ? { ...item, isAvailable: enabled } : item
+        ),
+        subcategories: category.subcategories?.map(subcategory => ({
+          ...subcategory,
+          items: subcategory.items.map(item =>
+            item.id === itemId ? { ...item, isAvailable: enabled } : item
+          )
+        }))
+      }))
+    );
+  };
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'} flex font-poppins transition-colors duration-300`}>
@@ -122,7 +367,7 @@ export default function ConnectionsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-6xl"
+          className="w-full max-w-4xl"
         >
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-10">
@@ -145,69 +390,10 @@ export default function ConnectionsPage() {
             </div>
           </div>
 
-          {/* Categories and Status Filter */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10">
-            <div className={`flex flex-wrap gap-2 mb-4 sm:mb-0 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-xl p-1.5 shadow-sm`}>
-              {connectionCategories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setActiveTab(category)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    activeTab === category
-                      ? isDarkMode
-                        ? 'bg-teal-600 text-white shadow-sm'
-                        : 'bg-white text-gray-900 shadow-sm'
-                      : isDarkMode
-                        ? 'text-gray-300 hover:bg-gray-700'
-                        : 'text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-
-            <div className="relative w-full sm:w-48">
-              <button
-                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                className={`flex items-center justify-between w-full px-4 py-3 rounded-xl border ${isDarkMode ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-200 text-gray-900'} shadow-sm hover:bg-gray-700 transition-colors duration-200`}
-              >
-                {selectedStatus}
-                {isStatusDropdownOpen ? <HiChevronUp size={22} /> : <HiChevronDown size={22} />}
-              </button>
-              <AnimatePresence>
-                {isStatusDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className={`absolute right-0 mt-2 w-full rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10 ${isDarkMode ? 'bg-gray-800 ring-gray-700' : 'bg-white ring-gray-200'}`}
-                  >
-                    <div className="py-1.5">
-                      {statusOptions.map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => {
-                            setSelectedStatus(status);
-                            setIsStatusDropdownOpen(false);
-                          }}
-                          className={`block w-full text-left px-4 py-2 text-sm ${isDarkMode ? 'hover:bg-gray-700 text-gray-100' : 'hover:bg-gray-100 text-gray-700'} transition-colors duration-200`}
-                        >
-                          {status}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Connections Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {connections.map((connection, index) => (
-              <ConnectionCard key={index} {...connection} />
+          {/* Categories List */}
+          <div className="space-y-4">
+            {categories.map((category) => (
+              <CategorySection key={category.id} category={category} onToggle={handleToggle} />
             ))}
           </div>
         </motion.div>
