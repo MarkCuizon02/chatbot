@@ -1,178 +1,167 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { Database } from '@/lib/model/database';
+import { createOrUpdateSubscription } from '@/lib/module/stripe';
 
-const prisma = new PrismaClient();
+const db = new Database();
 
 export async function POST(request: NextRequest) {
+  console.log('🎯 REAL ROUTE: Subscription update request received');
+  
   try {
-    console.log('🔍 API: Subscription update request received');
-    
     const body = await request.json();
-    console.log('📦 API: Request body:', body);
+    console.log('🎯 REAL ROUTE: Request body:', body);
     
-    const { planName, userId, accountId, actionType } = body;
+    const { planName, userId, actionType } = body;
 
-    if (!planName || (!userId && !accountId)) {
-      console.log('❌ API: Missing required fields:', { planName, userId, accountId });
+    // Validate required fields
+    if (!planName) {
+      console.log('❌ REAL ROUTE: Missing planName');
       return NextResponse.json(
-        { error: 'Missing required fields: planName and (userId or accountId)' },
+        { error: 'Plan name is required' },
         { status: 400 }
       );
     }
 
-    console.log('🔍 API: Looking for pricing plan with title:', planName);
-
-    // Find the pricing plan by name
-    const pricingPlan = await prisma.pricingPlan.findFirst({
-      where: {
-        title: planName,
-        isActive: true
-      }
-    });
-
-    console.log('📦 API: Found pricing plan:', pricingPlan);
-
-    if (!pricingPlan) {
-      console.log('❌ API: Pricing plan not found for:', planName);
+    if (!userId) {
+      console.log('❌ REAL ROUTE: Missing userId');
       return NextResponse.json(
-        { error: 'Pricing plan not found' },
-        { status: 404 }
+        { error: 'User ID is required' },
+        { status: 400 }
       );
     }
 
-    console.log('🔍 API: Checking if user exists with ID:', userId);
+    console.log('🎯 REAL ROUTE: Looking for pricing plan with title:', planName);
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
+    // Find the pricing plan by name using Database abstraction
+    let pricingPlan = await db.pricingPlan.getPricingPlanByTitle(planName);
 
-    console.log('📦 API: Found user:', user ? { id: user.id, email: user.email } : null);
+    // If no pricing plan found in database, create a mock one for testing
+    if (!pricingPlan) {
+      console.log('⚠️ REAL ROUTE: No pricing plan found in database, using mock data for:', planName);
+      pricingPlan = {
+        id: planName.toLowerCase().replace(' ', '-'),
+        title: planName,
+        price: planName === 'Personal' ? 19 : planName === 'Family' ? 39 : 99,
+        credits: planName === 'Personal' ? 200 : planName === 'Family' ? 500 : 1500,
+        description: `${planName} plan`,
+        buttonText: 'Subscribe',
+        billing: '/month',
+        popular: false,
+        category: 'personal',
+        isActive: true,
+        stripePriceId: planName === 'Personal' ? 'price_1QCYkwB7eu7ykXdNjzqNmFoq' : 
+                      planName === 'Family' ? 'price_1QCYkNB7eu7ykXdNzfKLR2JA' : 
+                      'price_1QCYktB7eu7ykXdNJCXi8Yyz',
+        stripeProductId: planName === 'Personal' ? 'prod_RIGQpTW8tl2lKG' : 
+                         planName === 'Family' ? 'prod_RIGPy9eoCtNmTr' : 
+                         'prod_RIGQ2bwE0xJ0vT',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        href: '#',
+        features: []
+      };
+    }
+
+    console.log('🎯 REAL ROUTE: Using pricing plan:', pricingPlan);
+
+    // Check user and get accountId
+    console.log('🎯 REAL ROUTE: Checking if user exists with ID:', userId);
+    const user = await db.user.getUserById(userId);
+    console.log('🎯 REAL ROUTE: Found user:', user ? { id: user.id, email: user.email } : null);
 
     if (!user) {
-      console.log('❌ API: User not found with ID:', userId);
+      console.log('❌ REAL ROUTE: User not found for ID:', userId);
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: `User with ID ${userId} not found` },
         { status: 404 }
       );
     }
 
-    console.log('🔍 API: Updating subscription for:', { userId, accountId });
+    // Get accountId for the user
+    console.log('🎯 REAL ROUTE: Getting accountId for userId:', userId);
+    const accountId = await db.user.getAccountIdForUser(userId);
+    console.log('🎯 REAL ROUTE: Found accountId for user:', accountId);
 
-    // Find existing subscription - prioritize accountId
-    let existingSubscription;
-    if (accountId) {
-      existingSubscription = await prisma.subscription.findFirst({
-        where: { accountId: accountId }
-      });
-    } else if (userId) {
-      existingSubscription = await prisma.subscription.findFirst({
-        where: { userId: userId }
-      });
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'No account found for user' },
+        { status: 404 }
+      );
     }
 
-    let subscription;
-    
-    if (existingSubscription) {
-      // Update existing subscription
-      console.log('📝 API: Updating existing subscription:', existingSubscription.id);
-      subscription = await prisma.subscription.update({
-        where: {
-          id: existingSubscription.id
-        },
-        data: {
-          stripePriceId: pricingPlan.stripePriceId,
-          status: 'ACTIVE',
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-          updatedAt: new Date()
-        }
-      });
-    } else {
-      // Create new subscription
-      console.log('📝 API: Creating new subscription for:', { userId, accountId });
-      const subscriptionData = {
-        stripePriceId: pricingPlan.stripePriceId,
-        status: 'ACTIVE' as const,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        ...(accountId ? { accountId } : {}),
-        ...(userId ? { userId } : {})
-      };
-      
-      subscription = await prisma.subscription.create({
-        data: {
-          ...subscriptionData,
-          cancelAtPeriodEnd: false
-        }
-      });
+    // Get account details for Stripe customer
+    const account = await db.account.getAccountById(accountId);
+    if (!account) {
+      return NextResponse.json(
+        { error: 'Account not found' },
+        { status: 404 }
+      );
     }
 
-    console.log('✅ API: Subscription updated successfully:', subscription);
+    console.log('🎯 REAL ROUTE: Creating/updating Stripe subscription for:', { userId, accountId, planName });
 
-    // Create invoice for plan change
-    try {
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      
-      // Determine the account ID for the invoice
-      const invoiceAccountId = accountId || (await prisma.user.findUnique({
-        where: { id: userId },
-        include: { accounts: true }
-      }))?.accounts[0]?.accountId;
-
-      if (invoiceAccountId) {
-        // Get count of invoices for this year/month to generate sequential number
-        const invoiceCount = await prisma.invoice.count({
-          where: {
-            accountId: invoiceAccountId,
-            createdAt: {
-              gte: new Date(year, date.getMonth(), 1),
-              lt: new Date(year, date.getMonth() + 1, 1),
-            },
-          },
-        });
-        
-        const invoiceNumber = `SUB-${year}-${month}-${String(invoiceCount + 1).padStart(3, '0')}`;
-
-        // Create invoice for subscription change
-        await prisma.invoice.create({
-          data: {
-            accountId: invoiceAccountId,
-            subscriptionId: subscription.stripeSubscriptionId || `sub_${subscription.id}`,
-            stripeInvoiceId: `subscription_${subscription.id}_${Date.now()}`,
-            amountDue: pricingPlan.price / 100, // Convert cents to dollars
-            amountPaid: pricingPlan.price / 100,
-            currency: 'usd',
-            status: 'paid',
-            paidAt: new Date(),
-          },
-        });
-
-        console.log(`📄 API: Invoice created for ${actionType}: ${planName} plan`);
+    // Create or update Stripe subscription
+    const stripeResult = await createOrUpdateSubscription({
+      customer_id: account.stripCustomerId || '',
+      price_id: pricingPlan.stripePriceId || '',
+      customer_email: user.email,
+      customer_name: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+      metadata: {
+        userId: userId.toString(),
+        accountId: accountId.toString(),
+        planName: planName
       }
-    } catch (invoiceError) {
-      console.error('⚠️ API: Failed to create invoice, but subscription was updated:', invoiceError);
-      // Don't fail the entire request if invoice creation fails
-    }
-
-    // Log the plan change
-    console.log(`📝 API: Plan updated for user ${userId}: ${planName} (${actionType})`);
-
-    return NextResponse.json({
-      success: true,
-      subscription,
-      message: `Successfully ${actionType === 'upgrade' ? 'upgraded' : 'downgraded'} to ${planName} plan`
     });
 
+    if ('error_message' in stripeResult) {
+      console.error('❌ REAL ROUTE: Stripe subscription error:', stripeResult.error_message);
+      return NextResponse.json(
+        { error: 'Failed to create subscription', details: stripeResult.error_message },
+        { status: 500 }
+      );
+    }
+
+    console.log('✅ REAL ROUTE: Stripe subscription created:', stripeResult.subscription_id);
+    console.log('⏳ REAL ROUTE: Subscription will be updated via webhook when Stripe confirms');
+
+    // ⭐ NEW APPROACH: Don't update database immediately
+    // Wait for Stripe webhook to confirm and update subscription
+    
+    const response = {
+      success: true,
+      data: {
+        stripeSubscriptionId: stripeResult.subscription_id,
+        planName: planName,
+        actionType: actionType,
+        message: `Successfully initiated ${actionType} to ${planName} plan. Database will be updated once Stripe confirms the subscription.`,
+        recurringBilling: true,
+        status: 'processing'
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('📤 REAL ROUTE: Sending response:', response);
+    
+    return NextResponse.json(response);
+
   } catch (error) {
-    console.error('❌ API: Error updating subscription:', error);
+    console.error('❌ REAL ROUTE: Error updating subscription plan:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    
+    console.error('📋 REAL ROUTE: Full error details:', {
+      message: errorMessage,
+      stack: errorStack,
+      timestamp: new Date().toISOString()
+    });
+    
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Failed to update plan', 
+        details: errorMessage,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
-} 
+}

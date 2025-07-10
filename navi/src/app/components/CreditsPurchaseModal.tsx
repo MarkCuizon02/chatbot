@@ -32,8 +32,8 @@ const creditPackages = CREDIT_PACKS.map((pack, index) => ({
 
 export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountActive = false, setMonthlyDiscountActive }: CreditsPurchaseModalProps) {
   const { isDarkMode } = useTheme();
-  const { purchaseAdditionalCredits, subscription } = useSubscription();
-  const { currentAccount, refreshAccount } = useCurrentAccount();
+  const { subscription, addPendingCreditPurchase } = useSubscription();
+  const { currentAccount } = useCurrentAccount();
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
@@ -108,14 +108,15 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
       }
 
       const result = await response.json();
-      console.log('Purchase successful:', result);
+      console.log('Payment intent created:', result);
       
-      // Update the subscription context
-      purchaseAdditionalCredits(amount, price);
+      // ⭐ IMPORTANT: Add pending credit purchase (no credits added yet!)
+      // Credits will only be added after Stripe webhook confirms successful payment
+      if (result.success && result.paymentIntentId) {
+        addPendingCreditPurchase(amount, price, result.paymentIntentId);
+      }
       
-      // Refresh account credits
-      await refreshAccount();
-      
+      // Show success modal with "processing" status instead
       setIsProcessing(false);
       setShowPurchaseModal(true);
       setPurchaseData({ amount, price });
@@ -127,20 +128,6 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
       setIsProcessing(false);
       setErrorMessage(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.');
     }
-  };
-
-  const confirmPurchase = async () => {
-    if (!purchaseData) return;
-    
-    setIsProcessing(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsProcessing(false);
-    setShowPurchaseModal(false);
-    setPurchaseData(null);
-    onClose();
   };
 
   const handleCustomAmountChange = (value: string) => {
@@ -487,10 +474,14 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
               {/* Header */}
               <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-green-900' : 'bg-green-50'}`}>
-                    <HiOutlineCheck className={`w-5 h-5 ${isDarkMode ? 'text-green-300' : 'text-green-600'}`} />
+                  <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900' : 'bg-blue-50'}`}>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className={`w-5 h-5 border-2 ${isDarkMode ? 'border-blue-300 border-t-transparent' : 'border-blue-600 border-t-transparent'} rounded-full`}
+                    />
                   </div>
-                  <h2 className="text-xl font-semibold">Purchase Confirmation</h2>
+                  <h2 className="text-xl font-semibold">Payment Processing</h2>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
@@ -506,28 +497,37 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
               <div className="p-6">
                 <div className="text-center mb-6">
                   <div className="mb-4">
-                    <HiOutlineCheck className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                      className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-4"
+                    />
                   </div>
-                  <h3 className="text-xl font-semibold mb-4">You have purchased credits!</h3>
+                  <h3 className="text-xl font-semibold mb-4">Processing Your Payment...</h3>
                   <div className={`space-y-3 text-base ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     <p>
-                      You have purchased <span className="font-semibold text-blue-600">{purchaseData.amount} credits</span> for <span className="font-semibold">${purchaseData.price}</span>.
+                      Your purchase of <span className="font-semibold text-blue-600">{purchaseData.amount} credits</span> for <span className="font-semibold">${purchaseData.price}</span> is being processed.
                     </p>
-                    <p>
-                      <span className="font-semibold text-green-600">These credits will be consumed separately from your plan credits.</span>
+                    <p className="text-orange-600 font-medium">
+                      ⚠️ Credits will be added to your account only after payment is confirmed.
                     </p>
                   </div>
                 </div>
                 
-                <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-blue-900/20 border border-blue-700' : 'bg-blue-50 border border-blue-200'}`}>
+                <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-orange-900/20 border border-orange-700' : 'bg-orange-50 border border-orange-200'}`}>
                   <div className="flex items-start gap-3">
-                    <HiOutlineCheck className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full mt-0.5 flex-shrink-0"
+                    />
                     <div className="text-sm">
-                      <p className="font-medium text-blue-800 dark:text-blue-300 mb-1">What happens next?</p>
-                      <ul className={`space-y-1 ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
-                        <li>• Credits added to your account immediately</li>
-                        <li>• Used before your plan credits</li>
-                        <li>• Available for all features</li>
+                      <p className="font-medium text-orange-800 dark:text-orange-300 mb-1">What happens next?</p>
+                      <ul className={`space-y-1 ${isDarkMode ? 'text-orange-200' : 'text-orange-700'}`}>
+                        <li>• Payment is being processed by Stripe</li>
+                        <li>• Credits will be added after confirmation</li>
+                        <li>• You&apos;ll receive an email notification</li>
+                        <li>• Check your billing history for updates</li>
                       </ul>
                     </div>
                   </div>
@@ -536,37 +536,14 @@ export default function CreditsPurchaseModal({ isOpen, onClose, monthlyDiscountA
 
               {/* Actions */}
               <div className="p-6 pt-0">
-                <div className="flex gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowPurchaseModal(false)}
-                    className={`flex-1 px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
-                      isDarkMode 
-                        ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    }`}
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={confirmPurchase}
-                    disabled={isProcessing}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isProcessing ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mx-auto"
-                      />
-                    ) : (
-                      'Confirm Purchase'
-                    )}
-                  </motion.button>
-                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowPurchaseModal(false)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-medium text-sm transition-all duration-200"
+                >
+                  Close
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>

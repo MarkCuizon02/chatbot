@@ -47,20 +47,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       
       // Mock user data
       const mockUser: User = {
-        id: 3,
-        username: 'subscription-test-user',
-        email: 'subscription-test@example.com',
+        id: 1, // Use the existing user ID from database
+        username: 'testuser',
+        email: 'test@example.com',
         firstname: 'Test',
         lastname: 'User'
       };
       
-      // Mock account data (using the existing test account)
+      // Mock account data (using the existing test account from database)
       const mockAccount: Account = {
-        id: 999,
-        name: 'Test Account for Subscription',
-        description: 'Testing subscription migration',
-        type: 'business',
-        credits: 1000,
+        id: 1, // Use the existing account ID from database
+        name: 'Test Account',
+        description: 'Test account for development',
+        type: 'personal',
+        credits: 100,
         setup: true
       };
       
