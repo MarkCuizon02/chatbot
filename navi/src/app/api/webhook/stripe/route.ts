@@ -24,6 +24,7 @@ interface StripeInvoiceEvent {
   metadata?: {
     type?: string;
     credits?: string;
+    accountId?: string;
   };
 }
 
@@ -50,6 +51,7 @@ interface StripePaymentIntentEvent {
   metadata?: {
     type?: string;
     credits?: string;
+    accountId?: string;
   };
 }
 
@@ -98,6 +100,10 @@ export async function POST(req: NextRequest) {
       case 'payment_intent.succeeded':
         await handlePaymentIntentSucceeded(event.data.object as StripePaymentIntentEvent);
         break;
+      
+      case 'payment_intent.payment_failed':
+        await handlePaymentIntentFailed(event.data.object as StripePaymentIntentEvent);
+        break;
 
       default:
         console.log(`Unhandled event type ${event.type}`);
@@ -145,13 +151,24 @@ async function handleInvoicePaymentSucceeded(invoice: StripeInvoiceEvent) {
 
     const newInvoice = await db.invoice.createInvoice(invoiceData);
 
-    // If this is a credit purchase (one-time payment), add credits to account
+    // If this is a credit purchase (one-time payment), add credits to USER
     if (invoice.metadata?.type === 'credit_purchase' && invoice.metadata?.credits) {
       const creditsToAdd = parseFloat(invoice.metadata.credits);
       
-      await db.account.updateAccountCredits(account.id, creditsToAdd);
-
-      console.log(`Added ${creditsToAdd} credits to account ${account.id}`);
+      // ⭐ IMPORTANT: Credits go to USER, not Account
+      // Get the accountId from metadata, then find the user
+      const accountIdFromMetadata = invoice.metadata?.accountId;
+      if (accountIdFromMetadata) {
+        // Find the primary user for this account (the one who made the purchase)
+        const userAccount = await db.account.getUserAccountForAccount(parseInt(accountIdFromMetadata));
+        if (userAccount?.user) {
+          await db.user.updateUserCredits(userAccount.user.id, creditsToAdd);
+          console.log(`Added ${creditsToAdd} credits to user ${userAccount.user.id} (account ${accountIdFromMetadata})`);
+          
+          // Update invoice with userId for tracking
+          await db.invoice.updateInvoiceUserId(newInvoice.id, userAccount.user.id);
+        }
+      }
     }
 
     console.log('Successfully created invoice:', newInvoice?.id);
@@ -201,9 +218,17 @@ async function handleSubscriptionCreated(subscription: StripeSubscriptionEvent) 
       return;
     }
 
+    // ⭐ IMPORTANT: Find the user associated with this account for user-based subscriptions
+    const userAccount = await db.account.getUserAccountForAccount(account.id);
+    if (!userAccount?.user) {
+      console.error('No user found for account:', account.id);
+      return;
+    }
+
     // Create or update subscription record using Database abstraction
     await db.subscription.upsertSubscription(subscription.id, {
-      accountId: account.id,
+      userId: userAccount.user.id, // ⭐ USER-BASED subscription
+      accountId: account.id,        // ⭐ ACCOUNT handles billing
       stripeCustomerId: subscription.customer,
       status: mapStripeStatusToPrisma(subscription.status),
       stripePriceId: subscription.items.data[0]?.price?.id,
@@ -275,13 +300,87 @@ async function handlePaymentIntentSucceeded(paymentIntent: StripePaymentIntentEv
 
       const creditsToAdd = parseFloat(paymentIntent.metadata.credits);
       
-      await db.account.updateAccountCredits(account.id, creditsToAdd);
-
-      console.log(`Added ${creditsToAdd} credits to account ${account.id} from payment intent`);
+      // Validate credits amount
+      if (isNaN(creditsToAdd) || creditsToAdd <= 0) {
+        console.error('Invalid credits amount:', paymentIntent.metadata.credits);
+        return;
+      }
+      
+      // ⭐ IMPORTANT: Credits go to USER, not Account (same as invoice handler)
+      const accountIdFromMetadata = paymentIntent.metadata?.accountId;
+      if (accountIdFromMetadata) {
+        // Find the primary user for this account (the one who made the purchase)
+        const userAccount = await db.account.getUserAccountForAccount(parseInt(accountIdFromMetadata));
+        if (userAccount?.user) {
+          // ⭐ ONLY ADD CREDITS ON SUCCESSFUL PAYMENT
+          await db.user.updateUserCredits(userAccount.user.id, creditsToAdd);
+          console.log(`✅ Added ${creditsToAdd} credits to user ${userAccount.user.id} (account ${accountIdFromMetadata}) from payment intent`);
+          
+          // Create SUCCESS invoice record for this credit purchase  
+          await db.invoice.createInvoice({
+            accountId: account.id,
+            stripeInvoiceId: `pi_${paymentIntent.id}`, // Use payment intent ID as unique identifier
+            amountDue: creditsToAdd * 10, // Assuming 10 cents per credit
+            amountPaid: creditsToAdd * 10,
+            currency: 'usd',
+            status: 'paid',
+            paidAt: new Date()
+          });
+          
+          // Then update it with userId and payment intent ID
+          const newInvoice = await db.invoice.getInvoiceByStripeId(`pi_${paymentIntent.id}`);
+          if (newInvoice) {
+            await db.invoice.updateInvoiceUserId(newInvoice.id, userAccount.user.id);
+          }
+        } else {
+          console.error('No user found for account:', accountIdFromMetadata);
+        }
+      } else {
+        console.error('No accountId in payment intent metadata');
+      }
     }
     
   } catch (error) {
     console.error('Error handling payment intent succeeded:', error);
+    throw error;
+  }
+}
+
+async function handlePaymentIntentFailed(paymentIntent: StripePaymentIntentEvent) {
+  try {
+    console.log('Processing payment intent failed:', paymentIntent.id);
+
+    // Check if this was a credit purchase that failed
+    if (paymentIntent.metadata?.type === 'credit_purchase' && paymentIntent.metadata?.credits && paymentIntent.customer) {
+      // Find the account by Stripe customer ID using Database abstraction
+      const account = await db.account.getAccountByStripeCustomerId(paymentIntent.customer);
+
+      if (!account) {
+        console.error('Account not found for Stripe customer:', paymentIntent.customer);
+        return;
+      }
+
+      const creditsAttempted = parseFloat(paymentIntent.metadata.credits);
+      
+      console.log(`❌ Credit purchase FAILED for ${creditsAttempted} credits (Payment Intent: ${paymentIntent.id})`);
+      
+      // Create a failed invoice record for tracking
+      await db.invoice.createInvoice({
+        accountId: account.id,
+        stripeInvoiceId: `pi_failed_${paymentIntent.id}`,
+        amountDue: creditsAttempted * 10, // Assuming 10 cents per credit
+        amountPaid: 0, // No payment was successful
+        currency: 'usd',
+        status: 'payment_failed',
+        paidAt: undefined
+      });
+
+      // ⭐ IMPORTANT: NO CREDITS ARE ADDED - Payment failed!
+      console.log(`📝 Created failed invoice record for payment intent: ${paymentIntent.id}`);
+    }
+    
+  } catch (error) {
+    console.error('Error handling payment intent failed:', error);
     throw error;
   }
 }

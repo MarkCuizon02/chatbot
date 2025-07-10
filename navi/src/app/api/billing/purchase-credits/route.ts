@@ -97,13 +97,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      status: 'payment_intent_created',
       data: {
         paymentId: paymentResult.payment_id,
         clientSecret: paymentResult.client_secret,
-        credits: credits,
+        pendingCredits: credits,
         totalPrice: totalPrice,
         discountApplied: applyDiscount,
-        message: 'Payment intent created successfully! Complete payment to receive credits.',
+        message: '⏳ Payment Intent created. Credits will be added ONLY after successful payment completion.',
+        nextStep: 'Complete payment using the clientSecret to receive credits',
+        creditsAddedImmediately: false
       },
     });
 

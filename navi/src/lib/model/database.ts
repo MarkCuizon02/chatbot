@@ -152,6 +152,7 @@ export class Database {
     },
 
     upsertSubscription: async (stripeSubscriptionId: string, data: {
+      userId: number;
       accountId: number;
       stripeCustomerId: string;
       stripePriceId?: string;
@@ -173,7 +174,8 @@ export class Database {
             canceledAt: data.canceledAt,
           },
           create: {
-            accountId: data.accountId,
+            userId: data.userId,        // ⭐ USER-BASED subscription
+            accountId: data.accountId,  // ⭐ ACCOUNT handles billing
             stripeSubscriptionId,
             stripeCustomerId: data.stripeCustomerId,
             stripePriceId: data.stripePriceId,
@@ -359,6 +361,20 @@ export class Database {
         console.error('Error updating invoice status:', error);
         throw error;
       }
+    },
+
+    // ⭐ NEW: Update invoice with userId for credit purchases
+    updateInvoiceUserId: async (invoiceId: number, userId: number) => {
+      try {
+        const invoice = await prisma.invoice.update({
+          where: { id: invoiceId },
+          data: { userId }
+        });
+        return invoice;
+      } catch (error) {
+        console.error('Error updating invoice userId:', error);
+        throw error;
+      }
     }
   };
 
@@ -467,6 +483,32 @@ export class Database {
       } catch (error) {
         console.error('Error getting account ID for user:', error);
         return null;
+      }
+    },
+
+    // ⭐ NEW: Update user credits (not account credits)
+    updateUserCredits: async (userId: number, creditsToAdd: number) => {
+      try {
+        // Get current user first
+        const currentUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { credits: true }
+        });
+        
+        if (!currentUser) {
+          throw new Error(`User ${userId} not found`);
+        }
+
+        const user = await prisma.user.update({
+          where: { id: userId },
+          data: {
+            credits: currentUser.credits + creditsToAdd
+          }
+        });
+        return user;
+      } catch (error) {
+        console.error('Error updating user credits:', error);
+        throw error;
       }
     }
   };

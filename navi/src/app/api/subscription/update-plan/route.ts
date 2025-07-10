@@ -122,50 +122,20 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ REAL ROUTE: Stripe subscription created:', stripeResult.subscription_id);
+    console.log('⏳ REAL ROUTE: Subscription will be updated via webhook when Stripe confirms');
 
-    // Find existing subscription in database
-    const existingSubscription = await db.subscription.getSubscriptionByAccountId(accountId);
-
-    let subscription;
-    
-    if (existingSubscription) {
-      // Update existing subscription
-      console.log('📝 REAL ROUTE: Updating existing subscription:', existingSubscription.id);
-      subscription = await db.subscription.updateSubscriptionWithStripeData(existingSubscription.id, {
-        stripeSubscriptionId: stripeResult.subscription_id,
-        stripePriceId: pricingPlan.stripePriceId || undefined,
-        status: 'ACTIVE',
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      });
-    } else {
-      // Create new subscription
-      console.log('📝 REAL ROUTE: Creating new subscription');
-      subscription = await db.subscription.createSubscription({
-        accountId: accountId,
-        stripeSubscriptionId: stripeResult.subscription_id,
-        stripeCustomerId: account.stripCustomerId || '',
-        stripePriceId: pricingPlan.stripePriceId || '',
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        status: 'ACTIVE'
-      });
-    }
-
-    console.log('✅ REAL ROUTE: Subscription updated successfully:', subscription);
-
-    console.log(`📝 REAL ROUTE: Plan updated for user ${userId}: ${planName} (${actionType})`);
+    // ⭐ NEW APPROACH: Don't update database immediately
+    // Wait for Stripe webhook to confirm and update subscription
     
     const response = {
       success: true,
       data: {
-        subscription: subscription,
         stripeSubscriptionId: stripeResult.subscription_id,
         planName: planName,
         actionType: actionType,
-        message: `Successfully ${actionType}d to ${planName} plan with Stripe billing`,
+        message: `Successfully initiated ${actionType} to ${planName} plan. Database will be updated once Stripe confirms the subscription.`,
         recurringBilling: true,
-        nextBillingDate: subscription.currentPeriodEnd
+        status: 'processing'
       },
       timestamp: new Date().toISOString()
     };

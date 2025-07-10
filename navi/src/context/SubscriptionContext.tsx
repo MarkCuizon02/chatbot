@@ -54,6 +54,9 @@ interface SubscriptionContextType {
   updatePaymentMethod: (method: SubscriptionState['paymentMethod']) => void;
   updateCredits: (used: number, remaining: number) => void;
   purchaseAdditionalCredits: (amount: number, price: number) => void;
+  addPendingCreditPurchase: (amount: number, price: number, paymentIntentId: string) => void;
+  confirmCreditPurchase: (paymentIntentId: string, amount: number) => void;
+  failCreditPurchase: (paymentIntentId: string) => void;
   useCredits: (amount: number) => void;
 }
 
@@ -215,6 +218,76 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }));
   };
 
+  // ⭐ NEW: Add a pending credit purchase that will only be confirmed after webhook
+  const addPendingCreditPurchase = (amount: number, price: number, paymentIntentId: string) => {
+    // Add a billing record with "Pending" status
+    const newBillingRecord = {
+      id: paymentIntentId,
+      plan: `${amount} Additional Credits`,
+      date: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      status: 'Pending' as const,
+      amount: price,
+      type: 'credits' as const
+    };
+
+    setSubscription(prev => ({
+      ...prev,
+      billingHistory: [newBillingRecord, ...(prev.billingHistory || [])]
+    }));
+  };
+
+  // ⭐ NEW: Confirm credit purchase after successful webhook
+  const confirmCreditPurchase = (paymentIntentId: string, amount: number) => {
+    setSubscription(prev => {
+      // Update billing record status from Pending to Paid
+      const updatedBillingHistory = prev.billingHistory.map(record => 
+        record.id === paymentIntentId ? { ...record, status: 'Paid' as const } : record
+      );
+
+      // Find the billing record to get the price
+      const billingRecord = prev.billingHistory.find(record => record.id === paymentIntentId);
+      
+      // Add the credit package
+      const newCreditPackage: AdditionalCredits = {
+        id: `add-${Date.now()}`,
+        amount,
+        price: billingRecord?.amount || 0,
+        purchaseDate: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        status: 'active'
+      };
+
+      return {
+        ...prev,
+        additionalCredits: [newCreditPackage, ...(prev.additionalCredits || [])],
+        totalAdditionalCredits: (prev.totalAdditionalCredits || 0) + amount,
+        billingHistory: updatedBillingHistory
+      };
+    });
+  };
+
+  // ⭐ NEW: Mark credit purchase as failed after failed webhook
+  const failCreditPurchase = (paymentIntentId: string) => {
+    setSubscription(prev => {
+      // Update billing record status from Pending to Failed
+      const updatedBillingHistory = prev.billingHistory.map(record => 
+        record.id === paymentIntentId ? { ...record, status: 'Failed' as const } : record
+      );
+
+      return {
+        ...prev,
+        billingHistory: updatedBillingHistory
+      };
+    });
+  };
+
   const useCredits = (amount: number) => {
     setSubscription(prev => {
       let remainingToUse = amount;
@@ -265,6 +338,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       updatePaymentMethod,
       updateCredits,
       purchaseAdditionalCredits,
+      addPendingCreditPurchase,
+      confirmCreditPurchase,
+      failCreditPurchase,
       useCredits
     }}>
       {children}
