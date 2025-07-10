@@ -14,18 +14,19 @@ model User {
   password               String
   firstname              String?
   lastname               String?
-  credits                Float                   @default(0)  // ⭐ USER gets the credits
+  credits                Float                   @default(0) // ⭐ USER gets the credits
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   verified               Boolean                 @default(false)
   AccountLinkRequest     AccountLinkRequest[]
   admins                 Admin?                  @relation("UserAdmin")
   chattieCoachsCreated   ChattieCoach[]          @relation("UserChattieCoachCreator")
-  invoices               Invoice[]               // ⭐ USER receives credits from invoices
+  invoices               Invoice[] // ⭐ USER receives credits from invoices
   knowledgeBaseResponses KnowledgeBaseResponse[]
   oauths                 OAuth[]                 @relation("UserOAuth")
   onboardings            Onboarding[]            @relation("UserOnboarding")
-  subscriptions          Subscription[]          // ⭐ USER-BASED: User has subscriptions
+  paymentMethods         PaymentMethod[]
+  subscriptions          Subscription[] // ⭐ USER-BASED: User has subscriptions
   Transaction            Transaction[]
   accounts               UserAccount[]
   verificationTokens     VerificationToken[]
@@ -37,16 +38,17 @@ model Account {
   description            String?
   type                   String                  @default("personal")
   setup                  Boolean                 @default(false)
-  stripCustomerId        String?                 // ⭐ ACCOUNT handles billing/payments
+  stripCustomerId        String? // ⭐ ACCOUNT handles billing/payments
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   AccountLinkRequest     AccountLinkRequest[]
   chatThreads            ChatThread[]
   chattieCoachs          ChattieCoach[]
   chatties               ChattieSettings[]
-  Invoice                Invoice[]               // ⭐ ACCOUNT gets billed
+  Invoice                Invoice[] // ⭐ ACCOUNT gets billed
   knowledgeBaseResponses KnowledgeBaseResponse[]
-  subscriptions          Subscription[]          // ⭐ ACCOUNT handles billing for user subscriptions
+  paymentMethods         PaymentMethod[]
+  subscriptions          Subscription[] // ⭐ ACCOUNT handles billing for user subscriptions
   Transaction            Transaction[]
   users                  UserAccount[]
 }
@@ -59,7 +61,7 @@ model UserAccount {
   account    Account      @relation(fields: [accountId], references: [id])
   user       User         @relation(fields: [userId], references: [id])
   UserAssets UserAssets[]
-  
+
   @@unique([userId, accountId])
 }
 
@@ -259,10 +261,10 @@ model PlanFeature {
 
 model Subscription {
   id                   Int                @id @default(autoincrement())
-  userId               Int                // ⭐ REQUIRED - WHO subscribes (USER-BASED)
-  accountId            Int                // ⭐ REQUIRED - WHERE billing happens & credits go
+  userId               Int // ⭐ REQUIRED - WHO subscribes (USER-BASED)
+  accountId            Int // ⭐ REQUIRED - WHERE billing happens & credits go
   stripeSubscriptionId String?            @unique
-  stripeCustomerId     String?            // Should match Account.stripCustomerId
+  stripeCustomerId     String? // Should match Account.stripCustomerId
   stripePriceId        String?
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
@@ -271,10 +273,10 @@ model Subscription {
   canceledAt           DateTime?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
-  
+
   // ⭐ USER-BASED: User subscribes, Account gets billed & receives credits
-  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account              Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model ChattieCoach {
@@ -351,11 +353,11 @@ model Agent {
 
 model Invoice {
   id                    Int       @id @default(autoincrement())
-  accountId             Int       // ⭐ ACCOUNT gets billed
-  userId                Int?      // ⭐ USER gets the credits (optional for legacy invoices)
+  accountId             Int // ⭐ ACCOUNT gets billed
+  userId                Int? // ⭐ USER gets the credits (optional for legacy invoices)
   subscriptionId        String?
   stripeInvoiceId       String    @unique
-  stripePaymentIntentId String?   // ⭐ For credit purchases via Payment Intents
+  stripePaymentIntentId String? // ⭐ For credit purchases via Payment Intents
   amountDue             Float
   amountPaid            Float
   currency              String    @default("usd")
@@ -364,10 +366,10 @@ model Invoice {
   paidAt                DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-  
+
   // Relations
-  account               Account   @relation(fields: [accountId], references: [id])
-  user                  User?     @relation(fields: [userId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
 }
 
 model AccountLinkRequest {
@@ -414,6 +416,42 @@ model Transaction {
   Account         Account  @relation(fields: [accountId], references: [id])
   Agent           Agent    @relation(fields: [agentId], references: [id])
   User            User     @relation(fields: [userId], references: [id])
+}
+
+model PaymentMethod {
+  id                    Int       @id @default(autoincrement())
+  userId                Int
+  accountId             Int? // Optional: link to specific account
+  brand                 String // Visa, Mastercard, PayPal, etc.
+  logo                  String? // URL to brand logo
+  number                String // Masked card number (e.g., "****1234")
+  expiry                String? // MM/YY format
+  cardholderName        String?
+  isDefault             Boolean   @default(false)
+  paymentMethod         String // 'card', 'paypal', 'bank'
+  status                String    @default("active") // 'active', 'expired', 'suspended'
+  lastUsed              DateTime?
+  securityFeatures      String[] // Array of security features
+  stripePaymentMethodId String? // Link to Stripe payment method
+
+  // Additional fields for different payment types
+  bankName      String? // For bank accounts
+  accountNumber String? // For bank accounts (masked)
+  routingNumber String? // For bank accounts
+  email         String? // For PayPal
+  zipCode       String? // For cards
+  country       String? // For cards
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id])
+  account Account? @relation(fields: [accountId], references: [id])
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([stripePaymentMethodId])
 }
 
 enum SubscriptionStatus {

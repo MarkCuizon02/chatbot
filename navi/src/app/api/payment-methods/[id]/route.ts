@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-
+import { detachPaymentMethod, updateCustomerDefaultPaymentMethod, retrievePaymentMethod } from '@/lib/stripe';
 
 export async function GET(
   request: NextRequest,
@@ -8,24 +8,42 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const paymentMethod = await prisma.paymentMethod.findUnique({
-      where: {
-        id: parseInt(id)
+    
+    // Get payment method from Stripe
+    try {
+      const stripePaymentMethod = await retrievePaymentMethod(id);
+      
+      if (!stripePaymentMethod) {
+        return NextResponse.json({ error: 'Payment method not found' }, { status: 404 });
       }
-    });
 
-    if (!paymentMethod) {
+      // Format for frontend
+      const card = (stripePaymentMethod as { card?: { brand?: string; last4?: string; exp_month?: number; exp_year?: number } }).card;
+      
+      const paymentMethod = {
+        id: stripePaymentMethod.id,
+        brand: card?.brand || stripePaymentMethod.type,
+        number: `****${card?.last4 || '****'}`,
+        expiry: card ? `${card.exp_month?.toString().padStart(2, '0')}/${card.exp_year?.toString().slice(-2)}` : 'N/A',
+        cardholderName: stripePaymentMethod.billing_details?.name || '',
+        paymentMethod: stripePaymentMethod.type as 'card' | 'paypal' | 'bank',
+        status: 'active',
+        stripePaymentMethodId: stripePaymentMethod.id,
+        createdAt: new Date(stripePaymentMethod.created * 1000).toISOString(),
+      };
+
+      return NextResponse.json(paymentMethod);
+    } catch (error) {
+      console.error('Error fetching payment method from Stripe:', error);
       return NextResponse.json({ error: 'Payment method not found' }, { status: 404 });
     }
-
-    return NextResponse.json(paymentMethod);
   } catch (error) {
     console.error('Error fetching payment method:', error);
     return NextResponse.json({ error: 'Failed to fetch payment method' }, { status: 500 });
   }
 }
 
-// PUT /api/payment-methods/[id] - Update a payment method
+// PUT /api/payment-methods/[id] - Update a payment method (mainly for setting as default)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -33,121 +51,88 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const {
-      brand,
-      logo,
-      number,
-      expiry,
-      cardholderName,
-      cvv,
-      zipCode,
-      country,
-      isDefault,
-      paymentMethod,
-      securityFeatures,
-      bankName,
-      accountNumber,
-      routingNumber,
-      email
-    } = body;
+    const { isDefault, userId } = body;
 
-    // Get the current payment method to check if we need to update defaults
-    const currentPaymentMethod = await prisma.paymentMethod.findUnique({
-      where: { id: parseInt(id) }
-    });
-
-    if (!currentPaymentMethod) {
-      return NextResponse.json({ error: 'Payment method not found' }, { status: 404 });
+    if (!id) {
+      return NextResponse.json({ error: 'Payment method ID is required' }, { status: 400 });
     }
 
-    // If this payment method is being set as default, unset all other defaults for this user
-    if (isDefault && !currentPaymentMethod.isDefault) {
-      await prisma.paymentMethod.updateMany({
-        where: {
-          userId: currentPaymentMethod.userId,
-          isDefault: true,
-          id: { not: parseInt(id) }
-        },
-        data: {
-          isDefault: false
+    // If setting as default, we need to update the customer's default payment method in Stripe
+    if (isDefault && userId) {
+      try {
+        // Get user to find their account
+        const user = await prisma.user.findUnique({
+          where: { id: parseInt(userId) },
+          include: {
+            accounts: {
+              include: {
+                account: true
+              }
+            }
+          }
+        });
+
+        if (!user) {
+          return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
-      });
+
+        // Get the primary account
+        const primaryAccount = user.accounts[0]?.account;
+        if (!primaryAccount?.stripCustomerId) {
+          return NextResponse.json({ error: 'No Stripe customer found for user' }, { status: 404 });
+        }
+
+        // Update default payment method in Stripe
+        await updateCustomerDefaultPaymentMethod(primaryAccount.stripCustomerId, id);
+        
+        return NextResponse.json({ 
+          message: 'Payment method updated successfully',
+          id: id,
+          isDefault: true
+        });
+      } catch (error) {
+        console.error('Error updating default payment method in Stripe:', error);
+        return NextResponse.json({ error: 'Failed to update payment method' }, { status: 500 });
+      }
     }
 
-    const updatedPaymentMethod = await prisma.paymentMethod.update({
-      where: {
-        id: parseInt(id)
-      },
-      data: {
-        brand,
-        logo,
-        number,
-        expiry,
-        cardholderName,
-        cvv,
-        zipCode,
-        country,
-        isDefault,
-        paymentMethod,
-        securityFeatures,
-        bankName,
-        accountNumber,
-        routingNumber,
-        email,
-        lastUsed: new Date()
-      }
+    // For other updates, we could handle them here
+    return NextResponse.json({ 
+      message: 'Payment method updated successfully',
+      id: id 
     });
-
-    return NextResponse.json(updatedPaymentMethod);
   } catch (error) {
-    console.error('Error updating payment method:', error);
+    console.error('Error in payment method PUT:', error);
     return NextResponse.json({ error: 'Failed to update payment method' }, { status: 500 });
   }
 }
 
-
+// DELETE /api/payment-methods/[id] - Delete (detach) a payment method from Stripe
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const paymentMethod = await prisma.paymentMethod.findUnique({
-      where: { id: parseInt(id) }
-    });
 
-    if (!paymentMethod) {
-      return NextResponse.json({ error: 'Payment method not found' }, { status: 404 });
+    if (!id) {
+      return NextResponse.json({ error: 'Payment method ID is required' }, { status: 400 });
     }
 
-    // If this was the default payment method, set the first available one as default
-    if (paymentMethod.isDefault) {
-      const nextDefault = await prisma.paymentMethod.findFirst({
-        where: {
-          userId: paymentMethod.userId,
-          id: { not: parseInt(id) },
-          isDeleted: false
-        },
-        orderBy: { createdAt: 'desc' }
+    // Detach the payment method from Stripe customer
+    try {
+      await detachPaymentMethod(id);
+      
+      return NextResponse.json({ 
+        message: 'Payment method deleted successfully',
+        id: id 
       });
-
-      if (nextDefault) {
-        await prisma.paymentMethod.update({
-          where: { id: nextDefault.id },
-          data: { isDefault: true }
-        });
-      }
+    } catch (error) {
+      console.error('Error detaching payment method from Stripe:', error);
+      return NextResponse.json({ error: 'Failed to delete payment method' }, { status: 500 });
     }
-
-    // Soft delete: set isDeleted to true and deletedAt to now
-    await prisma.paymentMethod.update({
-      where: { id: parseInt(id) },
-      data: { isDeleted: true, deletedAt: new Date() }
-    });
-
-    return NextResponse.json({ message: 'Payment method soft deleted successfully' });
   } catch (error) {
-    console.error('Error soft deleting payment method:', error);
-    return NextResponse.json({ error: 'Failed to soft delete payment method' }, { status: 500 });
+    console.error('Error in payment method DELETE:', error);
+    return NextResponse.json({ error: 'Failed to delete payment method' }, { status: 500 });
   }
 } 
