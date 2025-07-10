@@ -36,7 +36,8 @@ Response: ${responseText}
       `);
 
     } catch (error) {
-      setTestResult(`Error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setTestResult(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -55,7 +56,8 @@ Response: ${responseText}
       setTestResult(result);
 
     } catch (error) {
-      setTestResult(`Error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setTestResult(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
