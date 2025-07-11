@@ -6,6 +6,7 @@ import { Poppins } from 'next/font/google';
 import { ThemeProvider } from '../context/ThemeContext';
 import { SubscriptionProvider } from '../context/SubscriptionContext';
 import { UserProvider } from '../context/UserContext';
+import { SidebarProvider } from '../context/SidebarContext';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,7 +37,9 @@ export default function RootLayout({
         <ThemeProvider>
           <UserProvider>
             <SubscriptionProvider>
-              {children}
+              <SidebarProvider>
+                {children}
+              </SidebarProvider>
             </SubscriptionProvider>
           </UserProvider>
         </ThemeProvider>

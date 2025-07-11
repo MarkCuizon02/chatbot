@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useTheme } from '../context/ThemeContext';
 import { useSubscription } from '../context/SubscriptionContext';
 import { useCurrentAccount } from '../context/UserContext';
+import { useSidebar } from '../context/SidebarContext';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Sidebar from './components/Sidebar';
@@ -250,10 +251,18 @@ function TeamUsageModal({ isOpen, onClose, teamData, isDarkMode }: { isOpen: boo
 }
 
 export default function Dashboard() {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
-  const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
+  const {
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
+    isNaviModalOpen,
+    setIsNaviModalOpen,
+    isNaviDropdownOpen,
+    setIsNaviDropdownOpen,
+    isProfileOpen,
+    setIsProfileOpen,
+    isNaviChatbotOpen,
+    setIsNaviChatbotOpen,
+  } = useSidebar();
   const [isTeamUsageModalOpen, setIsTeamUsageModalOpen] = useState(false);
   const [isCreditDetailsModalOpen, setIsCreditDetailsModalOpen] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -325,10 +334,8 @@ export default function Dashboard() {
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
-        isNaviChatbotOpen={false}
-        setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
-          throw new Error('Function not implemented.');
-        }}
+        isNaviChatbotOpen={isNaviChatbotOpen}
+        setIsNaviChatbotOpen={setIsNaviChatbotOpen}
       />
 
       {/* Main Content */}

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import { useSidebar } from '../../context/SidebarContext';
 import Sidebar from '../components/Sidebar';
 import {
   HiOutlinePlus,
@@ -87,13 +88,11 @@ const ModelItemComponent: React.FC<ModelItemComponentProps> = ({ item, onToggle 
         <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} whitespace-nowrap`}>
           {item.credits}
         </span>
-        {item.isAvailable && (
-          <ToggleSwitch
-            isEnabled={item.isAvailable}
-            onChange={(enabled) => onToggle(item.id, enabled)}
-            id={`toggle-${item.id}`}
-          />
-        )}
+        <ToggleSwitch
+          isEnabled={item.isAvailable}
+          onChange={(enabled) => onToggle(item.id, enabled)}
+          id={`toggle-${item.id}`}
+        />
       </div>
     </div>
   );
@@ -187,16 +186,60 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category, onToggle })
 
 export default function ConnectionsPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
-  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const {
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
+    isNaviModalOpen,
+    setIsNaviModalOpen,
+    isNaviDropdownOpen,
+    setIsNaviDropdownOpen,
+    isProfileOpen,
+    setIsProfileOpen,
+    isNaviChatbotOpen,
+    setIsNaviChatbotOpen,
+  } = useSidebar();
 
   const [categories, setCategories] = useState<CategoryData[]>([
     {
       id: 'text-writing',
       name: 'TEXT & WRITING',
-      items: []
+      items: [
+        {
+          id: 'gpt-4-turbo',
+          title: 'GPT-4 Turbo',
+          description: 'Advanced language model for complex writing, analysis, and creative tasks with enhanced reasoning.',
+          credits: '3.0 Credits / 1k Tokens',
+          isAvailable: true
+        },
+        {
+          id: 'gpt-3.5-turbo',
+          title: 'GPT-3.5 Turbo',
+          description: 'Fast and efficient text generation for everyday writing tasks, summaries, and content creation.',
+          credits: '0.5 Credits / 1k Tokens',
+          isAvailable: true
+        },
+        {
+          id: 'claude-3-opus',
+          title: 'Claude 3 Opus',
+          description: 'Sophisticated AI assistant for nuanced writing, analysis, and complex reasoning tasks.',
+          credits: '4.0 Credits / 1k Tokens',
+          isAvailable: false
+        },
+        {
+          id: 'claude-3-haiku',
+          title: 'Claude 3 Haiku',
+          description: 'Lightning-fast responses for quick writing assistance and simple text generation tasks.',
+          credits: '0.3 Credits / 1k Tokens',
+          isAvailable: true
+        },
+        {
+          id: 'gemini-pro',
+          title: 'Gemini Pro',
+          description: 'Google\'s multimodal AI for comprehensive text generation and analysis with web integration.',
+          credits: '1.2 Credits / 1k Tokens',
+          isAvailable: false
+        }
+      ]
     },
     {
       id: 'image-generation',
@@ -209,23 +252,23 @@ export default function ConnectionsPage() {
           items: [
             {
               id: 'dalle-3-1',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
+              title: 'DALL-E 3 Standard',
+              description: 'Generate high-quality images from text descriptions with improved prompt adherence and fine details.',
               credits: '0.8 Credits / 1k Tokens',
               isAvailable: false
             },
             {
               id: 'dalle-3-2',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-              credits: '0.8 Credits / 1k Tokens',
+              title: 'DALL-E 3 HD',
+              description: 'Create ultra-high resolution images with enhanced detail and clarity for professional use cases.',
+              credits: '1.2 Credits / 1k Tokens',
               isAvailable: true
             },
             {
               id: 'dalle-3-3',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-              credits: '0.8 Credits / 1k Tokens',
+              title: 'DALL-E 3 Turbo',
+              description: 'Fast image generation with optimized processing time while maintaining good quality output.',
+              credits: '0.6 Credits / 1k Tokens',
               isAvailable: false
             }
           ]
@@ -238,23 +281,23 @@ export default function ConnectionsPage() {
       items: [
         {
           id: 'midjourney-1',
-          title: 'Title-4.1',
-          description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-          credits: '0.8 Credits / 1k Tokens',
+          title: 'Midjourney v6',
+          description: 'Create stunning artistic images with photorealistic quality and enhanced prompt understanding.',
+          credits: '1.0 Credits / Image',
           isAvailable: false
         },
         {
           id: 'midjourney-2',
-          title: 'Title-4.1',
-          description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-          credits: '0.8 Credits / 1k Tokens',
+          title: 'Midjourney Niji',
+          description: 'Specialized model for anime and manga-style artwork with vibrant colors and detailed character designs.',
+          credits: '0.9 Credits / Image',
           isAvailable: false
         },
         {
           id: 'midjourney-3',
-          title: 'Title-4.1',
-          description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-          credits: '0.8 Credits / 1k Tokens',
+          title: 'Midjourney Fast',
+          description: 'Quick image generation with reduced wait times for rapid prototyping and iteration.',
+          credits: '0.7 Credits / Image',
           isAvailable: false
         }
       ]
@@ -270,23 +313,23 @@ export default function ConnectionsPage() {
           items: [
             {
               id: 'elevenlabs-1',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-              credits: '0.8 Credits / 1k Tokens',
+              title: 'ElevenLabs Turbo',
+              description: 'Ultra-fast text-to-speech conversion with natural-sounding voices and low latency.',
+              credits: '0.3 Credits / 1k Characters',
               isAvailable: true
             },
             {
               id: 'elevenlabs-2',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-              credits: '0.8 Credits / 1k Tokens',
+              title: 'ElevenLabs Multilingual',
+              description: 'Generate speech in 29+ languages with authentic accents and natural pronunciation.',
+              credits: '0.5 Credits / 1k Characters',
               isAvailable: false
             },
             {
               id: 'elevenlabs-3',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-              credits: '0.8 Credits / 1k Tokens',
+              title: 'ElevenLabs Voice Cloning',
+              description: 'Create custom voice models from audio samples for personalized speech synthesis.',
+              credits: '2.0 Credits / Voice Model',
               isAvailable: false
             }
           ]
@@ -297,23 +340,23 @@ export default function ConnectionsPage() {
           items: [
             {
               id: 'audiolm-1',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-              credits: '0.8 Credits / 1k Tokens',
+              title: 'AudioLM Music',
+              description: 'Generate high-quality music compositions and soundscapes from text descriptions.',
+              credits: '1.5 Credits / 30s Audio',
               isAvailable: false
             },
             {
               id: 'audiolm-2',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-              credits: '0.8 Credits / 1k Tokens',
+              title: 'AudioLM Speech',
+              description: 'Create realistic speech continuation and audio completion with context awareness.',
+              credits: '0.8 Credits / 30s Audio',
               isAvailable: true
             },
             {
               id: 'audiolm-3',
-              title: 'Title-4.1',
-              description: 'Lorem ipsum dolor sit amet consectetur. Ut porttitor nibh etiam ut vitae aliquet magna cursus.',
-              credits: '0.8 Credits / 1k Tokens',
+              title: 'AudioLM Effects',
+              description: 'Generate environmental sounds, sound effects, and ambient audio for multimedia projects.',
+              credits: '1.0 Credits / 30s Audio',
               isAvailable: false
             }
           ]
@@ -323,7 +366,50 @@ export default function ConnectionsPage() {
     {
       id: 'research-data',
       name: 'RESEARCH & DATA',
-      items: []
+      items: [
+        {
+          id: 'perplexity-pro',
+          title: 'Perplexity Pro',
+          description: 'AI-powered search engine with real-time web access for accurate research and fact-checking.',
+          credits: '2.0 Credits / Query',
+          isAvailable: true
+        },
+        {
+          id: 'wolfram-alpha',
+          title: 'Wolfram Alpha',
+          description: 'Computational knowledge engine for mathematical calculations, data analysis, and scientific queries.',
+          credits: '1.5 Credits / Computation',
+          isAvailable: false
+        },
+        {
+          id: 'semantic-scholar',
+          title: 'Semantic Scholar API',
+          description: 'Access millions of academic papers and research publications with AI-powered search and insights.',
+          credits: '0.8 Credits / Paper Query',
+          isAvailable: true
+        },
+        {
+          id: 'code-interpreter',
+          title: 'Code Interpreter',
+          description: 'Execute Python code for data analysis, visualization, and statistical computations in real-time.',
+          credits: '1.0 Credits / Execution',
+          isAvailable: false
+        },
+        {
+          id: 'web-scraper',
+          title: 'Web Scraper Pro',
+          description: 'Extract and analyze data from websites with intelligent parsing and structured output.',
+          credits: '0.6 Credits / Page',
+          isAvailable: true
+        },
+        {
+          id: 'citation-generator',
+          title: 'Citation Generator',
+          description: 'Automatically generate properly formatted citations in APA, MLA, Chicago, and other academic styles.',
+          credits: '0.2 Credits / Citation',
+          isAvailable: false
+        }
+      ]
     }
   ]);
 
@@ -357,10 +443,8 @@ export default function ConnectionsPage() {
         setIsNaviDropdownOpen={setIsNaviDropdownOpen}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
-        isNaviChatbotOpen={false}
-        setIsNaviChatbotOpen={function (value: React.SetStateAction<boolean>): void {
-          throw new Error("Function not implemented.");
-        }}
+        isNaviChatbotOpen={isNaviChatbotOpen}
+        setIsNaviChatbotOpen={setIsNaviChatbotOpen}
       />
       <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'ml-12' : 'ml-32'} p-6 sm:p-8 overflow-x-hidden flex justify-center`}>
         <motion.div
