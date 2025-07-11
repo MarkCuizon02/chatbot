@@ -292,6 +292,38 @@ export class Database {
         throw error;
       }
     },
+
+    getUserSubscriptions: async (userId: number) => {
+      try {
+        const subscriptions = await prisma.subscription.findMany({
+          where: { userId },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstname: true,
+                lastname: true
+              }
+            },
+            account: {
+              select: {
+                id: true,
+                name: true,
+                type: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        });
+        return subscriptions;
+      } catch (error) {
+        console.error('Error getting user subscriptions:', error);
+        return [];
+      }
+    },
   };
 
   invoice = {

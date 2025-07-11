@@ -33,7 +33,7 @@ export async function retrieveCustomer(customer_id: string) {
 
 export async function createOrRetrieveCustomer(data: CustomerData) {
     try {
-        // First, try to find existing customer by email
+        // Find existing customer by email
         const existingCustomer = await findCustomerByEmail(data.email);
         
         if (existingCustomer) {
@@ -307,6 +307,31 @@ export async function detachPaymentMethod(payment_method_id: string) {
     }
 }
 
+export async function retrievePaymentMethod(payment_method_id: string) {
+    try {
+        const paymentMethod = await stripe.paymentMethods.retrieve(payment_method_id);
+        return paymentMethod;
+    } catch (error) {
+        console.error('Error retrieving payment method:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new Error(`Failed to retrieve payment method: ${errorMessage}`);
+    }
+}
+
+export async function updateCustomerDefaultPaymentMethod(customer_id: string, payment_method_id: string) {
+    try {
+        const customer = await stripe.customers.update(customer_id, {
+            invoice_settings: {
+                default_payment_method: payment_method_id,
+            },
+        });
+        return customer;
+    } catch (error) {
+        console.error('Error updating customer default payment method:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new Error(`Failed to update default payment method: ${errorMessage}`);
+    }
+}
 
 // Payment Intent Management - Optimized for Credit Purchases
 export async function createCreditPurchasePaymentIntent(data: { 
@@ -351,7 +376,12 @@ export async function createCreditPurchasePaymentIntent(data: {
     }
 }
 
-export async function oneTimePayment(data: { customer_id?: string; amount: number; ddecation?: string }) {
+export async function oneTimePayment(data: { 
+  customer_id?: string; 
+  amount: number; 
+  ddecation?: string;
+  metadata?: { [key: string]: string }; 
+}) {
     try {
         let customer_id = data.customer_id;
         
@@ -372,6 +402,7 @@ export async function oneTimePayment(data: { customer_id?: string; amount: numbe
             currency: 'usd',
             description: data.ddecation || "Amount",
             automatic_payment_methods: { enabled: true },
+            metadata: data.metadata || {},
         });
 
         return {
@@ -381,7 +412,8 @@ export async function oneTimePayment(data: { customer_id?: string; amount: numbe
         };
     } catch (error) {
         console.error('Error creating one-time payment:', error);
-        throw new Error(`Failed to create payment intent: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Failed to create payment intent: ${errorMessage}`);
     }
 }
 
@@ -483,12 +515,152 @@ export async function getSessionDetails(sessionId: string) {
     }
 }
 
+// Automatic Payment Processing with Stored Payment Methods
+export async function chargeStoredPaymentMethod(data: {
+    customer_id: string;
+    amount: number;
+    description?: string;
+    credits?: number;
+    accountId?: string;
+    payment_method_id?: string; // If not provided, uses customer's default
+}) {
+    try {
+        // Validate customer exists
+        const customer = await retrieveCustomer(data.customer_id);
+        if (!customer) {
+            throw new Error('Customer not found');
+        }
+
+        // Get payment method ID - use provided one or customer's default
+        let payment_method_id = data.payment_method_id;
+        
+        if (!payment_method_id) {
+            // Use customer's default payment method
+            if (customer.deleted !== true && 
+                (customer as Stripe.Customer).invoice_settings?.default_payment_method) {
+                payment_method_id = (customer as Stripe.Customer).invoice_settings.default_payment_method as string;
+            } else {
+                // If no default set, get the first available payment method
+                const paymentMethods = await getCustomerPaymentMethods(data.customer_id);
+                if (paymentMethods.length === 0) {
+                    throw new Error('No payment methods found for customer');
+                }
+                payment_method_id = paymentMethods[0].id;
+            }
+        }
+
+        // Create and confirm payment intent with stored payment method
+        const intent = await stripe.paymentIntents.create({
+            customer: data.customer_id,
+            amount: data.amount * 100, // Convert to cents
+            currency: 'usd',
+            description: data.description || 'Automatic payment',
+            payment_method: payment_method_id,
+            confirmation_method: 'automatic',
+            confirm: true,
+            return_url: 'http://localhost:3000/billing/success', // Required for automatic confirmation
+            metadata: {
+                type: data.credits ? 'credit_purchase' : 'payment',
+                ...(data.credits && { credits: data.credits.toString() }),
+                ...(data.accountId && { accountId: data.accountId }),
+            },
+        });
+
+        return {
+            payment_id: intent.id,
+            status: intent.status,
+            amount_charged: intent.amount / 100,
+            payment_method_id,
+            customer_id: data.customer_id,
+            intent,
+            success: intent.status === 'succeeded',
+        };
+    } catch (error) {
+        console.error('Error charging stored payment method:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new Error(`Failed to charge stored payment method: ${errorMessage}`);
+    }
+}
+
+export async function processAutomaticCreditPurchase(data: {
+    email: string;
+    accountId: string;
+    credits: number;
+    amount: number;
+    description?: string;
+}) {
+    try {
+        // Get or create customer
+        const customerResult = await createOrRetrieveCustomer({
+            email: data.email,
+            name: data.email, // Use email as name if not provided
+        });
+
+        // Check if customer has a default payment method
+        const customer = await retrieveCustomer(customerResult.customer_id);
+        const hasDefaultPaymentMethod = customer.deleted !== true && 
+            (customer as Stripe.Customer).invoice_settings?.default_payment_method;
+        const paymentMethods = await getCustomerPaymentMethods(customerResult.customer_id);
+
+        if (!hasDefaultPaymentMethod && paymentMethods.length === 0) {
+            throw new Error('No payment methods available for automatic charging. Please add a payment method first.');
+        }
+
+        // Process automatic payment
+        const chargeResult = await chargeStoredPaymentMethod({
+            customer_id: customerResult.customer_id,
+            amount: data.amount,
+            description: data.description || `Credit purchase: ${data.credits} credits`,
+            credits: data.credits,
+            accountId: data.accountId,
+        });
+
+        return {
+            success: chargeResult.success,
+            payment_id: chargeResult.payment_id,
+            status: chargeResult.status,
+            amount_charged: chargeResult.amount_charged,
+            customer_id: chargeResult.customer_id,
+            credits: data.credits,
+            message: chargeResult.success 
+                ? `Successfully charged $${chargeResult.amount_charged} and purchased ${data.credits} credits`
+                : 'Payment failed - please check your payment method',
+        };
+    } catch (error) {
+        console.error('Error processing automatic credit purchase:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new Error(`Failed to process automatic credit purchase: ${errorMessage}`);
+    }
+}
+
+export async function getCustomerDefaultPaymentMethod(customer_id: string) {
+    try {
+        const customer = await retrieveCustomer(customer_id);
+        
+        if (customer.deleted !== true && 
+            (customer as Stripe.Customer).invoice_settings?.default_payment_method) {
+            const paymentMethod = await stripe.paymentMethods.retrieve(
+                (customer as Stripe.Customer).invoice_settings.default_payment_method as string
+            );
+            return paymentMethod;
+        }
+        
+        // If no default set, return the first available payment method
+        const paymentMethods = await getCustomerPaymentMethods(customer_id);
+        return paymentMethods.length > 0 ? paymentMethods[0] : null;
+    } catch (error) {
+        console.error('Error getting customer default payment method:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new Error(`Failed to get default payment method: ${errorMessage}`);
+    }
+}
+
 // Utility Functions
 export async function validateCustomer(customer_id: string): Promise<boolean> {
     try {
         await retrieveCustomer(customer_id);
         return true;
-    } catch (error) {
+    } catch {
         return false;
     }
 }
@@ -504,22 +676,32 @@ export async function ensureCustomerExists(data: CustomerData): Promise<string> 
 }
 
 // Helper function to handle Stripe errors consistently
-export function handleStripeError(error: any): never {
+export function handleStripeError(error: unknown): never {
     console.error('Stripe operation failed:', error);
     
-    if (error.type === 'StripeCardError') {
-        throw new Error(`Card error: ${error.message}`);
-    } else if (error.type === 'StripeRateLimitError') {
-        throw new Error('Rate limit exceeded. Please try again later.');
-    } else if (error.type === 'StripeInvalidRequestError') {
-        throw new Error(`Invalid request: ${error.message}`);
-    } else if (error.type === 'StripeAPIError') {
-        throw new Error('Stripe API error. Please try again later.');
-    } else if (error.type === 'StripeConnectionError') {
-        throw new Error('Network error. Please check your connection.');
-    } else if (error.type === 'StripeAuthenticationError') {
-        throw new Error('Authentication error. Please contact support.');
+    // Type guard to check if error has Stripe properties
+    const hasStripeProperties = (err: unknown): err is { type: string; message: string } => {
+        return typeof err === 'object' && err !== null && 'type' in err && 'message' in err;
+    };
+    
+    if (hasStripeProperties(error)) {
+        if (error.type === 'StripeCardError') {
+            throw new Error(`Card error: ${error.message}`);
+        } else if (error.type === 'StripeRateLimitError') {
+            throw new Error('Rate limit exceeded. Please try again later.');
+        } else if (error.type === 'StripeInvalidRequestError') {
+            throw new Error(`Invalid request: ${error.message}`);
+        } else if (error.type === 'StripeAPIError') {
+            throw new Error('Stripe API error. Please try again later.');
+        } else if (error.type === 'StripeConnectionError') {
+            throw new Error('Network error. Please check your connection.');
+        } else if (error.type === 'StripeAuthenticationError') {
+            throw new Error('Authentication error. Please contact support.');
+        } else {
+            throw new Error(`Stripe error: ${error.message}`);
+        }
     } else {
-        throw new Error(`Stripe error: ${error.message || 'Unknown error occurred'}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        throw new Error(`Stripe error: ${errorMessage}`);
     }
 }

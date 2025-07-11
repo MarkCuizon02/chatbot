@@ -26,7 +26,7 @@ export const paymentMethodService = {
   // Get all payment methods for a user
   async getUserPaymentMethods(userId: number) {
     try {
-      const response = await fetch(`/api/payment-methods?userId=${userId}`);
+      const response = await fetch(`/api/payment?userId=${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch payment methods');
       }
@@ -37,14 +37,11 @@ export const paymentMethodService = {
     }
   },
 
-  // Get a specific payment method
-  async getPaymentMethod(id: number) {
+  // Get a specific payment method by ID
+  async getPaymentMethod(id: number, userId: number) {
     try {
-      const response = await fetch(`/api/payment-methods/${id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch payment method');
-      }
-      return await response.json();
+      const allPaymentMethods = await this.getUserPaymentMethods(userId);
+      return allPaymentMethods.find((pm: PaymentMethodData) => pm.id === id);
     } catch (error) {
       console.error('Error fetching payment method:', error);
       throw error;
@@ -54,12 +51,15 @@ export const paymentMethodService = {
   // Create a new payment method
   async createPaymentMethod(data: PaymentMethodData) {
     try {
-      const response = await fetch('/api/payment-methods', {
+      const response = await fetch('/api/payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          action: 'add_payment_method',
+          ...data
+        }),
       });
       
       if (!response.ok) {
@@ -74,15 +74,46 @@ export const paymentMethodService = {
     }
   },
 
+  // Purchase credits
+  async purchaseCredits(accountId: number, credits: number, applyDiscount = false) {
+    try {
+      const response = await fetch('/api/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'purchase_credits',
+          accountId,
+          credits,
+          applyDiscount
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to purchase credits');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error purchasing credits:', error);
+      throw error;
+    }
+  },
+
   // Update a payment method
   async updatePaymentMethod(id: number, data: Partial<PaymentMethodData>) {
     try {
-      const response = await fetch(`/api/payment-methods/${id}`, {
+      const response = await fetch(`/api/payment`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          paymentMethodId: id,
+          ...data
+        }),
       });
       
       if (!response.ok) {
@@ -100,7 +131,7 @@ export const paymentMethodService = {
   // Delete a payment method
   async deletePaymentMethod(id: number) {
     try {
-      const response = await fetch(`/api/payment-methods/${id}`, {
+      const response = await fetch(`/api/payment?id=${id}`, {
         method: 'DELETE',
       });
       
@@ -117,14 +148,18 @@ export const paymentMethodService = {
   },
 
   // Set a payment method as default
-  async setAsDefault(id: number) {
+  async setAsDefault(id: number, userId: number) {
     try {
-      const response = await fetch(`/api/payment-methods/${id}`, {
+      const response = await fetch(`/api/payment`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isDefault: true }),
+        body: JSON.stringify({ 
+          paymentMethodId: id,
+          isDefault: true,
+          userId: userId
+        }),
       });
       
       if (!response.ok) {
