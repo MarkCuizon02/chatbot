@@ -3,16 +3,24 @@
 import React, { useState, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import { useTheme } from "../../context/ThemeContext";
+import { useSidebar } from "../../context/SidebarContext";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SettingsPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isNaviModalOpen, setIsNaviModalOpen] = useState(false);
-  const [isNaviDropdownOpen, setIsNaviDropdownOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNaviChatbotOpen, setIsNaviChatbotOpen] = useState(false);
+  const {
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
+    isNaviModalOpen,
+    setIsNaviModalOpen,
+    isNaviDropdownOpen,
+    setIsNaviDropdownOpen,
+    isProfileOpen,
+    setIsProfileOpen,
+    isNaviChatbotOpen,
+    setIsNaviChatbotOpen,
+  } = useSidebar();
 
   // Profile state
   const [fullName, setFullName] = useState("Troy Teeples");
