@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     const paymentResult = await oneTimePayment({
       customer_id: stripeCustomerId,
       amount: totalPrice,
-      description: `Purchase ${credits} credits`,
+      ddecation: `Purchase ${credits} credits`,
       metadata: {
         type: 'credit_purchase',
         credits: credits.toString(),

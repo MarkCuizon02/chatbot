@@ -76,7 +76,7 @@ class SubscriptionService {
   // Get all subscriptions for a user
   async getSubscriptions(userId: number): Promise<SubscriptionData[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscriptions?userId=${userId}`);
+      const response = await fetch(`${this.baseUrl}/subscription?userId=${userId}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch subscriptions: ${response.statusText}`);
       }
@@ -90,7 +90,7 @@ class SubscriptionService {
   // Get subscriptions for an account
   async getAccountSubscriptions(accountId: number): Promise<SubscriptionData[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscriptions?accountId=${accountId}`);
+      const response = await fetch(`${this.baseUrl}/subscription?accountId=${accountId}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch account subscriptions: ${response.statusText}`);
       }
@@ -104,7 +104,7 @@ class SubscriptionService {
   // Get a specific subscription
   async getSubscription(subscriptionId: number): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscriptions/${subscriptionId}`);
+      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch subscription: ${response.statusText}`);
       }
@@ -118,7 +118,7 @@ class SubscriptionService {
   // Create a new subscription
   async createSubscription(data: CreateSubscriptionRequest): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscriptions`, {
+      const response = await fetch(`${this.baseUrl}/subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ class SubscriptionService {
   // Update a subscription
   async updateSubscription(subscriptionId: number, data: UpdateSubscriptionRequest): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscriptions/${subscriptionId}`, {
+      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ class SubscriptionService {
   // Cancel a subscription
   async cancelSubscription(subscriptionId: number, data: CancelSubscriptionRequest = {}): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscriptions/${subscriptionId}`, {
+      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ class SubscriptionService {
   // Reactivate a cancelled subscription
   async reactivateSubscription(subscriptionId: number, planId?: string): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscriptions/${subscriptionId}/reactivate`, {
+      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}/reactivate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +229,8 @@ class SubscriptionService {
         throw new Error(error.error || 'Failed to reactivate subscription');
       }
 
-      return await response.json();
+      const result = await response.json();
+      return result.subscription;
     } catch (error) {
       console.error('Error reactivating subscription:', error);
       throw error;
@@ -239,12 +240,14 @@ class SubscriptionService {
   // Change subscription plan
   async changePlan(subscriptionId: number, newPlanId: string): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscriptions/${subscriptionId}/change-plan`, {
+      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}/update-plan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ planId: newPlanId }),
+        body: JSON.stringify({ 
+          planId: newPlanId 
+        }),
       });
 
       if (!response.ok) {
@@ -252,7 +255,8 @@ class SubscriptionService {
         throw new Error(error.error || 'Failed to change plan');
       }
 
-      return await response.json();
+      const result = await response.json();
+      return result.subscription;
     } catch (error) {
       console.error('Error changing plan:', error);
       throw error;

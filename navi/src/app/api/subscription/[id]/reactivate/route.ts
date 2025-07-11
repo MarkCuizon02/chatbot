@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-// POST /api/subscriptions/[id]/reactivate - Reactivate a cancelled subscription
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const subscriptionId = parseInt(params.id);
-    const { planId } = await request.json();
+    const body = await request.json();
+    const { planId } = body;
 
-    if (!subscriptionId) {
+    if (isNaN(subscriptionId)) {
       return NextResponse.json({ error: 'Invalid subscription ID' }, { status: 400 });
     }
 
@@ -45,8 +45,8 @@ export async function POST(
       return NextResponse.json({ error: 'Only canceled subscriptions can be reactivated' }, { status: 400 });
     }
 
-    // If planId is provided, also update the plan
-    const updateData: {
+    // Prepare reactivation data
+    const reactivateData: {
       status: 'ACTIVE';
       cancelAtPeriodEnd: boolean;
       canceledAt: null;
@@ -61,8 +61,8 @@ export async function POST(
       currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
     };
 
+    // If planId is provided, also update the plan
     if (planId) {
-      // Validate the plan exists
       const plan = await prisma.pricingPlan.findUnique({
         where: { id: planId }
       });
@@ -71,13 +71,13 @@ export async function POST(
         return NextResponse.json({ error: 'Invalid plan ID' }, { status: 400 });
       }
 
-      updateData.stripePriceId = plan.stripePriceId;
+      reactivateData.stripePriceId = plan.stripePriceId;
     }
 
     // Update the subscription
-    const updatedSubscription = await prisma.subscription.update({
+    const reactivatedSubscription = await prisma.subscription.update({
       where: { id: subscriptionId },
-      data: updateData,
+      data: reactivateData,
       include: {
         user: {
           select: {
@@ -99,7 +99,7 @@ export async function POST(
 
     return NextResponse.json({
       message: 'Subscription reactivated successfully',
-      subscription: updatedSubscription
+      subscription: reactivatedSubscription
     });
   } catch (error) {
     console.error('Error reactivating subscription:', error);

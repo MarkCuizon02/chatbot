@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-// POST /api/subscriptions/[id]/change-plan - Change subscription plan
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const subscriptionId = parseInt(params.id);
-    const { planId } = await request.json();
+    const body = await request.json();
+    const { planId } = body;
 
-    if (!subscriptionId) {
+    if (isNaN(subscriptionId)) {
       return NextResponse.json({ error: 'Invalid subscription ID' }, { status: 400 });
     }
 
     if (!planId) {
-      return NextResponse.json({ error: 'Plan ID is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Plan ID is required' },
+        { status: 400 }
+      );
     }
 
     // Get the current subscription

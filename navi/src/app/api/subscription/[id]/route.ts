@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { SubscriptionStatus } from '@prisma/client';
 
-// GET /api/subscriptions/[id] - Get a specific subscription
+// GET /api/subscription/[id] - Get a specific subscription
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const subscriptionId = parseInt(params.id);
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-// PUT /api/subscriptions/[id] - Update a subscription
+// PUT /api/subscription/[id] - Update a subscription
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const subscriptionId = parseInt(params.id);
@@ -53,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const body = await request.json();
     const updateData: {
-      status?: string;
+      status?: SubscriptionStatus;
       cancelAtPeriodEnd?: boolean;
       currentPeriodStart?: Date;
       currentPeriodEnd?: Date;
@@ -62,7 +63,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     } = {};
 
     // Allow updating specific fields
-    if (body.status !== undefined) updateData.status = body.status;
+    if (body.status !== undefined) updateData.status = body.status as SubscriptionStatus;
     if (body.cancelAtPeriodEnd !== undefined) updateData.cancelAtPeriodEnd = body.cancelAtPeriodEnd;
     if (body.currentPeriodStart !== undefined) updateData.currentPeriodStart = new Date(body.currentPeriodStart);
     if (body.currentPeriodEnd !== undefined) updateData.currentPeriodEnd = new Date(body.currentPeriodEnd);
@@ -107,7 +108,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-// DELETE /api/subscriptions/[id] - Cancel/Delete a subscription
+// DELETE /api/subscription/[id] - Cancel/Delete a subscription
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const subscriptionId = parseInt(params.id);
@@ -129,7 +130,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const subscription = await prisma.subscription.update({
       where: { id: subscriptionId },
       data: {
-        status: 'CANCELED',
+        status: 'CANCELED' as SubscriptionStatus,
         canceledAt: new Date(),
         cancelAtPeriodEnd: true
       },
