@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { cancelSubscription } from '@/lib/stripe';
 
 const prisma = new PrismaClient();
 
@@ -52,24 +53,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔍 API: Canceling subscription:', subscription.id);
-
-    // Cancel the subscription
-    const updatedSubscription = await prisma.subscription.update({
-      where: {
-        id: subscription.id
-      },
-      data: {
-        status: 'CANCELED',
-        cancelAtPeriodEnd: true,
-        canceledAt: new Date(),
-        updatedAt: new Date()
+    // Step 1: Cancel subscription in Stripe if stripeSubscriptionId exists
+    let stripeCancelResult = null;
+    if (subscription.stripeSubscriptionId) {
+      try {
+        console.log('🔍 API: Canceling subscription in Stripe:', subscription.stripeSubscriptionId);
+        stripeCancelResult = await cancelSubscription(subscription.stripeSubscriptionId);
+        console.log('✅ API: Stripe subscription canceled successfully:', stripeCancelResult);
+      } catch (stripeError) {
+        console.error('❌ API: Failed to cancel subscription in Stripe:', stripeError);
+        return NextResponse.json(
+          { 
+            error: 'Failed to cancel subscription in Stripe', 
+            details: stripeError instanceof Error ? stripeError.message : 'Unknown Stripe error' 
+          },
+          { status: 500 }
+        );
       }
-    });
+    } else {
+      console.log('⚠️ API: No Stripe subscription ID found, proceeding with database-only cancellation');
+    }
 
-    console.log('✅ API: Subscription canceled successfully:', updatedSubscription);
+    // Step 2: Update database only if Stripe operation succeeded (or if no Stripe subscription)
+    let updatedSubscription;
+    try {
+      console.log('🔍 API: Updating subscription in database');
+      
+      updatedSubscription = await prisma.subscription.update({
+        where: {
+          id: subscription.id
+        },
+        data: {
+          status: 'CANCELED',
+          cancelAtPeriodEnd: true,
+          canceledAt: new Date(),
+          updatedAt: new Date(),
+          // Note: Stripe subscription data is already updated via the cancelSubscription call
+        }
+      });
 
-    // Create invoice record for cancellation (for billing history tracking)
+      console.log('✅ API: Database updated successfully:', updatedSubscription);
+    } catch (dbError) {
+      console.error('❌ API: Failed to update database after Stripe cancellation:', dbError);
+      
+      // If we successfully canceled in Stripe but failed to update DB, we have a problem
+      if (stripeCancelResult) {
+        console.error('⚠️ API: WARNING - Stripe subscription was canceled but database update failed');
+        // In a production environment, you might want to implement a retry mechanism
+        // or alert administrators about this inconsistency
+      }
+      
+      return NextResponse.json(
+        { 
+          error: 'Failed to update subscription in database', 
+          details: dbError instanceof Error ? dbError.message : 'Unknown database error' 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Step 3: Create invoice record for cancellation (for billing history tracking)
     try {
       // Determine the account ID for the invoice
       const invoiceAccountId = accountId || (await prisma.user.findUnique({
@@ -103,7 +146,8 @@ export async function POST(request: NextRequest) {
     console.log(`📝 API: Subscription canceled for user ${userId}:`, {
       reason: reason || 'No reason provided',
       feedback: feedback || 'No feedback provided',
-      canceledAt: new Date()
+      canceledAt: new Date(),
+      stripeCanceled: !!stripeCancelResult
     });
 
     // Here you could also:
@@ -117,7 +161,8 @@ export async function POST(request: NextRequest) {
       subscription: updatedSubscription,
       message: 'Subscription canceled successfully. You will continue to have access until the end of your current billing period.',
       cancelDate: updatedSubscription.canceledAt,
-      endDate: updatedSubscription.currentPeriodEnd
+      endDate: updatedSubscription.currentPeriodEnd,
+      stripeCanceled: !!stripeCancelResult
     });
 
   } catch (error) {

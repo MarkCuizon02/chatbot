@@ -151,12 +151,13 @@ async function main() {
       id: 'personal',
       title: 'Personal',
       price: 1900, // $19.00
-      credits: 200,
+      credits: 20000,
       description: 'Great for steady personal use with rollover and solid credit limits.',
-      buttonText: 'Upgrade Plan',
-      href: '/billing/plan/personal',
+      buttonText: 'Downgrade Plan',
+      href: '/billing/plan',
       billing: '/month',
       popular: false,
+      category: 'personal',
       isActive: true,
       stripeProductId: 'prod_personal',
       stripePriceId: 'price_personal_monthly'
@@ -165,12 +166,13 @@ async function main() {
       id: 'family',
       title: 'Family',
       price: 3900, // $39.00
-      credits: 500,
+      credits: 50000,
       description: 'Flexible plan for families or small teams with shared credits.',
-      buttonText: 'Upgrade Plan',
-      href: '/billing/plan/family',
+      buttonText: 'Downgrade Plan',
+      href: '/billing/plan',
       billing: '/month',
       popular: false,
+      category: 'personal',
       isActive: true,
       stripeProductId: 'prod_family',
       stripePriceId: 'price_family_monthly'
@@ -179,12 +181,13 @@ async function main() {
       id: 'family-plus',
       title: 'Family Plus',
       price: 9900, // $99.00
-      credits: 1500,
+      credits: 150000,
       description: 'A solid starting point for businesses with scalable credits.',
       buttonText: 'Current Plan',
-      href: '/billing/plan/family-plus',
+      href: '/billing/plan',
       billing: '/month',
       popular: true,
+      category: 'personal',
       isActive: true,
       stripeProductId: 'prod_family_plus',
       stripePriceId: 'price_family_plus_monthly'
@@ -193,12 +196,13 @@ async function main() {
       id: 'launch',
       title: 'Launch',
       price: 9900, // $99.00
-      credits: 1500,
+      credits: 150000,
       description: 'Ideal for starting your teams needing more credits, storage and BYOK.',
       buttonText: 'Upgrade Plan',
-      href: '/billing/plan/launch',
+      href: '/billing/plan',
       billing: '/month',
       popular: false,
+      category: 'business',
       isActive: true,
       stripeProductId: 'prod_launch',
       stripePriceId: 'price_launch_monthly'
@@ -207,12 +211,13 @@ async function main() {
       id: 'growth',
       title: 'Growth',
       price: 29900, // $299.00
-      credits: 5000,
+      credits: 500000,
       description: 'Ideal for growing teams needing more credits, storage and BYOK.',
       buttonText: 'Upgrade Plan',
-      href: '/billing/plan/growth',
+      href: '/billing/plan',
       billing: '/month',
       popular: false,
+      category: 'business',
       isActive: true,
       stripeProductId: 'prod_growth',
       stripePriceId: 'price_growth_monthly'
@@ -221,43 +226,16 @@ async function main() {
       id: 'pro',
       title: 'Pro',
       price: 69900, // $699.00
-      credits: 15000,
+      credits: 1500000,
       description: 'Full-featured plan for pro teams with max credits, storage and BYOK.',
       buttonText: 'Upgrade Plan',
-      href: '/billing/plan/pro',
+      href: '/billing/plan',
       billing: '/month',
       popular: false,
+      category: 'business',
       isActive: true,
       stripeProductId: 'prod_pro',
       stripePriceId: 'price_pro_monthly'
-    },
-    {
-      id: 'human-digital-manager',
-      title: 'Human Digital Manager',
-      price: 250000, // $2500.00
-      credits: 50000,
-      description: 'Full-featured plan for pro teams with max credits, storage and BYOK.',
-      buttonText: 'Upgrade Plan',
-      href: '/billing/plan/human-digital-manager',
-      billing: '/month',
-      popular: false,
-      isActive: true,
-      stripeProductId: 'prod_human_digital_manager',
-      stripePriceId: 'price_human_digital_manager_monthly'
-    },
-    {
-      id: 'founders-club',
-      title: "Founder's Club",
-      price: 250000, // $2500.00
-      credits: 50000,
-      description: 'Exclusive plan for local small business owners.',
-      buttonText: 'Upgrade Plan',
-      href: '/billing/plan/founders-club',
-      billing: '/month',
-      popular: false,
-      isActive: true,
-      stripeProductId: 'prod_founders_club',
-      stripePriceId: 'price_founders_club_monthly'
     }
   ];
 
@@ -274,203 +252,75 @@ async function main() {
   const planFeatures = [
     // Personal Plan Features
     {
-      name: 'Navi Agent',
-      description: 'Access to Navi, your smart assistant',
-      included: true,
-      pricingPlanId: 'personal'
-    },
-    {
-      name: 'Pixie Agent',
-      description: 'Conversational AI capabilities',
-      included: true,
-      pricingPlanId: 'personal'
-    },
-    {
-      name: '200 Credits',
-      description: 'Monthly credit allocation',
-      included: true,
-      pricingPlanId: 'personal'
-    },
-    {
-      name: 'Basic Support',
-      description: 'Email support during business hours',
+      name: '20,000 credits per month',
+      description: '',
       included: true,
       pricingPlanId: 'personal'
     },
     // Family Plan Features
     {
-      name: 'Navi Agent',
-      description: 'Access to Navi, your smart assistant',
+      name: '50,000 credits per month',
+      description: '',
       included: true,
       pricingPlanId: 'family'
     },
     {
-      name: 'Pixie Agent',
-      description: 'Conversational AI capabilities',
-      included: true,
-      pricingPlanId: 'family'
-    },
-    {
-      name: '500 Credits',
-      description: 'Monthly credit allocation',
-      included: true,
-      pricingPlanId: 'family'
-    },
-    {
-      name: '4 Users',
-      description: 'Team member access',
+      name: '4 users',
+      description: '',
       included: true,
       pricingPlanId: 'family'
     },
     // Family Plus Plan Features
     {
-      name: 'Navi Agent',
-      description: 'Access to Navi, your smart assistant',
+      name: '150,000 credits per month',
+      description: '',
       included: true,
       pricingPlanId: 'family-plus'
     },
     {
-      name: 'Pixie Agent',
-      description: 'Conversational AI capabilities',
-      included: true,
-      pricingPlanId: 'family-plus'
-    },
-    {
-      name: '1500 Credits',
-      description: 'Monthly credit allocation',
-      included: true,
-      pricingPlanId: 'family-plus'
-    },
-    {
-      name: '6 Users',
-      description: 'Team member access',
+      name: '6 users',
+      description: '',
       included: true,
       pricingPlanId: 'family-plus'
     },
     // Launch Plan Features
     {
-      name: 'All AI Agents',
-      description: 'Access to all available AI agents',
+      name: '150,000 credits per month',
+      description: '',
       included: true,
       pricingPlanId: 'launch'
     },
     {
-      name: '1500 Credits',
-      description: 'Monthly credit allocation',
-      included: true,
-      pricingPlanId: 'launch'
-    },
-    {
-      name: '6 Users',
-      description: 'Team member access',
-      included: true,
-      pricingPlanId: 'launch'
-    },
-    {
-      name: 'Priority Support',
-      description: 'Priority email and chat support',
+      name: '6 users',
+      description: '',
       included: true,
       pricingPlanId: 'launch'
     },
     // Growth Plan Features
     {
-      name: 'All AI Agents',
-      description: 'Access to all available AI agents',
+      name: '500,000 credits per month',
+      description: '',
       included: true,
       pricingPlanId: 'growth'
     },
     {
-      name: '5000 Credits',
-      description: 'Monthly credit allocation',
-      included: true,
-      pricingPlanId: 'growth'
-    },
-    {
-      name: 'Unlimited Users',
-      description: 'Unlimited team member access',
-      included: true,
-      pricingPlanId: 'growth'
-    },
-    {
-      name: 'Priority Support',
-      description: 'Priority email and chat support',
+      name: 'Unlimited users',
+      description: '',
       included: true,
       pricingPlanId: 'growth'
     },
     // Pro Plan Features
     {
-      name: 'All AI Agents',
-      description: 'Access to all available AI agents',
+      name: '1,500,000 credits per month',
+      description: '',
       included: true,
       pricingPlanId: 'pro'
     },
     {
-      name: '15000 Credits',
-      description: 'Monthly credit allocation',
+      name: 'Unlimited users',
+      description: '',
       included: true,
       pricingPlanId: 'pro'
-    },
-    {
-      name: 'Unlimited Users',
-      description: 'Unlimited team member access',
-      included: true,
-      pricingPlanId: 'pro'
-    },
-    {
-      name: 'Priority Support',
-      description: 'Priority email and chat support',
-      included: true,
-      pricingPlanId: 'pro'
-    },
-    // Human Digital Manager Plan Features
-    {
-      name: 'All AI Agents',
-      description: 'Access to all available AI agents',
-      included: true,
-      pricingPlanId: 'human-digital-manager'
-    },
-    {
-      name: '50000 Credits',
-      description: 'Monthly credit allocation',
-      included: true,
-      pricingPlanId: 'human-digital-manager'
-    },
-    {
-      name: 'Unlimited Users',
-      description: 'Unlimited team member access',
-      included: true,
-      pricingPlanId: 'human-digital-manager'
-    },
-    {
-      name: 'Dedicated Support',
-      description: 'Dedicated account manager',
-      included: true,
-      pricingPlanId: 'human-digital-manager'
-    },
-    // Founder's Club Plan Features
-    {
-      name: '+20% Bonus Credits',
-      description: 'Lifetime bonus credits',
-      included: true,
-      pricingPlanId: 'founders-club'
-    },
-    {
-      name: 'Community Access',
-      description: 'Access to exclusive community',
-      included: true,
-      pricingPlanId: 'founders-club'
-    },
-    {
-      name: 'Early Feature Access',
-      description: 'Early access to new features',
-      included: true,
-      pricingPlanId: 'founders-club'
-    },
-    {
-      name: 'Locked Pricing',
-      description: 'No future price increases',
-      included: true,
-      pricingPlanId: 'founders-club'
     }
   ];
 

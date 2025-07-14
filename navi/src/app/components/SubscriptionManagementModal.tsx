@@ -12,7 +12,6 @@ interface SubscriptionManagementModalProps {
   action: 'cancel' | 'update' | 'success';
   planName?: string;
   currentPlan?: string;
-  onConfirm?: () => void;
   onDeleteAccount?: () => void;
 }
 
@@ -22,23 +21,23 @@ export default function SubscriptionManagementModal({
   action, 
   planName, 
   currentPlan,
-  onConfirm,
   onDeleteAccount 
 }: SubscriptionManagementModalProps) {
   const { isDarkMode } = useTheme();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleConfirm = async () => {
-    if (onConfirm) {
-      setIsProcessing(true);
-      try {
-        await onConfirm();
-      } finally {
-        setIsProcessing(false);
-      }
-    }
-  };
+  // handleConfirm is not used in this component, but kept for future use
+  // const handleConfirm = async () => {
+  //   if (onConfirm) {
+  //     setIsProcessing(true);
+  //     try {
+  //       await onConfirm();
+  //     } finally {
+  //       setIsProcessing(false);
+  //     }
+  //   }
+  // };
 
   const handleDeleteAccount = async () => {
     if (onDeleteAccount) {
@@ -152,7 +151,7 @@ export default function SubscriptionManagementModal({
                     <span className="font-semibold text-green-600">{planName}</span>.
                   </p>
                   <p>
-                    The changes will take effect immediately, and you'll be charged a prorated amount 
+                    The changes will take effect immediately, and you&apos;ll be charged a prorated amount 
                     for the current billing period.
                   </p>
                 </div>
@@ -162,7 +161,7 @@ export default function SubscriptionManagementModal({
                 <div className="flex items-start gap-3">
                   <HiOutlineCheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm">
-                    <p className="font-medium text-green-800 dark:text-green-300 mb-1">What's new?</p>
+                    <p className="font-medium text-green-800 dark:text-green-300 mb-1">What&apos;s new?</p>
                     <ul className={`space-y-1 ${isDarkMode ? 'text-green-200' : 'text-green-700'}`}>
                       <li>• Plan changes effective immediately</li>
                       <li>• Prorated billing for current period</li>

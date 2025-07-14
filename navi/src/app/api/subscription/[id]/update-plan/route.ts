@@ -3,10 +3,11 @@ import { prisma } from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const subscriptionId = parseInt(params.id);
+    const { id } = await params;
+    const subscriptionId = parseInt(id);
     const body = await request.json();
     const { planId } = body;
 
@@ -61,36 +62,33 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid plan ID' }, { status: 400 });
     }
 
-    // Update the subscription with the new plan
-    const updatedSubscription = await prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: {
-        stripePriceId: newPlan.stripePriceId,
-        // Reset period for immediate plan change
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        updatedAt: new Date()
+    // Check if it's the same plan
+    if (subscription.stripePriceId === newPlan.stripePriceId) {
+      return NextResponse.json({ 
+        error: 'You are already on this plan',
+        currentPlan: subscription.stripePriceId,
+        requestedPlan: newPlan.stripePriceId
+      }, { status: 400 });
+    }
+
+    // TODO: Implement Stripe integration for plan changes
+    // For now, we'll return an error since Stripe integration is not yet implemented
+    // In production, this should first update Stripe and only update DB on success
+    console.log('⚠️ API: Stripe integration not yet implemented for plan changes');
+    
+    return NextResponse.json(
+      { 
+        error: 'Stripe integration not yet implemented for plan changes. Please try again later.',
+        stripeIntegrationRequired: true
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstname: true,
-            lastname: true
-          }
-        },
-        account: {
-          select: {
-            id: true,
-            name: true,
-            type: true
-          }
-        }
-      }
-    });
+      { status: 501 } // 501 Not Implemented
+    );
+
+    // Note: Invoice records for plan changes can be created via Stripe webhooks
+    // to ensure accurate billing information
 
     return NextResponse.json({
+      success: true,
       message: 'Plan changed successfully',
       subscription: updatedSubscription,
       newPlan: newPlan

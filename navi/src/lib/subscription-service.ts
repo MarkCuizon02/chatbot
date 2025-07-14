@@ -46,6 +46,7 @@ export interface PricingPlanData {
     description?: string;
     included: boolean;
   }>;
+  foundersClubEligible?: boolean; // <-- Add this property
 }
 
 export interface CreateSubscriptionRequest {
@@ -115,10 +116,10 @@ class SubscriptionService {
     }
   }
 
-  // Create a new subscription
-  async createSubscription(data: CreateSubscriptionRequest): Promise<SubscriptionData> {
+  // Create a new subscription with Stripe integration
+  async createSubscriptionWithStripe(data: CreateSubscriptionRequest & { email: string; name?: string; phone?: string }): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscription`, {
+      const response = await fetch(`${this.baseUrl}/subscription/create-with-stripe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,21 +129,22 @@ class SubscriptionService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create subscription');
+        throw new Error(error.error || 'Failed to create subscription with Stripe');
       }
 
-      return await response.json();
+      const result = await response.json();
+      return result.subscription;
     } catch (error) {
-      console.error('Error creating subscription:', error);
+      console.error('Error creating subscription with Stripe:', error);
       throw error;
     }
   }
 
-  // Update a subscription
-  async updateSubscription(subscriptionId: number, data: UpdateSubscriptionRequest): Promise<SubscriptionData> {
+  // Cancel subscription with Stripe integration
+  async cancelSubscriptionWithStripe(subscriptionId: number, data: CancelSubscriptionRequest = {}): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}`, {
-        method: 'PUT',
+      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}/cancel`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -151,35 +153,39 @@ class SubscriptionService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to update subscription');
+        throw new Error(error.error || 'Failed to cancel subscription with Stripe');
       }
 
-      return await response.json();
+      const result = await response.json();
+      return result.subscription;
     } catch (error) {
-      console.error('Error updating subscription:', error);
+      console.error('Error canceling subscription with Stripe:', error);
       throw error;
     }
   }
 
-  // Cancel a subscription
-  async cancelSubscription(subscriptionId: number, data: CancelSubscriptionRequest = {}): Promise<SubscriptionData> {
+  // Change subscription plan with Stripe integration
+  async changePlanWithStripe(subscriptionId: number, newPlanId: string): Promise<SubscriptionData> {
     try {
-      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}`, {
-        method: 'DELETE',
+      const response = await fetch(`${this.baseUrl}/subscription/${subscriptionId}/update-plan`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ 
+          planId: newPlanId 
+        }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to cancel subscription');
+        throw new Error(error.error || 'Failed to change plan with Stripe');
       }
 
-      return await response.json();
+      const result = await response.json();
+      return result.subscription;
     } catch (error) {
-      console.error('Error canceling subscription:', error);
+      console.error('Error changing plan with Stripe:', error);
       throw error;
     }
   }
