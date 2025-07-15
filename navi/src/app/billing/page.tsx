@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useTheme } from '@/components/navi/context/ThemeContext';
-import { useSubscription } from '@/components/navi/context/SubscriptionContext';
-import { useCurrentAccount } from '@/components/navi/context/UserContext';
+import { useTheme } from '@/context/ThemeContext';
+import { useSubscription } from '@/context/SubscriptionContext';
+import { useCurrentAccount } from '@/context/UserContext';
 import Sidebar from '@/app/components/Sidebar';
 import { useSession } from 'next-auth/react';
-import CreditsPurchaseModal from '@/components/navi/CreditsPurchaseModal';
-import CreditsUsageChart from '@/components/navi/CreditsUsageChart';
-import SubscriptionManagementModal from '@/components/navi/SubscriptionManagementModal';
-import InvoicePreviewModal from '@/components/navi/InvoicePreviewModal';
+import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
+import CreditsUsageChart from '@/app/components/CreditsUsageChart';
+import SubscriptionManagementModal from '@/app/components/SubscriptionManagementModal';
+import InvoicePreviewModal from '@/app/components/InvoicePreviewModal';
 import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiOutlinePlus, HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineBell } from "react-icons/hi2";
 import { TrendingUp, TrendingDown, Zap, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
