@@ -5,7 +5,7 @@ import Sidebar from '@/app/components/Sidebar';
 import { motion } from "framer-motion";
 import { HiOutlineUser, HiOutlineBuildingOffice2, HiArrowLeft } from "react-icons/hi2";
 import { Crown, CheckCircle, XCircle, Zap, Calendar, Clock, ArrowRight } from "lucide-react";
-import { useTheme } from '@/app/context/ThemeContext';
+import { useTheme } from '@/context/ThemeContext';
 
 // PlanCard component (simplified for this UI)
 const PlanCard = ({ plan, isPopular, isCurrentPlan, onSelectPlan }: any) => {
