@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useTheme } from '@/context/ThemeContext';
-import { useSubscription } from '@/context/SubscriptionContext';
-import { useCurrentAccount } from '@/context/UserContext';
+import { useTheme } from '@/components/navi/context/ThemeContext';
+import { useSubscription } from '@/components/navi/context/SubscriptionContext';
+import { useCurrentAccount } from '@/components/navi/context/UserContext';
 import Sidebar from '@/app/components/Sidebar';
-import CreditsPurchaseModal from '@/app/components/CreditsPurchaseModal';
-import CreditsUsageChart from '@/app/components/CreditsUsageChart';
-import SubscriptionManagementModal from '@/app/components/SubscriptionManagementModal';
-import InvoicePreviewModal from '@/app/components/InvoicePreviewModal';
+import { useSession } from 'next-auth/react';
+import CreditsPurchaseModal from '@/components/navi/CreditsPurchaseModal';
+import CreditsUsageChart from '@/components/navi/CreditsUsageChart';
+import SubscriptionManagementModal from '@/components/navi/SubscriptionManagementModal';
+import InvoicePreviewModal from '@/components/navi/InvoicePreviewModal';
 import { HiOutlineEye, HiOutlineCreditCard, HiOutlineCalendar, HiOutlineCog, HiOutlinePlus, HiOutlineArrowDownTray, HiOutlineArrowPath, HiOutlineBell } from "react-icons/hi2";
 import { TrendingUp, TrendingDown, Zap, DollarSign, Users, Shield, Star, ArrowRight, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -38,6 +39,7 @@ interface ApiInvoice {
 }
 
 export default function BillingPage() {
+  const { data: session } = useSession();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const { subscription } = useSubscription();
   const { currentAccount } = useCurrentAccount();
@@ -298,8 +300,8 @@ Thank you for your business!
           setIsNaviChatbotOpen={setIsNaviChatbotOpen}
           isProfileOpen={isProfileOpen}
           setIsProfileOpen={setIsProfileOpen}
-        />
-        <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-24" : "ml-72"} p-8 md:p-12 overflow-x-hidden`}>
+          session={session}        />
+        <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-4" : "ml-8"} p-4 md:p-6 overflow-x-hidden`}>
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
@@ -322,14 +324,13 @@ Thank you for your business!
         isNaviChatbotOpen={isNaviChatbotOpen}
         setIsNaviChatbotOpen={setIsNaviChatbotOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen}
-      />
+        setIsProfileOpen={setIsProfileOpen} session={undefined}      />
       <AnimatePresence>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-24" : "ml-72"} p-8 md:p-12 overflow-x-hidden`}
+          className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "ml-4" : "ml-8"} p-4 md:p-6 overflow-x-hidden`}
         >
           <motion.div
             variants={containerVariants}
@@ -596,7 +597,7 @@ Thank you for your business!
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-medium text-sm hover:shadow-lg transition-all duration-200 w-fit flex items-center gap-2 group"
-                        onClick={() => router.push('/billing/plan')}
+                        onClick={() => router.push('/navi/billing/plan')}
                       >
                         Manage Plan
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -850,4 +851,4 @@ Thank you for your business!
       />
     </div>
   );
-} 
+}

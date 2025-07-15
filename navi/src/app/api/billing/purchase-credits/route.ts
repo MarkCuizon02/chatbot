@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Database } from '@/lib/model/database';
-import { getCreditPackPrice } from '@/lib/creditPricing';
-import { createCustomer, oneTimePayment } from '@/lib/stripe';
+import { getCreditPackPrice } from '@/lib/navi/creditPricing';
+import { createCustomer, oneTimePayment } from '@/lib/navi/stripe';
 
-const db = new Database();
+const db = new Database('prisma');
 
 export async function POST(request: NextRequest) {
   console.log('🔧 Purchase Credits API called');
@@ -47,9 +47,9 @@ export async function POST(request: NextRequest) {
     // Get or create Stripe customer if needed
     let stripeCustomerId = account.stripCustomerId;
     if (!stripeCustomerId) {
-      // We need user email to create customer - get it from account
-      const userAccount = await db.account.getUserAccountForAccount(account.id);
-      if (!userAccount?.user?.email) {
+      // Get account owner to get user email
+      const accountOwner = await db.account.getAccountOwner(account.id);
+      if (!accountOwner?.email) {
         return NextResponse.json(
           { error: 'User email not found for account' },
           { status: 400 }
@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
       }
 
       const customerResult = await createCustomer({
-        email: userAccount.user.email,
-        fname: userAccount.user.firstname || '',
-        lname: userAccount.user.lastname || '',
+        email: accountOwner.email,
+        fname: accountOwner.firstname || '',
+        lname: accountOwner.lastname || '',
         phone: ''
       });
 
@@ -72,15 +72,17 @@ export async function POST(request: NextRequest) {
 
       stripeCustomerId = customerResult.customer_id;
       
-      // Update account with Stripe customer ID
-      await db.account.updateAccountStripeCustomerId(account.id, stripeCustomerId);
+      // Update account with Stripe customer ID using updateAccount
+      await db.account.updateAccount(account.id, { 
+        stripCustomerId: stripeCustomerId 
+      });
     }
 
     // Create Stripe Payment Intent for credit purchase
     const paymentResult = await oneTimePayment({
       customer_id: stripeCustomerId,
       amount: totalPrice,
-      ddecation: `Purchase ${credits} credits`,
+      description: `Purchase ${credits} credits`,
       metadata: {
         type: 'credit_purchase',
         credits: credits.toString(),

@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from '@/context/ThemeContext';
-import { useSubscription } from '@/context/SubscriptionContext';
-import Sidebar from '@/app/components/Sidebar';
-import CardDetailsModal from '@/app/components/CardDetailsModal';
+import { useTheme } from '@/components/navi/context/ThemeContext';
+import { useSubscription } from '@/components/navi/context/SubscriptionContext';
+import Sidebar from '@/components/navi/Sidebar';
+import CardDetailsModal from '@/components/navi/CardDetailsModal';
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineCreditCard, HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineCheck, HiOutlineShare, HiOutlineLockClosed, HiArrowLeft } from "react-icons/hi2";
 import { CreditCard, Shield, Lock, ArrowLeft, CheckCircle, AlertCircle, Info } from "lucide-react";
-import { paymentMethodService, paymentMethodHelpers, PaymentMethodData } from '@/lib/payment-methods';
+import { paymentMethodService, paymentMethodHelpers, PaymentMethodData } from '@/lib/navi/payment-methods';
 
 
 interface Card {
@@ -471,8 +471,7 @@ export default function CardDetailsPage() {
         isNaviChatbotOpen={isNaviChatbotOpen}
         setIsNaviChatbotOpen={setIsNaviChatbotOpen}
         isProfileOpen={isProfileOpen}
-        setIsProfileOpen={setIsProfileOpen}
-      />
+        setIsProfileOpen={setIsProfileOpen} session={undefined}      />
       <AnimatePresence>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
